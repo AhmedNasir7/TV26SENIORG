@@ -72,6 +72,8 @@ _Last updated: 2026-11-27_
   after dependency change: `... up -d --build -V`
 - Containers `secureexam-app-dev`, `secureexam-db-dev`; database `secureexam`
 - **State:** containers running; migration applied; demo accounts seeded (see `docs/TEST-ACCOUNTS.md`)
+- Sign-in page has Admin / Examiner / Candidate fill buttons when `SHOW_DEMO_LOGINS=true` (set only in
+  `docker-compose.dev.yml`). Never enable it with real data.
 - Access check: `python scripts/access-check.py` (149/149 passed after step 6)
 - The built-in browser pane stalled on large dev scripts (connection reset); Playwright Chromium worked.
 - New migration for schema changes (never wipe data without asking): `prisma/migrations/<n>_name`,

@@ -34,6 +34,11 @@ services:
     environment:
       - NODE_ENV=development
       - WATCHPACK_POLLING=true
+      # Demo fill buttons on the sign-in page: local testing only (passwords as in CREDENTIALS.md)
+      - SHOW_DEMO_LOGINS=true
+      - DEMO_ADMIN_PASSWORD=Demo-chqRodTGUQGO
+      - DEMO_EXAMINER_PASSWORD=Demo-4JHnGboxMAq-
+      - DEMO_CANDIDATE_PASSWORD=Demo-mrEY8GNJI506
       # Local testing always uses the Postgres container below, never the
       # DATABASE_URL in .env (which points at the shared/remote database).
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-secureexam}?schema=public

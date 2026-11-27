@@ -26,14 +26,19 @@ async function main() {
   const passwordHash = await bcrypt.hash(password, 12)
 
   // Existing accounts keep their own password: only missing ones are created
-  const account = (email: string, name: string, role: Role) =>
-    prisma.user.upsert({ where: { email }, update: {}, create: { email, name, role, passwordHash } })
+  // The three main accounts use their own password when given, so the sign-in fill buttons keep working
+  const account = async (email: string, name: string, role: Role, own?: string) => {
+    const hash = own ? await bcrypt.hash(own, 12) : passwordHash
+    return prisma.user.upsert({ where: { email }, update: {}, create: { email, name, role, passwordHash: hash } })
+  }
 
-  await account('admin.demo@secureexam.test', 'Demo Admin', 'ADMIN')
-  const examiner = await account('examiner.demo@secureexam.test', 'Demo Examiner', 'EXAMINER')
+  await account('admin.demo@secureexam.test', 'Demo Admin', 'ADMIN', process.env.DEMO_ADMIN_PASSWORD)
+  const examiner = await account('examiner.demo@secureexam.test', 'Demo Examiner', 'EXAMINER', process.env.DEMO_EXAMINER_PASSWORD)
   await account('examiner2.demo@secureexam.test', 'Second Examiner', 'EXAMINER')
 
-  const candidates = [await account('candidate.demo@secureexam.test', 'Demo Candidate', 'CANDIDATE')]
+  const candidates = [
+    await account('candidate.demo@secureexam.test', 'Demo Candidate', 'CANDIDATE', process.env.DEMO_CANDIDATE_PASSWORD),
+  ]
   for (const [index, name] of NAMES.entries()) {
     const number = String(index + 1).padStart(2, '0')
     candidates.push(await account(`candidate${number}@secureexam.test`, name, 'CANDIDATE'))

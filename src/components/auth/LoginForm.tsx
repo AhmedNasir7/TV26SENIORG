@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth'
 
+import type { DemoLogin } from '@/lib/demo-logins'
 import { auth } from '@/lib/firebase/client'
 
-export function LoginForm({ allowSignup }: { allowSignup: boolean }) {
+export function LoginForm({ allowSignup, demoAccounts }: { allowSignup: boolean; demoAccounts: DemoLogin[] }) {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -88,6 +89,29 @@ export function LoginForm({ allowSignup }: { allowSignup: boolean }) {
           Use the account your institution gave you.
         </p>
       </div>
+
+      {demoAccounts.length > 0 && (
+        <div className="mb-5">
+          <p className="mb-2 text-sm font-medium">Fill a demo account</p>
+          <div className="grid grid-cols-3 gap-2">
+            {demoAccounts.map((account) => (
+              <button
+                key={account.email}
+                type="button"
+                disabled={loading || googleLoading}
+                onClick={() => {
+                  setEmail(account.email)
+                  setPassword(account.password)
+                  setError('')
+                }}
+                className="btn-secondary px-3 py-2 text-sm disabled:opacity-60"
+              >
+                {account.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
