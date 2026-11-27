@@ -21,6 +21,14 @@ NOT tested: candidate join with camera, recording, presence check, real email de
 leave prompt in a browser. Still to do: README, docs/TASKS ticks, PERMISSIONS.md, HMS env names in example files,
 commit, merge to main, push (deploys). Port 3000 had a stale dev server once: kill it, delete `.next`.
 
+### Server settings (2026-11-27, evening)
+Pushed to `main` up to f68d440 (deploys succeeded). On the server (`~/secureexam/.env`, ssh as ec2-user with the key
+`comsats.pem` kept in the user's Downloads, never in the repo): `TURNSTILE_SECRET_KEY` set by the user's request via
+`set-turnstile.sh` (checked with Cloudflare; live sign-in without a captcha token now answers 403), `CRON_INTERVAL_MINUTES`
+and `REMINDER_MINUTES` set by deploy.sh (testing defaults 1 and 3: set `REMINDER_MINUTES=1440,60` for real use).
+Still EMPTY on the server: `HMS_SUBDOMAIN` (recording needs it), `GROQ_API_KEY` (AI off). The Turnstile secret was shared in chat: rotate it.
+Added since: COPY indicator (migration 9), integrity scoring with corroboration rule, branded emails, toasts, date-time picker.
+
 ### Handover (2026-11-27, session ended on a usage limit)
 
 **On `main` (pushed, commit fd275c7, deploy run 45998693789 was still running: CHECK with `gh run list`,
