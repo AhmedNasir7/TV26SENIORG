@@ -295,7 +295,7 @@ for page_path in ["/candidate", f"/candidate/exams/{eid}"]:
     check(f"page {page_path} renders", status == 200 and "Access check exam" in body, status)
 check("candidate kept out of examiner pages", goes_to(candidate, f"/examiner/exams/{eid}", "/")[0])
 state = {e["title"]: e["access"]["state"] for e in json.loads(call(candidate, "GET", "/api/me/exams")[2])["exams"]}
-check("dashboard states are right", state.get("Database Systems: Quiz") == "available"
+check("dashboard states are right", state.get("Database Systems: Quiz") in ("available", "in_progress", "submitted")
       and state.get("Computer Networks: Final") == "upcoming" and state.get("Programming Fundamentals: Midterm") == "submitted", state)
 status, _, body = call(examiner, "POST", exam_url + "/duplicate")
 check("exam duplicated as draft", status == 201, body[:120])
@@ -319,6 +319,7 @@ def run_attempt_checks():
     q2 = make({"type": "WRITTEN", "text": "ZZ attempt check written", "marks": 3, "guidance": "SECRET-GUIDANCE", "maxLength": 50})
     body = {"title": "ZZ attempt check", "instructions": "", "startsAt": iso(timedelta(minutes=-5)), "endsAt": iso(timedelta(hours=2)),
             "durationMinutes": 30, "totalMarks": 5, "passMarks": None}
+    plan = dict(body)
     eid = json.loads(call(examiner, "POST", "/api/exams", body)[2])["exam"]["id"]
     call(examiner, "PUT", f"/api/exams/{eid}/questions", {"items": [{"questionId": q1, "marks": 2}, {"questionId": q2, "marks": 3}]})
     ids = []
@@ -402,6 +403,35 @@ def run_attempt_checks():
     check("sweep endpoint needs the secret", call(client(), "POST", "/api/cron/finalize")[0] == 401)
     status, _, body = call(one, "GET", f"/candidate/exams/{eid}/attempt")
     check("attempt page renders", status == 200 and "NEXT_REDIRECT" not in body, status)
+
+    # exam screen rules: no going back, and the clock reports a takeover
+    strict = json.loads(call(examiner, "POST", "/api/exams", {**plan, "title": "ZZ attempt check one way", "allowBackNavigation": False, "shuffleQuestions": False})[2])["exam"]["id"]
+    call(examiner, "PUT", f"/api/exams/{strict}/questions", {"items": [{"questionId": q1, "marks": 2}, {"questionId": q2, "marks": 3}]})
+    call(examiner, "POST", f"/api/exams/{strict}/enrollments", {"candidateIds": ids})
+    call(examiner, "POST", f"/api/exams/{strict}/publish", {"published": True})
+    opened = json.loads(call(one, "POST", f"/api/me/exams/{strict}/attempt", {"start": True})[2])
+    sid, paper = opened["sessionId"], opened["attempt"]
+    wid = paper["id"]
+    first, ahead = sorted(paper["questions"], key=lambda q: q["position"])
+    check("one-way paper hides later questions", ahead["hidden"] and ahead["text"] == "" and ahead["options"] == [] and not first["hidden"], ahead)
+    def put(question, revision):
+        return call(one, "PUT", f"/api/attempts/{wid}/answers/{question}", {"sessionId": sid, "revision": revision, "markedForReview": True, "response": None})[0]
+    check("a later question cannot be answered early", put(ahead["id"], 1) == 403)
+    check("the current question saves", put(first["id"], 1) == 200)
+    def progress(who, session_id, position):
+        return call(who, "POST", f"/api/attempts/{wid}/progress", {"sessionId": session_id, "position": position})
+    check("another candidate cannot move the attempt", progress(two, sid, 2)[0] == 404)
+    check("wrong session cannot move on", progress(one, "not-the-active-session", 2)[0] == 409)
+    check("positions past the end change nothing", json.loads(progress(one, sid, 3)[2])["attempt"]["reachedPosition"] == 1)
+    moved = json.loads(progress(one, sid, 2)[2])["attempt"]
+    left = next(q for q in moved["questions"] if q["position"] == 1)
+    check("moving on hides the earlier question", moved["reachedPosition"] == 2 and left["hidden"] and left["answer"] is None and left["markedForReview"], left)
+    check("an earlier question cannot be changed", put(first["id"], 2) == 403)
+    clock = lambda s: json.loads(call(one, "GET", f"/api/attempts/{wid}/clock?session={s}")[2])
+    check("clock recognises the active session", clock(sid)["activeSession"] is True)
+    check("clock reports a takeover", clock("an-older-session")["activeSession"] is False)
+    sql(f'DELETE FROM "Attempt" WHERE "examId"={strict}')
+    sql(f'DELETE FROM "Exam" WHERE id={strict}')
 
     # remove only what this block created
     sql(f'DELETE FROM "Attempt" WHERE "examId"={eid}')

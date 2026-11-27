@@ -31,7 +31,7 @@ Y = allowed · own = only the caller's own records · — = refused
 | `GET /api/exams/{id}/candidates`, `GET/POST .../enrollments`, `PATCH/DELETE .../enrollments/{eid}` | — | — | own | Y |
 | `GET /api/me/exams`, `GET /api/me/exams/{id}` (no questions) | — | own | — | — |
 | `POST /api/me/exams/{id}/attempt` (start or resume) | — | own | — | — |
-| `GET /api/attempts/{id}`, `.../clock`, `PUT .../answers/{qid}`, `POST .../submit` | — | own | — | — |
+| `GET /api/attempts/{id}`, `.../clock`, `PUT .../answers/{qid}`, `POST .../progress`, `POST .../submit` | — | own | — | — |
 | `POST /api/cron/finalize` (needs `CRON_SECRET`, no session) | secret | secret | secret | secret |
 | `POST /api/email/send` | — | — | — | Y |
 | `POST /api/check-room`, `generate-code` | — | Y | Y | Y |
@@ -64,6 +64,7 @@ Examination features must pass these. Missing and forbidden records both answer 
 
 ## Known gaps (planned in the security pass)
 
-- No per-address rate limiting yet; sign-in has per-account lockout only
+- No per-address rate limiting yet; sign-in has per-account lockout, and answer saving is limited per
+  account (180 a minute, held in memory on one server)
 - Video room codes are issued with the host role to any signed-in user
 - Google refresh tokens are stored unencrypted

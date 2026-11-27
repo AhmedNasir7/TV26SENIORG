@@ -10,10 +10,9 @@ _Last updated: 2026-11-27_
 - **RULE: never remove services (Calendar, ElevenLabs, Supabase, Pusher, 100ms, Stripe, email, moderation,
   chat, support...). Only template content may go. ASK before removing anything.**
 - **RULE: no Claude co-author line in commits or pull requests.**
-- **Phase:** building. **Steps 1–7 done.** Commits since step 3 are local, **not pushed**.
-- **Next:** step 8 = WS-1..4 (exam screen: answer inputs, states, autosave with queue, resume, review and
-  submit). Server save, submit, takeover and receipt already exist; the screen is
-  `src/components/attempt/` and currently shows the paper without answer controls. Wait for the user.
+- **Phase:** building. **Steps 1–8 done.** Commits since step 3 are local, **not pushed**.
+- **Next:** step 9 = GRD-1..3, RES-1..4 (grading and results: manual marking of written answers, publishing,
+  candidate results). Objective auto-grading already runs on submit. Wait for the user.
 - **Progress view:** top of `docs/TASKS.md`. After each step: tick subtasks, raise `FINISHED_STEP` in
   `scripts/task-progress.py`, run it. The user relies on this to follow the work.
 - **Waiting for the user:** whether to bring back non-service items removed in step 1: admin analytics,
@@ -75,12 +74,14 @@ _Last updated: 2026-11-27_
 - **State:** containers running; migration applied; demo accounts seeded (see `docs/TEST-ACCOUNTS.md`)
 - Sign-in page has Admin / Examiner / Candidate fill buttons when `SHOW_DEMO_LOGINS=true` (set only in
   `docker-compose.dev.yml`). Never enable it with real data.
-- Access check: `python scripts/access-check.py` (182/182 passed after step 7; it creates and removes its own attempt test data)
+- Access check: `python scripts/access-check.py` (192/192 passed after step 8; it creates and removes its own attempt test data)
 - The built-in browser pane stalled on large dev scripts (connection reset); Playwright Chromium worked.
 - New migration for schema changes (never wipe data without asking): `prisma/migrations/<n>_name`,
   then `... exec -T app pnpm run db:migrate`
 - **The Docker app doesn't see file changes from Windows.** After editing code:
   `docker compose -f docker-compose.dev.yml restart app`
+- The dev container clears `.next` on every start: reusing it made nested API routes answer 404 after a
+  restart. The first request to each page is therefore slow again after a restart.
 - Demo data: `pnpm run seed:demo` in the app container with `DEMO_PASSWORD` (see `docs/TEST-ACCOUNTS.md`):
   37 users, 64 questions, 4 exams (completed, open, upcoming, draft), 25 graded attempts
 
@@ -136,13 +137,18 @@ _Last updated: 2026-11-27_
     parallel requests; server deadline with 5 s grace; save with revisions; takeover by a new session;
     submit and lazy expiry finalization with objective auto-grading and a receipt hash; candidate-safe paper
     with opaque option keys `c1..`; optional `POST /api/cron/finalize` (`CRON_SECRET`).
+12. **Step 8:** exam screen (inputs per type, question grid with symbols, mark for review, shortcuts, autosave
+    queue with offline retry and local copy, resume, takeover turns the old window read only, review and
+    submit). No-back exams are enforced on the server (one question sent at a time,
+    `POST /api/attempts/{id}/progress`; migration `2_attempt_progress`). Per-account save rate limit.
+    Checked once in Playwright Chromium: autosave, offline retry, reload, submit, narrow-screen width.
 
 Earlier, separate work in the parent folder (not the competition): the `obol` site, `DESIGN-PIPELINE.md`
 and the skills `design-pipeline`, `scroll-video-hero`, `kinetic-details`. The user said to forget Obol.
 
 ## 8. Known template problems
 
-- No per-address rate limiting yet (sign-in has per-account lockout) (SEC)
+- No per-address rate limiting yet (sign-in lockout and answer saving are limited per account) (SEC)
 - Video room codes are issued with the host role to any signed-in user (SEC)
 - Google refresh tokens are stored unencrypted (SEC)
 - Several older routes still use the `{ error: string }` shape; move to `lib/server/api.ts` when rewritten

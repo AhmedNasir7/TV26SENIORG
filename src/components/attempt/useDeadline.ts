@@ -3,31 +3,39 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiRequest } from '@/lib/client/request'
 
-type Clock = { status: 'IN_PROGRESS' | 'SUBMITTED'; serverNow: string; deadlineAt: string }
-const RESYNC_MS = 30_000
+type Clock = { status: 'IN_PROGRESS' | 'SUBMITTED'; serverNow: string; deadlineAt: string; activeSession?: boolean }
+const RESYNC_MS = 15_000
 
 /**
  * Time left according to the server, counted with the browser's monotonic timer (the device
  * clock is never read). Re-synchronised regularly, on focus and when the network returns.
+ * The same check reports when another browser has taken the attempt over.
  */
-export function useDeadline(attemptId: number, initial: Clock, onTimeUp: () => void) {
+export function useDeadline(
+  attemptId: number,
+  sessionId: string,
+  initial: Clock,
+  onTimeUp: () => void,
+  onTakenOver: () => void
+) {
   const [remaining, setRemaining] = useState(() => Date.parse(initial.deadlineAt) - Date.parse(initial.serverNow))
   const sync = useRef({ left: Date.parse(initial.deadlineAt) - Date.parse(initial.serverNow), at: 0 })
-  const timeUp = useRef(onTimeUp)
+  const handlers = useRef({ onTimeUp, onTakenOver })
 
   useEffect(() => {
-    timeUp.current = onTimeUp
-  }, [onTimeUp])
+    handlers.current = { onTimeUp, onTakenOver }
+  }, [onTimeUp, onTakenOver])
 
   const resync = useCallback(async () => {
     try {
-      const clock = await apiRequest<Clock>(`/api/attempts/${attemptId}/clock`)
+      const clock = await apiRequest<Clock>(`/api/attempts/${attemptId}/clock?session=${encodeURIComponent(sessionId)}`)
       sync.current = { left: Date.parse(clock.deadlineAt) - Date.parse(clock.serverNow), at: performance.now() }
-      if (clock.status !== 'IN_PROGRESS') timeUp.current()
+      if (clock.status !== 'IN_PROGRESS') handlers.current.onTimeUp()
+      else if (clock.activeSession === false) handlers.current.onTakenOver()
     } catch {
       // Offline: keep counting from the last good reading
     }
-  }, [attemptId])
+  }, [attemptId, sessionId])
 
   useEffect(() => {
     sync.current.at = performance.now()
@@ -37,7 +45,7 @@ export function useDeadline(attemptId: number, initial: Clock, onTimeUp: () => v
       setRemaining(Math.max(0, left))
       if (left <= 0 && !fired) {
         fired = true
-        timeUp.current()
+        handlers.current.onTimeUp()
       }
       if (left > 0) fired = false // extra time was granted
     }, 500)

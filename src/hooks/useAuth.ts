@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { clearAttemptStorage } from '@/components/attempt/storage'
 
 interface User {
   id: number
@@ -42,6 +43,7 @@ export function useAuth() {
   const logout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
+      clearAttemptStorage()
       setUser(null)
       router.push('/login')
       router.refresh()

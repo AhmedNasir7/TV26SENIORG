@@ -51,7 +51,8 @@ services:
       - /app/.next
     networks:
       - secureexam-network
-    command: pnpm dev
+    # Start from a clean build cache: a reused one makes nested API routes answer 404 after a restart
+    command: sh -c "rm -rf /app/.next/* && exec pnpm dev"
 
 volumes:
   postgres_data_dev:

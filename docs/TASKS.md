@@ -5,7 +5,7 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 <!-- progress:start -->
 ## Progress
 
-**Steps finished: 7 of 16** · required subtasks ticked: 113 of 245 · **next: step 8, Exam screen: autosave, resume, submit**
+**Steps finished: 8 of 16** · required subtasks ticked: 128 of 246 · **next: step 9, Grading and results**
 
 | Step | Work | Tasks | Subtasks | Status |
 |---:|---|---|---:|---|
@@ -16,8 +16,8 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 | 5 | Question bank | QB-1, QB-2, QB-3 | 13/13 | ✅ Done |
 | 6 | Examinations and enrolment | EXM-1, EXM-2, EXM-3, ENR-1, ENR-2, ENR-3 | 24/25 | ✅ Done (1 carried over) |
 | 7 | Attempt engine and server timing | ATT-1, ATT-2, ATT-3, ATT-4 | 13/13 | ✅ Done |
-| 8 | Exam screen: autosave, resume, submit | WS-1, WS-2, WS-3, WS-4 | 3/17 | ▶️ Next |
-| 9 | Grading and results | GRD-1, GRD-2, GRD-3, RES-1, RES-2, RES-3, RES-4 | 4/22 | 🟡 Started early |
+| 8 | Exam screen: autosave, resume, submit | WS-1, WS-2, WS-3, WS-4 | 18/18 | ✅ Done |
+| 9 | Grading and results | GRD-1, GRD-2, GRD-3, RES-1, RES-2, RES-3, RES-4 | 4/22 | ▶️ Next |
 | 10 | Monitoring and announcements | MON-1, MON-2, MON-3, MON-4 | 0/13 | ⬜ Not started |
 | 11 | Innovation: fair randomized papers | FAIR-1, FAIR-2, FAIR-3 | 0/10 | ⬜ Not started |
 | 12 | Network status, preferences, scratchpad | NET-1, PREF-1, PAD-1 | 0/12 | ⬜ Not started |
@@ -34,9 +34,6 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 
 ### Already done ahead of its step
 
-- **WS-2** (step 8): Idempotent per-answer save with a revision number; older revisions ignored
-- **WS-4** (step 8): Repeat submit returns the same successful result
-- **WS-4** (step 8): ★ Submission receipt: time and a hash of the submitted answers
 - **GRD-1** (step 9): Pure function per type and rule; unanswered = 0
 - **GRD-1** (step 9): Grades against the attempt's frozen question versions
 - **GRD-1** (step 9): Exact decimal handling with one rounding rule
@@ -318,33 +315,33 @@ Covers: T2, T3, A6
 
 ## WS. Examination workspace
 
-### WS-1 Layout and navigation (functional) · P0 · M — ⬜ Not started (step 8)
+### WS-1 Layout and navigation (functional) · P0 · M — ✅ Done (step 8)
 Covers: I1, I2
-- [ ] Question, marks, remaining time, previous and next, question grid
-- [ ] States: unanswered, answered, marked for review (and both), shown by text or icon, not colour only
-- [ ] Inputs per type; clear selection
-- [ ] Keyboard operable, labelled controls, time warnings announced to screen readers
-- [ ] ★ Keyboard shortcuts for next, previous, mark
+- [x] Question, marks, remaining time, previous and next, question grid
+- [x] States: unanswered, answered, marked for review (and both), shown by text or icon, not colour only
+- [x] Inputs per type; clear selection
+- [x] Keyboard operable, labelled controls, time warnings announced to screen readers
+- [x] ★ Keyboard shortcuts for next, previous, mark
 
-### WS-2 Autosave · P0 · L — 🟡 Partly done (step 8)
+### WS-2 Autosave · P0 · L — ✅ Done (step 8)
 Covers: I3, T10, T11
-- [ ] Save on change; debounce typing; flush on question change and tab hide
+- [x] Save on change; debounce typing; flush on question change and tab hide
 - [x] Idempotent per-answer save with a revision number; older revisions ignored
-- [ ] Local pending queue; retry with back-off
-- [ ] Visible state: saving, saved at time, not saved
-- [ ] **Sec:** answer must belong to this attempt; option IDs validated; length capped; rate limited
+- [x] Local pending queue; retry with back-off
+- [x] Visible state: saving, saved at time, not saved
+- [x] **Sec:** answer must belong to this attempt; option IDs validated; length capped; rate limited
 
-### WS-3 Resume · P0 · M — ⬜ Not started (step 8)
+### WS-3 Resume · P0 · M — ✅ Done (step 8)
 Covers: I4, I5
-- [ ] Reload restores answers, marks, current question and server time
-- [ ] Merge unsent local answers if still within time
-- [ ] Single active session: a new device takes over, the old one becomes read only, event recorded
-- [ ] Clear local data after submission and on sign-out (shared computers)
+- [x] Reload restores answers, marks, current question and server time
+- [x] Merge unsent local answers if still within time
+- [x] Single active session: a new device takes over, the old one becomes read only, event recorded
+- [x] Clear local data after submission and on sign-out (shared computers)
 
-### WS-4 Review and submit · P0 · S — 🟡 Partly done (step 8)
+### WS-4 Review and submit · P0 · S — ✅ Done (step 8)
 Covers: I6, T5
-- [ ] Summary of answered, unanswered, marked; jump to any
-- [ ] Flush pending saves, then confirm and submit; button disabled while working
+- [x] Summary of answered, unanswered, marked; jump to any
+- [x] Flush pending saves, then confirm and submit; button disabled while working
 - [x] Repeat submit returns the same successful result
 - [x] ★ Submission receipt: time and a hash of the submitted answers
 

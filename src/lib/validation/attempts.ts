@@ -22,4 +22,6 @@ export const saveAnswerSchema = z.strictObject({
 
 export const submitSchema = z.strictObject({ sessionId })
 
+export const progressSchema = z.strictObject({ sessionId, position: z.number().int().min(2).max(500) })
+
 export type SaveAnswerInput = z.infer<typeof saveAnswerSchema>

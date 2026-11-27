@@ -7,6 +7,7 @@ import { Prisma } from '@/generated/prisma/client'
 import { ensureFound, type Actor } from '@/lib/policies'
 import { prisma } from '@/lib/prisma'
 import { ApiError } from '@/lib/server/api'
+import { rateLimit } from '@/lib/server/rate-limit'
 import { serverNow } from '@/lib/server/time'
 import { seededRandom, shuffled } from '@/lib/shuffle'
 import { attemptDeadline, candidateAccess } from '@/lib/services/access'
@@ -150,6 +151,7 @@ export async function viewAttempt(actor: Actor, attemptId: number) {
       submittedAt: true,
       submissionHash: true,
       deadlineAt: true,
+      reachedPosition: true,
       exam: { select: { id: true, title: true, instructions: true, allowBackNavigation: true } },
       questions: {
         orderBy: { position: 'asc' },
@@ -177,13 +179,18 @@ export async function viewAttempt(actor: Actor, attemptId: number) {
     deadlineAt: attempt.deadlineAt.toISOString(),
     serverNow: serverNow().toISOString(),
     exam: attempt.exam,
+    reachedPosition: attempt.reachedPosition,
     // Questions are shown only while the attempt is running
-    questions: running ? attempt.questions.map(candidateQuestion) : [],
+    questions: running
+      ? attempt.questions.map((q) =>
+          candidateQuestion(q, !attempt.exam.allowBackNavigation && q.position !== attempt.reachedPosition)
+        )
+      : [],
   }
 }
 
 /** Small and cheap, for the browser to re-synchronise its countdown. */
-export async function attemptClock(actor: Actor, attemptId: number) {
+export async function attemptClock(actor: Actor, attemptId: number, sessionId?: string) {
   const attempt = await currentAttempt(actor, attemptId)
   if (attempt.status === 'IN_PROGRESS') {
     await prisma.attempt.update({ where: { id: attemptId }, data: { lastSeenAt: serverNow() } })
@@ -192,7 +199,26 @@ export async function attemptClock(actor: Actor, attemptId: number) {
     status: attempt.status,
     serverNow: serverNow().toISOString(),
     deadlineAt: attempt.deadlineAt.toISOString(),
+    // False once another browser has taken over: the screen turns read only
+    activeSession: sessionId === undefined || sessionId === attempt.activeSessionId,
   }
+}
+
+/** Moves to the next question when going back is not allowed. Only one step forward at a time. */
+export async function advanceAttempt(actor: Actor, attemptId: number, sessionId: string, position: number) {
+  const attempt = await currentAttempt(actor, attemptId)
+  if (attempt.status !== 'IN_PROGRESS') throw new ApiError('CONFLICT', ENDED)
+  if (attempt.activeSessionId !== sessionId) throw new ApiError('CONFLICT', ELSEWHERE)
+
+  const total = await prisma.attemptQuestion.count({ where: { attemptId } })
+  if (position <= total) {
+    // Conditional on being exactly one behind, so a repeat or a skip changes nothing
+    await prisma.attempt.updateMany({
+      where: { id: attemptId, status: 'IN_PROGRESS', activeSessionId: sessionId, reachedPosition: position - 1 },
+      data: { reachedPosition: position, lastSeenAt: serverNow() },
+    })
+  }
+  return viewAttempt(actor, attemptId)
 }
 
 // ---------- writing ----------
@@ -201,6 +227,7 @@ const ENDED = 'This attempt has ended. Answers sent now are not accepted.'
 const ELSEWHERE = 'This attempt is open somewhere else. Reload to continue here.'
 
 export async function saveAnswer(actor: Actor, attemptId: number, attemptQuestionId: number, input: SaveAnswerInput) {
+  rateLimit(`save:${actor.id}`, 180, 60_000)
   const attempt = await ownAttempt(actor, attemptId)
   if (attempt.status !== 'IN_PROGRESS' || isPastDeadline(attempt.deadlineAt)) {
     if (isPastDeadline(attempt.deadlineAt)) await recordIncident(attemptId, 'LATE_SAVE_REJECTED')
@@ -227,6 +254,14 @@ export async function saveAnswer(actor: Actor, attemptId: number, attemptQuestio
       include: { answer: true, questionVersion: { select: { maxLength: true, question: { select: { type: true } } } } },
     })
     if (!item) throw new ApiError('NOT_FOUND', 'Not found')
+
+    const { reachedPosition, exam } = await tx.attempt.findUniqueOrThrow({
+      where: { id: attemptId },
+      select: { reachedPosition: true, exam: { select: { allowBackNavigation: true } } },
+    })
+    if (!exam.allowBackNavigation && item.position !== reachedPosition) {
+      throw new ApiError('FORBIDDEN', 'Only the current question can be answered in this examination')
+    }
 
     // An older save that arrives late must not overwrite a newer one
     if (item.answer && input.revision <= item.answer.revision) {

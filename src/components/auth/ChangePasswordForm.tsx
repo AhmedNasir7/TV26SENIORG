@@ -1,5 +1,6 @@
 'use client'
 
+import { clearAttemptStorage } from '@/components/attempt/storage'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -52,6 +53,7 @@ export function ChangePasswordForm({ forced }: { forced: boolean }) {
 
   async function signOut() {
     await fetch('/api/auth/logout', { method: 'POST' })
+    clearAttemptStorage()
     router.push('/login')
     router.refresh()
   }

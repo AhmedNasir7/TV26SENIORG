@@ -27,7 +27,8 @@ type PaperQuestion = {
   answer: { response: unknown; markedForReview: boolean; revision: number; savedAt: Date } | null
 }
 
-export function candidateQuestion(item: PaperQuestion) {
+/** `hidden` sends only the question's progress, so its content can't be read early or revisited. */
+export function candidateQuestion(item: PaperQuestion, hidden = false) {
   const order = item.optionOrder as string[]
   const options = new Map((item.questionVersion.options as QuestionOption[]).map((o) => [o.id, o.text]))
   const stored = item.answer?.response as { optionIds?: string[]; text?: string } | null | undefined
@@ -36,11 +37,14 @@ export function candidateQuestion(item: PaperQuestion) {
     id: item.id,
     position: item.position,
     type: item.questionVersion.question.type,
-    text: item.questionVersion.text,
+    hidden,
+    text: hidden ? '' : item.questionVersion.text,
     marks: Number(item.marks),
     maxLength: item.questionVersion.maxLength,
-    options: order.map((id, index) => ({ key: optionKey(index), text: options.get(id) ?? '' })),
-    answer: item.answer && {
+    options: hidden ? [] : order.map((id, index) => ({ key: optionKey(index), text: options.get(id) ?? '' })),
+    answered: Boolean(stored?.optionIds?.length || stored?.text?.trim()),
+    markedForReview: item.answer?.markedForReview ?? false,
+    answer: hidden || !item.answer ? null : {
       response: stored?.optionIds
         ? { optionKeys: stored.optionIds.map((id) => optionKey(order.indexOf(id))) }
         : stored?.text !== undefined
