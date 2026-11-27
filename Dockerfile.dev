@@ -1,0 +1,27 @@
+FROM node:20-alpine
+
+# Install pnpm
+RUN corepack enable
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+
+# Install all dependencies (including dev dependencies). --ignore-scripts
+# skips the cosmetic postinstall browserslist refresh, which errors under
+# pnpm's newer ignored-builds enforcement in a from-scratch container.
+RUN pnpm install --ignore-scripts
+
+# Copy prisma schema
+COPY prisma ./prisma
+
+# Generate Prisma Client
+RUN pnpm prisma generate
+
+# Copy application code
+COPY . .
+
+EXPOSE 3000
+
+CMD ["pnpm", "dev"]

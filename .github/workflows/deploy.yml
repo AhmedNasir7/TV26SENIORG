@@ -1,0 +1,85 @@
+name: Build, Push, and Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+env:
+  IMAGE: bacillus/nascon
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Write .env for build-time secret
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+        run: printf '%s' "$ENV_FILE" > .env
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          secret-files: |
+            dotenv=.env
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Clean up build secret
+        if: always()
+        run: rm -f .env
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to remote server over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            IMAGE="bacillus/nascon:latest"
+            CONTAINER="estatepro"
+
+            OLD_IMAGE_ID=$(docker inspect --format='{{.Image}}' "$CONTAINER" 2>/dev/null || true)
+
+            docker network create nascon-net 2>/dev/null || true
+
+            docker pull "$IMAGE"
+
+            docker stop "$CONTAINER" 2>/dev/null || true
+            docker rm "$CONTAINER" 2>/dev/null || true
+
+            docker run -d \
+              --name "$CONTAINER" \
+              --restart unless-stopped \
+              --network nascon-net \
+              -p 3000:3000 \
+              --env-file ~/nascon/.env.docker \
+              "$IMAGE"
+
+            NEW_IMAGE_ID=$(docker inspect --format='{{.Image}}' "$CONTAINER")
+            if [ -n "$OLD_IMAGE_ID" ] && [ "$OLD_IMAGE_ID" != "$NEW_IMAGE_ID" ]; then
+              docker rmi "$OLD_IMAGE_ID" 2>/dev/null || true
+            fi
+            docker image prune -f

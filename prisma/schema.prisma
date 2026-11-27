@@ -1,0 +1,440 @@
+// Secure Examination Management System
+//
+// Integrity rules that live in the database (see prisma/migrations for the CHECK constraints):
+//  - question versions are immutable; an attempt references versions, never the editable question
+//  - one real attempt per candidate per exam (Attempt.realSlot), unlimited sandbox attempts
+//  - attempts, answers and results are never removed by deleting an exam or a user
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- accounts ----------
+
+enum Role {
+  ADMIN
+  EXAMINER
+  CANDIDATE
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+model User {
+  id                 Int        @id @default(autoincrement())
+  email              String     @unique // stored lowercase
+  name               String?
+  passwordHash       String
+  role               Role       @default(CANDIDATE)
+  status             UserStatus @default(ACTIVE)
+  sessionVersion     Int        @default(1) // bump to end every existing session
+  mustChangePassword Boolean    @default(false)
+  failedLogins       Int        @default(0)
+  lockedUntil        DateTime?
+  imageUrl           String?
+  googleRefreshToken String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  topics            Topic[]
+  questions         Question[]
+  exams             Exam[]
+  enrollments       Enrollment[]
+  attempts          Attempt[]
+  gradedAnswers     Answer[]           @relation("GradedBy")
+  reviewedIncidents Incident[]         @relation("ReviewedBy")
+  announcements     Announcement[]     @relation("AnnouncementAuthor")
+  directMessages    Announcement[]     @relation("AnnouncementRecipient")
+  announcementReads AnnouncementRead[]
+  preference        Preference?
+  activities        ActivityLog[]
+  notifications     Notification[]
+  chatMessages      ChatMessage[]
+  supportMessages   SupportMessage[]   @relation("SupportMessages")
+  supportResponses  SupportMessage[]   @relation("SupportResponses")
+}
+
+// ---------- question bank ----------
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  WRITTEN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum ScoringRule {
+  ALL_OR_NOTHING
+  PARTIAL
+}
+
+model Topic {
+  id        Int        @id @default(autoincrement())
+  ownerId   Int
+  owner     User       @relation(fields: [ownerId], references: [id])
+  name      String
+  createdAt DateTime   @default(now())
+  questions Question[]
+
+  @@unique([ownerId, name])
+}
+
+model Question {
+  id             Int          @id @default(autoincrement())
+  ownerId        Int
+  owner          User         @relation(fields: [ownerId], references: [id])
+  topicId        Int
+  topic          Topic        @relation(fields: [topicId], references: [id])
+  type           QuestionType
+  difficulty     Difficulty
+  currentVersion Int          @default(1)
+  archivedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  versions      QuestionVersion[]
+  examQuestions ExamQuestion[]
+
+  @@index([ownerId, archivedAt])
+  @@index([topicId, difficulty])
+}
+
+/// Immutable. Editing a question adds a version, so existing papers never change.
+model QuestionVersion {
+  id          Int         @id @default(autoincrement())
+  questionId  Int
+  question    Question    @relation(fields: [questionId], references: [id])
+  version     Int
+  text        String
+  options     Json        @default("[]") // [{ id, text, correct }]; never sent to candidates as stored
+  marks       Decimal     @db.Decimal(7, 2)
+  scoringRule ScoringRule @default(ALL_OR_NOTHING)
+  guidance    String? // marking notes for examiners
+  createdAt   DateTime    @default(now())
+
+  examQuestions    ExamQuestion[]
+  attemptQuestions AttemptQuestion[]
+
+  @@unique([questionId, version])
+}
+
+// ---------- examinations ----------
+
+/// ONGOING and COMPLETED are derived from the server clock, so no scheduler is needed.
+enum ExamStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Exam {
+  id                  Int        @id @default(autoincrement())
+  ownerId             Int
+  owner               User       @relation(fields: [ownerId], references: [id])
+  title               String
+  instructions        String     @default("")
+  startsAt            DateTime
+  endsAt              DateTime
+  durationMinutes     Int
+  totalMarks          Decimal    @db.Decimal(7, 2)
+  passMarks           Decimal?   @db.Decimal(7, 2)
+  status              ExamStatus @default(DRAFT)
+  shuffleQuestions    Boolean    @default(true)
+  shuffleOptions      Boolean    @default(true)
+  allowBackNavigation Boolean    @default(true)
+  blueprint           Json? // fair-paper recipe: counts per topic and difficulty
+  publishedAt         DateTime?
+  resultsPublishedAt  DateTime?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  questions     ExamQuestion[]
+  enrollments   Enrollment[]
+  attempts      Attempt[]
+  announcements Announcement[]
+
+  @@index([ownerId])
+  @@index([status, startsAt])
+}
+
+model ExamQuestion {
+  id                Int             @id @default(autoincrement())
+  examId            Int
+  exam              Exam            @relation(fields: [examId], references: [id], onDelete: Cascade)
+  questionId        Int
+  question          Question        @relation(fields: [questionId], references: [id])
+  questionVersionId Int
+  questionVersion   QuestionVersion @relation(fields: [questionVersionId], references: [id])
+  position          Int
+  marks             Decimal         @db.Decimal(7, 2)
+
+  @@unique([examId, questionId])
+  @@index([examId, position])
+}
+
+model Enrollment {
+  id           Int      @id @default(autoincrement())
+  examId       Int
+  exam         Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  candidateId  Int
+  candidate    User     @relation(fields: [candidateId], references: [id])
+  extraMinutes Int      @default(0)
+  extraReason  String?
+  createdAt    DateTime @default(now())
+
+  @@unique([examId, candidateId])
+  @@index([candidateId])
+}
+
+// ---------- attempts ----------
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+}
+
+enum SubmitReason {
+  MANUAL
+  TIME_EXPIRED
+  EXAMINER
+}
+
+enum GradingState {
+  PENDING
+  PENDING_MANUAL
+  GRADED
+}
+
+model Attempt {
+  id              Int           @id @default(autoincrement())
+  examId          Int
+  exam            Exam          @relation(fields: [examId], references: [id])
+  candidateId     Int
+  candidate       User          @relation(fields: [candidateId], references: [id])
+  isSandbox       Boolean       @default(false)
+  realSlot        Int? // 1 for real attempts, null for sandbox: makes real attempts unique
+  status          AttemptStatus @default(IN_PROGRESS)
+  submitReason    SubmitReason?
+  gradingState    GradingState  @default(PENDING)
+  startedAt       DateTime      @default(now())
+  deadlineAt      DateTime // set by the server; the only deadline that counts
+  submittedAt     DateTime?
+  seed            Int
+  activeSessionId String // only this browser session may save
+  lastSeenAt      DateTime      @default(now())
+  score           Decimal?      @db.Decimal(7, 2)
+  maxScore        Decimal       @db.Decimal(7, 2)
+  paperDifficulty Float?
+  submissionHash  String?
+
+  questions  AttemptQuestion[]
+  incidents  Incident[]
+  scratchpad Scratchpad?
+  reports    ResultReport[]
+
+  @@unique([examId, candidateId, realSlot])
+  @@index([examId, status])
+  @@index([candidateId])
+  @@index([status, deadlineAt])
+}
+
+/// The frozen paper: exactly what this candidate was given, in the order given.
+model AttemptQuestion {
+  id                Int             @id @default(autoincrement())
+  attemptId         Int
+  attempt           Attempt         @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionVersionId Int
+  questionVersion   QuestionVersion @relation(fields: [questionVersionId], references: [id])
+  position          Int
+  marks             Decimal         @db.Decimal(7, 2)
+  optionOrder       Json            @default("[]") // option ids in display order
+  difficultyScore   Float?
+  answer            Answer?
+
+  @@unique([attemptId, position])
+  @@unique([attemptId, questionVersionId])
+}
+
+model Answer {
+  id                Int             @id @default(autoincrement())
+  attemptQuestionId Int             @unique
+  attemptQuestion   AttemptQuestion @relation(fields: [attemptQuestionId], references: [id], onDelete: Cascade)
+  response          Json? // { optionIds: [] } or { text: "" }
+  markedForReview   Boolean         @default(false)
+  revision          Int             @default(0) // older saves are ignored
+  savedAt           DateTime        @default(now())
+  autoMarks         Decimal?        @db.Decimal(7, 2)
+  manualMarks       Decimal?        @db.Decimal(7, 2)
+  feedback          String?
+  gradedById        Int?
+  gradedBy          User?           @relation("GradedBy", fields: [gradedById], references: [id])
+  gradedAt          DateTime?
+}
+
+// ---------- monitoring ----------
+
+/// Indicators for human review. Never proof of misconduct.
+enum IncidentType {
+  TAB_HIDDEN
+  WINDOW_BLUR
+  OFFLINE
+  RECONNECTED
+  SESSION_TAKEOVER
+  LATE_SAVE_REJECTED
+  FULLSCREEN_EXIT
+  PASTE
+}
+
+model Incident {
+  id           Int          @id @default(autoincrement())
+  attemptId    Int
+  attempt      Attempt      @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  type         IncidentType
+  details      Json?
+  occurrences  Int          @default(1)
+  firstAt      DateTime     @default(now())
+  lastAt       DateTime     @default(now())
+  reviewedAt   DateTime?
+  reviewedById Int?
+  reviewedBy   User?        @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  reviewNote   String?
+
+  @@index([attemptId, type])
+}
+
+model Announcement {
+  id          Int                @id @default(autoincrement())
+  examId      Int
+  exam        Exam               @relation(fields: [examId], references: [id], onDelete: Cascade)
+  authorId    Int
+  author      User               @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  recipientId Int? // null = everyone in the exam
+  recipient   User?              @relation("AnnouncementRecipient", fields: [recipientId], references: [id])
+  message     String
+  createdAt   DateTime           @default(now())
+  reads       AnnouncementRead[]
+
+  @@index([examId, createdAt])
+}
+
+model AnnouncementRead {
+  announcementId Int
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  userId         Int
+  user           User         @relation(fields: [userId], references: [id])
+  readAt         DateTime     @default(now())
+
+  @@id([announcementId, userId])
+}
+
+// ---------- results and workspace ----------
+
+model ResultReport {
+  id               Int       @id @default(autoincrement())
+  attemptId        Int
+  attempt          Attempt   @relation(fields: [attemptId], references: [id])
+  verificationCode String    @unique // random, unguessable
+  payload          Json // snapshot of what the report states
+  signature        String
+  issuedAt         DateTime  @default(now())
+  revokedAt        DateTime?
+
+  @@index([attemptId])
+}
+
+model Preference {
+  userId    Int      @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  settings  Json     @default("{}")
+  updatedAt DateTime @updatedAt
+}
+
+model Scratchpad {
+  attemptId Int      @id
+  attempt   Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  notes     String   @default("")
+  drawing   Json?
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- platform ----------
+
+model ActivityLog {
+  id         Int      @id @default(autoincrement())
+  action     String // "user_registered", "user_logged_in", etc.
+  entityType String? // "user", "exam", "attempt", "system"
+  entityId   Int?
+  userId     Int?
+  user       User?    @relation(fields: [userId], references: [id])
+  metadata   String?  @default("{}") // JSON string for additional data
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action])
+  @@index([userId])
+}
+
+model Notification {
+  id         Int       @id @default(autoincrement())
+  title      String
+  message    String
+  type       String?
+  entityType String?
+  entityId   Int?
+  userId     Int?
+  user       User?     @relation(fields: [userId], references: [id])
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([readAt])
+  @@index([createdAt])
+}
+
+model SupportMessage {
+  id            Int      @id @default(autoincrement())
+  userId        Int?
+  user          User?    @relation("SupportMessages", fields: [userId], references: [id])
+  name          String?
+  email         String
+  subject       String
+  message       String
+  status        String   @default("open") // "open" | "resolved"
+  response      String?
+  respondedById Int?
+  respondedBy   User?    @relation("SupportResponses", fields: [respondedById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+// Single community room: top-level messages have parentId null; replies have parentId set
+model ChatMessage {
+  id        Int           @id @default(autoincrement())
+  content   String
+  authorId  Int
+  author    User          @relation(fields: [authorId], references: [id])
+  parentId  Int?
+  parent    ChatMessage?  @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   ChatMessage[] @relation("Replies")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([parentId])
+  @@index([authorId])
+  @@index([createdAt])
+}
