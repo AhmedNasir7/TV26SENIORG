@@ -1,18 +1,18 @@
 import Link from 'next/link'
 
-export function ChatHeader({ messageCount, signedIn }: { messageCount: number; signedIn: boolean }) {
+export function ChatHeader({ messageCount, signedIn, title = 'Chat' }: { messageCount: number; signedIn: boolean; title?: string }) {
   return (
     <div className="mb-6 flex items-center justify-between gap-4">
       <div className="min-w-0">
         <div className="flex items-center gap-3">
           <h1 className="font-display text-2xl font-semibold tracking-tight text-[color:var(--foreground)] md:text-3xl">
-            Community chat
+            {title}
           </h1>
           <span className="chip">
             {messageCount} {messageCount === 1 ? 'message' : 'messages'}
           </span>
         </div>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">Join the conversation. Reply to threads.</p>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">Only people in this examination can see this chat. Reply to threads.</p>
       </div>
       {!signedIn && (
         <Link href="/login" className="btn-primary whitespace-nowrap px-4 py-2.5 text-sm">

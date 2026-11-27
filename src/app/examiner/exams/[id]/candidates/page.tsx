@@ -1,5 +1,6 @@
 import { BackLink } from '@/components/ui/BackLink'
 import { EnrollmentManager } from '@/components/exams/EnrollmentManager'
+import { SendReminders } from '@/components/exams/SendReminders'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { requirePageUser } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
@@ -18,6 +19,7 @@ export default async function ExamCandidatesPage({ params }: { params: Promise<{
         description="Enrol candidates and grant extra time."
         actions={<BackLink href={`/examiner/exams/${exam.id}`}>Back to examination</BackLink>}
       />
+      {(exam.phase === 'PUBLISHED' || exam.phase === 'ONGOING') && <SendReminders examId={exam.id} />}
       <EnrollmentManager examId={exam.id} open={exam.phase !== 'COMPLETED'} />
     </div>
   )

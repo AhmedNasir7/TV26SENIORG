@@ -7,9 +7,10 @@
 import { BadgeCheck, Clock3, Save } from 'lucide-react'
 import { AnimatePresence, motion, MotionConfig } from 'motion/react'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { EASE_OUT, ProductWindow, Shot, Streaks } from '@/components/landing/motion'
 import '@/components/landing/landing.css'
+import './auth-parallax.css'
 import { BrandMark } from '@/components/layout/BrandMark'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
 import { scenes } from '@/content/landing'
@@ -30,7 +31,8 @@ export function AuthShell({ title, accent, subtitle, children }: { title: string
   return (
     <MotionConfig reducedMotion="user">
       <div className="page-shell grid min-h-screen lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-        <div className="flex min-w-0 flex-col px-6 sm:px-12 xl:px-24">
+        <div className="relative isolate flex min-w-0 flex-col px-6 sm:px-12">
+          <Parallax />
           <header className="flex h-20 items-center justify-between">
             <BrandMark />
             <div className="flex items-center gap-3">
@@ -38,17 +40,58 @@ export function AuthShell({ title, accent, subtitle, children }: { title: string
               <ThemeToggle />
             </div>
           </header>
-          <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
-            <motion.h1 {...rise(0)} className="font-display text-[44px] font-semibold leading-[1.02] tracking-[-0.03em]">
-              {title} <span className="mark-highlight">{accent}</span>
-            </motion.h1>
-            <motion.p {...rise(1)} className="mt-4 text-[15px] leading-6 text-[color:var(--muted)]">{subtitle}</motion.p>
-            <motion.div {...rise(2)} className="mt-10">{children}</motion.div>
+          <main className="mx-auto flex w-full max-w-[30rem] flex-1 flex-col justify-center py-8">
+            <div className="ap-card rounded-[24px] border border-[var(--border)] p-8 shadow-[0_30px_80px_-40px_rgb(0_0_0/0.5)] sm:p-10">
+              <motion.h1 {...rise(0)} className="font-display text-[38px] font-semibold leading-[1.05] tracking-[-0.03em]">
+                {title} <span className="mark-highlight">{accent}</span>
+              </motion.h1>
+              <motion.p {...rise(1)} className="mt-3 text-[15px] leading-6 text-[color:var(--muted)]">{subtitle}</motion.p>
+              <motion.div {...rise(2)} className="mt-8">{children}</motion.div>
+            </div>
           </main>
         </div>
         <Showcase />
       </div>
     </MotionConfig>
+  )
+}
+
+const SHAPES = [
+  { kind: 'ring', size: 90, left: '8%', top: '92%', delay: '-4s', dur: '34s' },
+  { kind: 'square', size: 56, left: '82%', top: '96%', delay: '-18s', dur: '42s' },
+  { kind: 'ring', size: 150, left: '70%', top: '110%', delay: '-26s', dur: '50s' },
+  { kind: 'square', size: 100, left: '22%', top: '120%', delay: '-10s', dur: '46s' },
+  { kind: 'ring', size: 44, left: '48%', top: '100%', delay: '-32s', dur: '36s' },
+  { kind: 'square', size: 38, left: '92%', top: '105%', delay: '-2s', dur: '30s' },
+] as const
+
+/** Endless, pointer-aware backdrop for the form side. Decorative and kept away from the form. */
+function Parallax() {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const node = ref.current
+    if (!node || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const move = (event: PointerEvent) => {
+      node.style.setProperty('--px', String((event.clientX / window.innerWidth - 0.5) * 2))
+      node.style.setProperty('--py', String((event.clientY / window.innerHeight - 0.5) * 2))
+    }
+    window.addEventListener('pointermove', move, { passive: true })
+    return () => window.removeEventListener('pointermove', move)
+  }, [])
+
+  return (
+    <div ref={ref} aria-hidden="true" className="ap -z-10">
+      <div className="ap-layer ap-far"><div className="ap-dots" /></div>
+      <div className="ap-layer ap-mid">
+        {SHAPES.map((shape, i) => (
+          <span key={i} className={`ap-shape ap-${shape.kind}`} style={{ width: shape.size, height: shape.size, left: shape.left, top: shape.top, animationDelay: shape.delay, animationDuration: shape.dur }} />
+        ))}
+      </div>
+      <div className="ap-layer ap-near">
+        <span className="ap-orb lime" style={{ width: 220, height: 220, left: '-6%', top: '8%' }} />
+        <span className="ap-orb sky" style={{ width: 280, height: 280, right: '-10%', bottom: '4%', animationDelay: '-7s' }} />
+      </div>
+    </div>
   )
 }
 

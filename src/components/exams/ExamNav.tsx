@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ArrowRight, Check, Lock } from 'lucide-react'
+import { ArrowRight, Check, Lock, MessagesSquare } from 'lucide-react'
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs'
 import { examSteps, nextAction, type FlowInput } from '@/lib/exam-flow'
 
@@ -18,6 +18,8 @@ export function ExamNav({ exam }: Props) {
     ? 'questions'
     : pathname.startsWith(`${base}/attempts`)
     ? 'results'
+    : pathname.startsWith(`${base}/chat`)
+    ? 'details'
     : (steps.find((s) => s.href !== base && pathname.startsWith(s.href))?.key ?? 'details')
   const next = nextAction(exam)
   const here = steps.find((s) => s.key === current)!
@@ -63,6 +65,11 @@ export function ExamNav({ exam }: Props) {
           })}
         </ol>
       </nav>
+      <div className="flex flex-wrap gap-2">
+        <Link href={`${base}/chat`} aria-current={pathname.startsWith(`${base}/chat`) ? 'page' : undefined} className="btn-secondary px-3 py-2 text-sm">
+          <MessagesSquare className="h-4 w-4" aria-hidden="true" /> Examination chat
+        </Link>
+      </div>
 
       {current !== 'sandbox' && (
       <div className="glow-card flex flex-wrap items-center justify-between gap-3 p-4">

@@ -65,7 +65,7 @@ def goes_to(c, path, target):
 anon = client()
 for method, path, body in [
     ("GET", "/api/admin/users", None), ("GET", "/api/admin/audit-logs", None), ("GET", "/api/admin/support", None),
-    ("GET", "/api/chat/messages", None), ("GET", "/api/notifications", None), ("GET", "/api/support", None),
+    ("GET", "/api/exams/1/chat", None), ("GET", "/api/notifications", None), ("GET", "/api/support", None),
     ("POST", "/api/speech", {"text": "hi"}), ("POST", "/api/get-or-create-room", {}), ("POST", "/api/check-room", {"room_id": "x"}),
     ("POST", "/api/generate-code", {"room_id": "x"}), ("POST", "/api/email/send", {}), ("POST", "/api/stripe/create-checkout", {}),
 ]:
@@ -584,8 +584,34 @@ def run_attempt_checks():
     check("running candidate receives it", "ZZ five minutes left" in call(one, "GET", f"/api/attempts/{wid}/clock?session={sid}")[2])
     check("later joiner sees it", "ZZ five minutes left" in call(two, "GET", f"/api/me/exams/{strict}")[2])
     check("outsider does not", call(outsider, "GET", f"/api/me/exams/{strict}")[0] == 404)
+    # per-exam chat
+    chat = f"/api/exams/{strict}/chat"
+    check("chat: outsider and other examiner see nothing", call(outsider, "GET", chat)[0] == 404 and call(other, "GET", chat)[0] == 404)
+    check("chat: closed while sitting the exam", call(one, "GET", chat)[0] == 409 and call(one, "POST", chat, {"content": "ZZ hi"})[0] == 409)
+    status, _, body = call(two, "POST", chat, {"content": "ZZ hello from a candidate"})
+    check("chat: enrolled candidate posts", status == 201, status)
+    first = json.loads(body)["message"]["id"]
+    check("chat: staff reply to the thread", call(examiner, "POST", chat, {"content": "ZZ reply", "parentId": first})[0] == 201)
+    check("chat: reply to a message from elsewhere refused", call(examiner, "POST", chat, {"content": "ZZ x", "parentId": 999999999})[0] == 400)
+    check("chat: thread is nested and visible", "ZZ reply" in call(two, "GET", chat)[2] and "ZZ hello from a candidate" in call(examiner, "GET", chat)[2])
+    check("chat: empty and unknown fields refused", call(two, "POST", chat, {"content": "  "})[0] == 400 and call(two, "POST", chat, {"content": "x", "extra": 1})[0] == 400)
+    # reminders
+    pick = f"/api/me/exams/{strict}/reminder"
+    check("reminder: candidate chooses a time", call(two, "PUT", pick, {"minutes": 30})[0] == 200 and "30" in call(two, "GET", f"/api/me/exams/{strict}")[2])
+    check("reminder: bad values and other roles refused", call(two, "PUT", pick, {"minutes": 0})[0] == 400 and call(examiner, "PUT", pick, {"minutes": 30})[0] == 403 and call(outsider, "PUT", pick, {"minutes": 30})[0] == 404)
+    check("reminder: calendar file carries the alarm", "TRIGGER:-PT30M" in call(two, "GET", f"/api/me/exams/{strict}/calendar")[2])
+    now_ = f"/api/exams/{strict}/reminders"
+    check("reminder: candidates cannot send", call(two, "POST", now_)[0] == 403 and call(other, "POST", now_)[0] == 404)
+    check("reminder: owner sends now, then must wait", call(examiner, "POST", now_)[0] == 200 and call(examiner, "POST", now_)[0] == 429)
+    # integrity ranking
+    check("integrity: staff only", call(examiner, "GET", f"/api/exams/{strict}/integrity")[0] == 200 and call(two, "GET", f"/api/exams/{strict}/integrity")[0] == 403 and call(other, "GET", f"/api/exams/{strict}/integrity")[0] == 404)
     status, _, body = call(examiner, "GET", f"/examiner/exams/{strict}/monitor")
     check("monitor page renders", status == 200 and "ZZ attempt check one way" in body and "What to record" in body, status)
+    # going back out of a running examination cancels it
+    check("leave: wrong session refused", call(one, "POST", f"/api/attempts/{wid}/leave", {"sessionId": "x" * 12})[0] == 409)
+    status, _, body = call(one, "POST", f"/api/attempts/{wid}/leave", {"sessionId": sid})
+    check("leave: cancels the attempt", status == 200 and '"LEFT"' in body, status)
+    check("leave: chat opens again afterwards", call(one, "GET", chat)[0] == 200)
     sql(f"""DELETE FROM "Notification" WHERE "entityType"='exam' AND "entityId"={strict}""")
     sql(f'DELETE FROM "Attempt" WHERE "examId"={strict}')
     sql(f'DELETE FROM "Exam" WHERE id={strict}')

@@ -15,7 +15,7 @@ export const GRACE_MS = 5000
 export const isPastDeadline = (deadlineAt: Date, now: Date = serverNow()) =>
   now.getTime() > deadlineAt.getTime() + GRACE_MS
 
-type Reason = 'MANUAL' | 'TIME_EXPIRED' | 'EXAMINER'
+type Reason = 'MANUAL' | 'TIME_EXPIRED' | 'EXAMINER' | 'LEFT'
 
 export function finalizeAttempt(attemptId: number, reason: Reason) {
   return prisma.$transaction(async (tx) => {

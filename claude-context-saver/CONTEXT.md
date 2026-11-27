@@ -3,9 +3,23 @@
 The handover file for any new Claude session or account. Read it fully before doing anything.
 **Keep it current** (rules in the last section). No secrets belong here.
 
-_Last updated: 2026-11-27_
+_Last updated: 2026-11-27 (later session)_
 
 ## 1. Right now
+
+### Update (2026-11-27, later session) - UNCOMMITTED on branch `live-exams-wip`
+Written, tsc/eslint clean, unit tests 14/14, access check 296/296 (local, port 3000): per-exam chat
+(`/api/exams/[id]/chat`, pages under candidate and examiner exam routes; global `/chat` and its API removed;
+candidates locked out while sitting), nav links for Community/Meetings removed (help call announces `/meeting`),
+Back during a running exam asks, then cancels (`SubmitReason.LEFT`, `/api/attempts/[id]/leave`), reminders
+(`REMINDER_MINUTES`, `CRON_INTERVAL_MINUTES`, candidate-chosen time in `Enrollment.reminderMinutes`, examiner
+"Send reminders now"), credential emails (admin-created users, bulk import) and enrolment email, integrity ranking
+(`lib/integrity.ts`, `/api/exams/[id]/integrity`, one batched AI explanation), AI instruction drafting and question
+check, new sign-in card with parallax, profile page redesign. Migration `8_exam_chat_reminders` (applied locally only).
+Browser-checked: sign-in page, profile, chat send. Real 100ms: room created and examiner token issued for exam 3.
+NOT tested: candidate join with camera, recording, presence check, real email delivery, AI (no Groq key locally),
+leave prompt in a browser. Still to do: README, docs/TASKS ticks, PERMISSIONS.md, HMS env names in example files,
+commit, merge to main, push (deploys). Port 3000 had a stale dev server once: kill it, delete `.next`.
 
 ### Handover (2026-11-27, session ended on a usage limit)
 

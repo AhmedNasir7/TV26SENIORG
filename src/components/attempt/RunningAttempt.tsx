@@ -7,6 +7,7 @@ import { DEFAULT_PREFERENCES } from '@/lib/preferences'
 import { AnnouncementList } from './AnnouncementList'
 import { DisplaySettings, usePreferences } from './DisplaySettings'
 import { FullscreenPrompt } from './FullscreenPrompt'
+import { LeaveGuard } from './LeaveGuard'
 import { NetworkNotice } from './NetworkNotice'
 import { QuestionArea } from './QuestionArea'
 import type { GridItem } from './QuestionGrid'
@@ -140,6 +141,8 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
           <button type="button" onClick={onTakeBack} className="btn-primary mt-3 px-4 py-2 text-sm">Continue here</button>
         </div>
       )}
+
+      <LeaveGuard attemptId={attempt.id} sessionId={sessionId} active={!attempt.isSandbox && !takenOver && remaining > 0} />
 
       <AnnouncementList announcements={announcements} />
 

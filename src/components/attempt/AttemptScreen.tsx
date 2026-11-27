@@ -81,7 +81,7 @@ export function AttemptScreen({ examId, sandbox = false }: { examId: number; san
               {sandbox ? 'Opening the marked paper...' : 'Your result appears on your examinations page once the examiner publishes it.'}
             </p>
             <p className="mt-2 text-sm">
-              {state.attempt.submitReason === 'TIME_EXPIRED' ? 'Time ran out and your saved answers were submitted.' : 'Your answers were submitted.'}
+              {state.attempt.submitReason === 'TIME_EXPIRED' ? 'Time ran out and your saved answers were submitted.' : state.attempt.submitReason === 'LEFT' ? 'You left the examination, so it was cancelled.' : 'Your answers were submitted.'}
               {state.attempt.submittedAt && <> Recorded <LocalTime iso={state.attempt.submittedAt} />.</>}
             </p>
             {state.attempt.receipt && (

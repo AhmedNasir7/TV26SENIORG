@@ -171,6 +171,7 @@ model Exam {
   attempts      Attempt[]
   announcements Announcement[]
   reminders     Reminder[]
+  chatMessages  ChatMessage[]
 
   @@index([ownerId])
   @@index([status, startsAt])
@@ -192,14 +193,16 @@ model ExamQuestion {
 }
 
 model Enrollment {
-  id           Int      @id @default(autoincrement())
-  examId       Int
-  exam         Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
-  candidateId  Int
-  candidate    User     @relation(fields: [candidateId], references: [id])
-  extraMinutes Int      @default(0)
-  extraReason  String?
-  createdAt    DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+  examId          Int
+  exam            Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  candidateId     Int
+  candidate       User     @relation(fields: [candidateId], references: [id])
+  extraMinutes    Int      @default(0)
+  extraReason     String?
+  // minutes before the start the candidate asked to be reminded; null = none chosen
+  reminderMinutes Int?
+  createdAt       DateTime @default(now())
 
   @@unique([examId, candidateId])
   @@index([candidateId])
@@ -216,6 +219,7 @@ enum SubmitReason {
   MANUAL
   TIME_EXPIRED
   EXAMINER
+  LEFT // the candidate went back out of a running examination and it was cancelled
 }
 
 enum GradingState {
@@ -441,6 +445,8 @@ model ChatMessage {
   content   String
   authorId  Int
   author    User          @relation(fields: [authorId], references: [id])
+  examId    Int?
+  exam      Exam?         @relation(fields: [examId], references: [id], onDelete: Cascade)
   parentId  Int?
   parent    ChatMessage?  @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   ChatMessage[] @relation("Replies")
@@ -450,6 +456,7 @@ model ChatMessage {
   @@index([parentId])
   @@index([authorId])
   @@index([createdAt])
+  @@index([examId])
 }
 
 // ---------- trust, AI and reminders ----------
@@ -502,4 +509,3 @@ model Reminder {
 
   @@unique([examId, candidateId, kind])
 }
-

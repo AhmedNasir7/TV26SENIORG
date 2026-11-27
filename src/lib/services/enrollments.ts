@@ -1,11 +1,13 @@
 /** Who may sit an examination. Only the owner (or an administrator) can change it. */
 import type { Prisma } from '@/generated/prisma/client'
+import { formatDateTime, SERVER_ZONE } from '@/lib/format-date'
 import { canManageExam, ensureFound, type Actor } from '@/lib/policies'
 import { prisma } from '@/lib/prisma'
 import { ApiError } from '@/lib/server/api'
 import { examPhase, serverNow } from '@/lib/server/time'
 import { attemptDeadline } from '@/lib/services/access'
 import { audit } from '@/lib/services/audit'
+import { emailLater } from '@/lib/services/emails'
 import { finalizeExpired } from '@/lib/services/finalize'
 import type { ExtraTimeInput, PeopleQuery } from '@/lib/validation/exams'
 
@@ -84,8 +86,8 @@ export async function searchCandidates(actor: Actor, examId: number, { search, p
   return { candidates, total, page, totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)) }
 }
 
-export function enroll(actor: Actor, examId: number, candidateIds: number[]) {
-  return prisma.$transaction(async (tx) => {
+export async function enroll(actor: Actor, examId: number, candidateIds: number[]) {
+  const outcome = await prisma.$transaction(async (tx) => {
     const exam = await ownedExam(tx, actor, examId)
     if (examPhase(exam) === 'COMPLETED') throw new ApiError('CONFLICT', 'This examination has finished')
 
@@ -111,8 +113,13 @@ export function enroll(actor: Actor, examId: number, candidateIds: number[]) {
       })
     }
     await audit(tx, actor.id, 'enrollment_added', 'exam', examId, { added: count })
-    return { added: count }
+    return { added: count, mail: exam.status === 'PUBLISHED' && count > 0 ? { ids, title: exam.title, startsAt: exam.startsAt } : null }
   })
+  // Candidates added to an examination that is already published are told straight away
+  if (outcome.mail) {
+    emailLater(outcome.mail.ids, 'You have been added to an examination', `"${outcome.mail.title}" is now on your list. It opens at ${formatDateTime(outcome.mail.startsAt, SERVER_ZONE)}.`)
+  }
+  return { added: outcome.added }
 }
 
 async function findEnrollment(tx: Prisma.TransactionClient, examId: number, enrollmentId: number) {

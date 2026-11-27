@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useMemo } from 'react'
 import { motion } from 'motion/react'
 import {
-  ClipboardList, LayoutDashboard, Library, LifeBuoy, LogOut, PanelLeftClose, PanelLeftOpen, MessagesSquare, ScrollText, Upload, UserRound, Users, Video, type LucideIcon,
+  ClipboardList, LayoutDashboard, Library, LifeBuoy, LogOut, PanelLeftClose, PanelLeftOpen, ScrollText, Upload, UserRound, Users, type LucideIcon,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSidebar } from '@/hooks/useSidebar'
@@ -28,8 +28,6 @@ const navItems: Array<{ href: string; label: string; roles: Role[]; icon: Lucide
 
 // Pages every signed-in user can open, offered in the command menu
 const sharedPages: CommandItem[] = [
-  { label: 'Community chat', href: '/chat', icon: MessagesSquare, group: 'Go to' },
-  { label: 'Meetings', href: '/meeting', icon: Video, group: 'Go to' },
   { label: 'Profile', href: '/profile', icon: UserRound, group: 'Go to' },
 ]
 

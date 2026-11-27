@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useFeatures } from '@/hooks/useFeatures'
 import { apiRequest } from '@/lib/client/request'
 import { OptionsEditor, type DraftOption } from './OptionsEditor'
 import { DIFFICULTY_LABEL, TYPE_LABEL, type Difficulty, type QuestionDetail, type QuestionType, type Topic } from './types'
@@ -25,6 +26,29 @@ export function QuestionEditor({ question, topics, onClose, onSaved }: Props) {
   const [maxLength, setMaxLength] = useState(question?.maxLength ? String(question.maxLength) : '')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const features = useFeatures()
+  const [checking, setChecking] = useState(false)
+  const [review, setReview] = useState<{ verdict: string; problems: string[]; suggestion: string } | null>(null)
+
+  async function check() {
+    setChecking(true)
+    setReview(null)
+    setError('')
+    try {
+      setReview(
+        await apiRequest('/api/ai/check-question', 'POST', {
+          type,
+          text,
+          options: type === 'WRITTEN' ? [] : options.filter((o) => o.text.trim()).map(({ text: optionText, correct }) => ({ text: optionText, correct })),
+          ...(guidance.trim() && { guidance }),
+        })
+      )
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not check the question')
+    } finally {
+      setChecking(false)
+    }
+  }
 
   async function save(e: React.FormEvent) {
     e.preventDefault()
@@ -110,8 +134,18 @@ export function QuestionEditor({ question, topics, onClose, onSaved }: Props) {
               </ul>
             </details>
           )}
+          {review && (
+            <div role="status" className="surface-card space-y-1 p-3 text-sm">
+              <p className="font-medium">{review.verdict === 'good' ? 'Looks good.' : 'Needs work.'}</p>
+              {review.problems.length > 0 && <ul className="list-disc pl-5 text-[color:var(--muted)]">{review.problems.map((p) => <li key={p}>{p}</li>)}</ul>}
+              {review.suggestion && <p>{review.suggestion}</p>}
+            </div>
+          )}
           {error && <p role="alert" className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
           <div className="flex justify-end gap-2">
+            {features.ai && text.trim().length >= 3 && (
+              <button type="button" onClick={() => void check()} disabled={checking} className="btn-secondary px-4 py-2 text-sm disabled:opacity-60">{checking ? 'Checking...' : 'Check with AI'}</button>
+            )}
             <button type="button" onClick={onClose} className="btn-secondary px-4 py-2 text-sm">Cancel</button>
             <button type="submit" disabled={saving} className="btn-primary px-4 py-2 text-sm disabled:opacity-60">{saving ? 'Saving...' : 'Save'}</button>
           </div>

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useMemo } from 'react'
-import { ClipboardList, LayoutDashboard, LifeBuoy, LogOut, MessagesSquare, UserRound, Video, type LucideIcon } from 'lucide-react'
+import { ClipboardList, LayoutDashboard, LifeBuoy, LogOut, UserRound, type LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { UserNotificationsBell } from '@/components/notifications/UserNotificationsBell'
 import { BrandMark } from '@/components/layout/BrandMark'
@@ -12,8 +12,6 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle'
 import { isStaff } from '@/lib/roles'
 
 const serviceLinks: Array<{ href: string; label: string; icon: LucideIcon }> = [
-  { href: '/chat', label: 'Community', icon: MessagesSquare },
-  { href: '/meeting', label: 'Meetings', icon: Video },
   { href: '/support', label: 'Support', icon: LifeBuoy },
 ]
 

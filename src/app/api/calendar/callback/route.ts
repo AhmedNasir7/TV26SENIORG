@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    await addCalendarEvent(client, parseCalendarRequest(state.get('title'), state.get('date')))
+    await addCalendarEvent(client, parseCalendarRequest(state.get('title'), state.get('date'), state.get('remind')))
 
     const response = NextResponse.redirect(new URL('/profile?calendar=added', req.url))
     response.cookies.delete({ name: 'calendar-nonce', path: '/api/calendar' })

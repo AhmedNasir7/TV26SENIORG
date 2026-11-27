@@ -1,0 +1,82 @@
+/* Endless parallax behind the sign-in form. Three layers drift at different speeds and loop without a
+   seam; the pointer nudges them by different amounts. Everything fades out toward the middle, so the
+   form never sits on top of anything busy. Decorative only (aria-hidden). */
+.ap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--foreground);
+  /* the pointer offset, set from script, -1..1 */
+  --px: 0;
+  --py: 0;
+  /* no hard cut where this side meets the showcase: everything dissolves toward that edge */
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 62%, transparent 98%);
+  mask-image: linear-gradient(90deg, #000 0%, #000 62%, transparent 98%);
+}
+@media (max-width: 1023px) {
+  .ap { -webkit-mask-image: none; mask-image: none; }
+}
+.ap-layer {
+  position: absolute;
+  inset: -80px;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ap-far { transform: translate(calc(var(--px) * 6px), calc(var(--py) * 6px)); }
+.ap-mid { transform: translate(calc(var(--px) * 16px), calc(var(--py) * 16px)); }
+.ap-near { transform: translate(calc(var(--px) * 34px), calc(var(--py) * 34px)); }
+
+/* far: a fine dot grid that scrolls forever (one tile per loop, so it never jumps) */
+.ap-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(currentColor 1px, transparent 1.4px);
+  background-size: 28px 28px;
+  opacity: 0.16;
+  animation: ap-scroll 40s linear infinite;
+  -webkit-mask-image: radial-gradient(70% 60% at 50% 50%, transparent 0%, #000 90%);
+  mask-image: radial-gradient(70% 60% at 50% 50%, transparent 0%, #000 90%);
+}
+@keyframes ap-scroll { to { background-position: 280px 280px; } }
+
+/* mid: outlined rings and squares drifting upward and looping */
+.ap-shape {
+  position: absolute;
+  border: 1px solid currentColor;
+  opacity: 0.14;
+  animation: ap-rise 38s linear infinite;
+}
+.ap-ring { border-radius: 9999px; }
+.ap-square { border-radius: 14px; }
+@keyframes ap-rise {
+  from { transform: translateY(0) rotate(0deg); }
+  to { transform: translateY(-120vh) rotate(180deg); }
+}
+
+/* near: soft coloured glows that float and breathe */
+.ap-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(46px);
+  opacity: 0.5;
+  animation: ap-float 16s ease-in-out infinite alternate;
+}
+.ap-orb.lime { background: #e4f222; }
+.ap-orb.sky { background: #7c9cff; }
+@keyframes ap-float {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(40px, -60px) scale(1.18); }
+}
+:root:not(.dark) .ap-orb { opacity: 0.38; }
+
+/* the form's backing: solid enough that inputs are always easy to read */
+.ap-card {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-dots, .ap-shape, .ap-orb { animation: none; }
+  .ap-layer { transition: none; }
+}

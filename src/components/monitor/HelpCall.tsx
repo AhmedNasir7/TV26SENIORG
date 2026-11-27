@@ -28,7 +28,7 @@ export function HelpCall({ examId }: { examId: number }) {
       const roomCode = result.code ?? result.data?.[0]?.code
       if (!roomCode) throw new Error('The video service returned no room code')
       await apiRequest(`/api/exams/${examId}/announcements`, 'POST', {
-        message: `Live help is available. Open Meetings and enter the room code ${roomCode}.`,
+        message: `Live help is available. Go to /meeting and enter the room code ${roomCode}. Turn your camera on; the call is recorded.`,
       })
       setCode(roomCode)
     } catch (err) {

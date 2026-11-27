@@ -8,7 +8,7 @@ import { parseRows, toQuestion, type Row } from '@/lib/import-parse'
 import { canManageExam, ensureFound, type Actor } from '@/lib/policies'
 import { prisma } from '@/lib/prisma'
 import { ApiError } from '@/lib/server/api'
-import { temporaryPassword } from '@/lib/server/credentials'
+import { deliverCredentialsBatch, temporaryPassword } from '@/lib/server/credentials'
 import { rateLimit } from '@/lib/server/rate-limit'
 import { audit } from '@/lib/services/audit'
 import { emailSchema } from '@/lib/validation/auth'
@@ -105,6 +105,8 @@ export async function importCandidates(actor: Actor, request: ImportRequest) {
     },
     { timeout: 60_000 }
   )
+  // Each new candidate is emailed their sign-in details; the list below stays as a backup
+  void deliverCredentialsBatch(accounts.map((a) => ({ email: a.email, password: a.password, name: a.name }))).catch((error) => console.error('Credential batch failed:', error))
   return {
     ...report,
     committed: true,

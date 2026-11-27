@@ -18,7 +18,7 @@ export const GET = route(async (_request: Request, { params }: Context) => {
     `UID:exam-${exam.id}-${actor.id}@${APP_NAME.toLowerCase()}`, `DTSTAMP:${stamp(new Date().toISOString())}`,
     `DTSTART:${stamp(exam.startsAt)}`, `DTEND:${stamp(exam.access.closesAt)}`, `SUMMARY:${escape(exam.title)}`,
     `DESCRIPTION:${escape(`Examination window. ${runtimeEnv('NEXT_PUBLIC_APP_URL') ?? ''}/login`)}`,
-    'BEGIN:VALARM', 'TRIGGER:-PT1H', 'ACTION:DISPLAY', 'DESCRIPTION:Examination in one hour', 'END:VALARM',
+    'BEGIN:VALARM', `TRIGGER:-PT${exam.reminderMinutes ?? 60}M`, 'ACTION:DISPLAY', `DESCRIPTION:${escape(`Examination in ${exam.reminderMinutes ?? 60} minutes`)}`, 'END:VALARM',
     'END:VEVENT', 'END:VCALENDAR',
   ]
   return new Response(lines.join('\r\n'), {

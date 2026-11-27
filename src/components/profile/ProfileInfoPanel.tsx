@@ -1,3 +1,4 @@
+import { roleLabel } from '@/lib/roles'
 import type { ProfileUser } from './types'
 
 export function ProfileInfoPanel({
@@ -57,6 +58,10 @@ export function ProfileInfoPanel({
               <div>
                 <dt className="text-[color:var(--muted)]">Name</dt>
                 <dd className="mt-0.5 font-medium text-[color:var(--foreground)]">{displayName}</dd>
+              </div>
+              <div>
+                <dt className="text-[color:var(--muted)]">Role</dt>
+                <dd className="mt-0.5 font-medium text-[color:var(--foreground)]">{roleLabel(user.role)}</dd>
               </div>
               <div>
                 <dt className="text-[color:var(--muted)]">Email</dt>

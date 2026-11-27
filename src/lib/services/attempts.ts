@@ -307,6 +307,19 @@ function checkResponse(
   return { optionIds }
 }
 
+/** Going back out of a running examination cancels it: the attempt ends now with what was saved. */
+export async function leaveAttempt(actor: Actor, attemptId: number, sessionId: string) {
+  const attempt = await currentAttempt(actor, attemptId)
+  if (attempt.isSandbox) throw new ApiError('BAD_REQUEST', 'A trial run can simply be closed')
+  if (attempt.status === 'IN_PROGRESS') {
+    if (attempt.activeSessionId !== sessionId) throw new ApiError('CONFLICT', ELSEWHERE)
+    if (await finalizeAttempt(attemptId, 'LEFT')) {
+      await audit(prisma, actor.id, 'attempt_left', 'attempt', attemptId)
+    }
+  }
+  return viewAttempt(actor, attemptId)
+}
+
 /** Submitting twice returns the same result. The reason is decided by the server clock. */
 export async function submitAttempt(actor: Actor, attemptId: number, sessionId: string) {
   const attempt = await currentAttempt(actor, attemptId)

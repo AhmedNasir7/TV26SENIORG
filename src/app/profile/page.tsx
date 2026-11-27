@@ -7,6 +7,7 @@ import { AppHeader } from '@/components/layout/AppHeader'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from '@/components/ui/ToasterProvider'
 import { ProfileHero } from '@/components/profile/ProfileHero'
+import { ProfileSide } from '@/components/profile/ProfileSide'
 import { ProfileTabs } from '@/components/profile/ProfileTabs'
 import { ProfileInfoPanel } from '@/components/profile/ProfileInfoPanel'
 import { NotificationsPanel } from '@/components/profile/NotificationsPanel'
@@ -160,7 +161,8 @@ export default function ProfilePage() {
           onAvatarChange={handleAvatarChange}
         />
 
-        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+        <div className="mx-auto grid max-w-5xl gap-8 px-4 pb-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
+          <div>
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ProfileTab)}>
             <ProfileTabs />
 
@@ -192,9 +194,11 @@ export default function ProfilePage() {
 
           </Tabs>
 
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8">
             <BackLink href="/">Back to home</BackLink>
           </div>
+          </div>
+          <ProfileSide user={user} />
         </div>
       </main>
 

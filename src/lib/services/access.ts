@@ -66,6 +66,7 @@ async function loadEnrollments(candidateId: number, examId?: number) {
     orderBy: { exam: { startsAt: 'asc' } },
     select: {
       extraMinutes: true,
+      reminderMinutes: true,
       exam: {
         select: {
           ...EXAM_FIELDS,
@@ -81,7 +82,7 @@ async function loadEnrollments(candidateId: number, examId?: number) {
 
 type Row = Awaited<ReturnType<typeof loadEnrollments>>[number]
 
-function present({ extraMinutes, exam }: Row, now: Date) {
+function present({ extraMinutes, reminderMinutes, exam }: Row, now: Date) {
   const { attempts, _count, resultsPublishedAt, monitoring, blueprint, ...details } = exam
   const access = candidateAccess(exam, extraMinutes, attempts[0] ?? null, now)
   return {
@@ -94,6 +95,7 @@ function present({ extraMinutes, exam }: Row, now: Date) {
     // Candidates are told before starting
     recorded: recordedList(readSettings(monitoring)),
     extraMinutes,
+    reminderMinutes,
     // Only a candidate who submitted has a result to open
     resultAvailable: resultsPublishedAt !== null && attempts[0]?.status === 'SUBMITTED',
     access: { ...access, closesAt: access.closesAt.toISOString() },

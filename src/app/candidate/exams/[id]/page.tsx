@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ScrollText } from 'lucide-react'
+import { MessagesSquare, ScrollText } from 'lucide-react'
 import { StatusPill } from '@/components/ui/StatusPill'
 import type { ExamPhase } from '@/lib/server/time'
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs'
@@ -84,7 +84,12 @@ export default async function CandidateExamPage({ params }: { params: Promise<{ 
                 ))}
             </section>
             {exam.access.state === 'upcoming' && (
-              <AddToCalendar examId={exam.id} title={exam.title} startsAt={exam.startsAt} closesAt={exam.access.closesAt} />
+              <AddToCalendar examId={exam.id} title={exam.title} startsAt={exam.startsAt} closesAt={exam.access.closesAt} reminderMinutes={exam.reminderMinutes} />
+            )}
+            {exam.access.state !== 'in_progress' && (
+              <Link href={`/candidate/exams/${exam.id}/chat`} className="btn-secondary flex w-full px-5 py-3 text-sm">
+                <MessagesSquare className="h-4 w-4" aria-hidden="true" /> Examination chat
+              </Link>
             )}
           </aside>
         </div>

@@ -37,6 +37,18 @@ if [ -z "$(value ADMIN_SIGNUP_CODE)" ]; then
   echo "ADMIN_SIGNUP_CODE=$(openssl rand -hex 12)" >> .env
 fi
 
+# Testing defaults: the timer runs every minute and a reminder goes out 3 minutes before a start.
+# Only filled in when empty, so a value set by hand is kept. For real use set REMINDER_MINUTES=1440,60.
+for pair in CRON_INTERVAL_MINUTES=1 REMINDER_MINUTES=3; do
+  key="${pair%%=*}"
+  if [ -z "$(value $key)" ]; then
+    echo "== Setting $key to ${pair#*=}"
+    sed -i "/^$key=/d" .env
+    [ -z "$(tail -c 1 .env)" ] || echo >> .env
+    echo "$pair" >> .env
+  fi
+done
+
 echo "== Removing leftovers from the earlier template"
 docker rm -f estatepro >/dev/null 2>&1 || true
 docker network rm nascon-net >/dev/null 2>&1 || true
@@ -85,7 +97,10 @@ fi
 curl -fsS --retry 20 --retry-delay 3 --retry-all-errors http://127.0.0.1:3000/api/health >/dev/null
 echo "== Healthy"
 
-echo "== Reminder timer (every 5 minutes)"
+# How often the timer runs; the reminder windows themselves come from REMINDER_MINUTES in the app's .env
+interval="$(sed -n 's/^CRON_INTERVAL_MINUTES=//p' .env | tail -1 | tr -d "\r\"' ")"
+case "$interval" in ''|*[!0-9]*|0) interval=1 ;; esac
+echo "== Reminder timer (every $interval minute(s))"
 sudo -n tee /etc/systemd/system/secureexam-cron.service >/dev/null <<UNIT
 [Unit]
 Description=Examination reminders and attempt closing
@@ -98,11 +113,11 @@ ExecStart=/usr/bin/env bash $(pwd)/cron.sh
 UNIT
 sudo -n tee /etc/systemd/system/secureexam-cron.timer >/dev/null <<UNIT
 [Unit]
-Description=Run examination reminders every 5 minutes
+Description=Run examination reminders every $interval minute(s)
 
 [Timer]
 OnBootSec=2min
-OnUnitActiveSec=5min
+OnUnitActiveSec=${interval}min
 
 [Install]
 WantedBy=timers.target

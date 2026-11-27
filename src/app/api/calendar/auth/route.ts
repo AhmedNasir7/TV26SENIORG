@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     if (!client) return NextResponse.json({ error: 'Google Calendar is not configured' }, { status: 503 })
 
     const { searchParams } = new URL(req.url)
-    const event = parseCalendarRequest(searchParams.get('title'), searchParams.get('date'))
+    const event = parseCalendarRequest(searchParams.get('title'), searchParams.get('date'), searchParams.get('remind'))
 
     const dbUser = await prisma.user.findUnique({
       where: { id: user.id },

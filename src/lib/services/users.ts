@@ -70,7 +70,7 @@ export async function createUser(actorId: number, { email, name, role, username,
     return created
   })
 
-  const emailed = await deliverCredentials(email, password)
+  const emailed = await deliverCredentials(email, password, { name, role, username })
   return { user, emailed, temporaryPassword: emailed || chosen ? undefined : password }
 }
 

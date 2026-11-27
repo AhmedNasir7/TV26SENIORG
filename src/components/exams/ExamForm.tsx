@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { apiRequest } from '@/lib/client/request'
+import { useFeatures } from '@/hooks/useFeatures'
 
 export type ExamValues = {
   id?: number
@@ -13,6 +14,7 @@ export type ExamValues = {
   durationMinutes: number
   totalMarks: number
   passMarks: number | null
+  liveProctor?: boolean
   shuffleQuestions: boolean
   shuffleOptions: boolean
   allowBackNavigation: boolean
@@ -48,7 +50,30 @@ export function ExamForm({ exam, wordingOnly = false }: { exam?: ExamValues; wor
   })
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
+  const features = useFeatures()
+  const [drafting, setDrafting] = useState(false)
   const set = (patch: Partial<typeof values>) => setValues((prev) => ({ ...prev, ...patch }))
+
+  /** Fills the box with a draft the examiner then edits; the earlier text is kept if the request fails. */
+  async function draftInstructions() {
+    setDrafting(true)
+    setMessage('')
+    try {
+      const draft = await apiRequest<{ instructions: string }>('/api/ai/instructions', 'POST', {
+        title: values.title.trim() || 'Examination',
+        durationMinutes: Number(values.durationMinutes) || 30,
+        allowBackNavigation: values.allowBackNavigation,
+        live: exam?.liveProctor ?? false,
+        ...(values.instructions.trim() && { notes: values.instructions.trim().slice(0, 1000) }),
+      })
+      set({ instructions: draft.instructions })
+      setMessage('Draft written. Read it and edit before saving.')
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Could not write a draft')
+    } finally {
+      setDrafting(false)
+    }
+  }
 
   async function save(e: React.FormEvent) {
     e.preventDefault()
@@ -96,6 +121,11 @@ export function ExamForm({ exam, wordingOnly = false }: { exam?: ExamValues; wor
         Instructions
         <textarea rows={4} maxLength={10000} value={values.instructions} onChange={(e) => set({ instructions: e.target.value })} className={field} />
       </label>
+      {features.ai && (
+        <button type="button" onClick={() => void draftInstructions()} disabled={drafting} className="btn-secondary px-3 py-2 text-sm disabled:opacity-60">
+          {drafting ? 'Writing...' : 'Draft instructions with AI'}
+        </button>
+      )}
       <div className="grid gap-3 sm:grid-cols-2">
         {input('startsAt', 'Opens (your time)', 'datetime-local', { required: true })}
         {input('endsAt', 'Closes (your time)', 'datetime-local', { required: true })}

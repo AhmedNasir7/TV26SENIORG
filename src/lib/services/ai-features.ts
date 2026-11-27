@@ -154,3 +154,27 @@ export function draftQuestions(actor: Actor, request: DraftRequest) {
     maxTokens: 1500,
   })
 }
+
+const instructionsSchema = z.object({ instructions: z.string().max(3000) })
+
+/** A draft of the candidate instructions from the facts the examiner already entered. */
+export function draftInstructions(actor: Actor, facts: { title: string; durationMinutes: number; allowBackNavigation: boolean; live: boolean; notes?: string }) {
+  return askAi(actor.id, {
+    task: `You write the instructions candidates read before an online examination. Be clear, calm and brief: short paragraphs or a list, plain English. Cover timing, how answers are saved, the rule on going back (if going back is not allowed, say that leaving cancels the examination), what is monitored, and conduct. Do not invent rules beyond the facts and notes given. JSON key: instructions (plain text).`,
+    data: facts,
+    schema: instructionsSchema,
+    maxTokens: 700,
+  })
+}
+
+const checkSchema = z.object({ verdict: z.enum(['good', 'needs_work']), problems: z.array(line).max(6), suggestion: line })
+
+/** Reads a drafted question for ambiguity, a wrong key or clues in the wording. */
+export function checkQuestion(actor: Actor, question: { type: string; text: string; options: Array<{ text: string; correct: boolean }>; guidance?: string }) {
+  return askAi(actor.id, {
+    task: `You review one examination question before use. Look for ambiguity, more or fewer correct options than marked, a wrong answer key, clues in the wording and grammar. JSON keys: verdict ("good" or "needs_work"), problems (array), suggestion (one improvement, or an empty string).`,
+    data: question,
+    schema: checkSchema,
+    maxTokens: 500,
+  })
+}

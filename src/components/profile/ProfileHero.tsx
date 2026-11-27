@@ -19,8 +19,8 @@ export function ProfileHero({
 }) {
   return (
     <div className="border-b border-[var(--border)] bg-[radial-gradient(120%_80%_at_50%_0%,color-mix(in_srgb,var(--glow-to)_14%,transparent),transparent_70%)]">
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-        <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-end sm:gap-8">
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
+        <div className="surface-card flex flex-col items-center gap-6 p-6 sm:flex-row sm:gap-8 sm:p-8">
           <div className="group relative">
             <div className="glow-card h-28 w-28 shrink-0 overflow-hidden rounded-[var(--radius-xl)] shadow-[var(--shadow-md)] sm:h-32 sm:w-32">
               {user.imageUrl ? (
@@ -60,7 +60,7 @@ export function ProfileHero({
               {displayName}
             </h1>
             <p className="mt-1 text-[color:var(--muted)]">{user.email}</p>
-            <div className="mt-2 inline-block">
+            <div className="mt-3 inline-flex items-center gap-2">
               <Badge variant={roleBadgeVariant(user.role)}>{roleLabel(user.role)}</Badge>
             </div>
           </div>

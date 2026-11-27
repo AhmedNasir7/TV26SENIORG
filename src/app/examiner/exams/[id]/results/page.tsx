@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { IntegrityBoard } from '@/components/ai/IntegrityBoard'
 import { Checklist } from '@/components/ui/Checklist'
 import { PublishResults } from '@/components/results/PublishResults'
 import { QuestionInsights } from '@/components/results/QuestionInsights'
@@ -58,6 +59,7 @@ export default async function ExamResultsPage({ params }: { params: Promise<{ id
               )}
               <PublishResults examId={exam.id} published={exam.publishedAt !== null} ready={results.checks.every((c) => c.ok)} />
             </section>
+            <IntegrityBoard examId={exam.id} />
             <div className="grid gap-6 lg:grid-cols-2">
               <section className="surface-card p-5 text-sm">
                 <h2 className="font-display font-semibold">Score distribution</h2>
