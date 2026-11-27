@@ -53,31 +53,45 @@ export function IntegrityBoard({ examId }: { examId: number }) {
           </button>
         )}
       </div>
-      <p className="text-sm text-[color:var(--muted)]">A score from logged events and answer similarity. Strong needs two independent kinds of evidence; one kind alone is at most worth a look. Open a candidate to see the full timeline. It is not proof and changes no mark.</p>
+      <p className="max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
+        A score from logged events and answer similarity. It shows where to look first; it is not proof and changes no mark. <strong className="font-medium text-[color:var(--foreground)]">Strong</strong> needs two independent kinds of evidence; one kind alone is at most <strong className="font-medium text-[color:var(--foreground)]">worth a look</strong>.
+      </p>
       <ErrorToast message={error} />
-      {explanation && <p className="text-sm">{explanation.overview}{explanation.cached && <span className="text-[color:var(--muted)]"> (saved)</span>}</p>}
+      {explanation && (
+        <div className="rounded-xl bg-[var(--surface-muted)] p-4 text-sm leading-6">
+          <p className="mb-1 flex items-center gap-2 font-medium"><Sparkles className="h-4 w-4" aria-hidden="true" /> AI overview{explanation.cached && <span className="font-normal text-[color:var(--muted)]">(saved)</span>}</p>
+          <p>{explanation.overview}</p>
+        </div>
+      )}
       {rows && rows.length === 0 && <p className="text-sm text-[color:var(--muted)]">No submitted attempts yet.</p>}
       {rows && rows.length > 0 && (
-        <ol className="divide-y divide-[var(--border)] text-sm">
+        <ol className="space-y-3">
           {rows.map((row) => (
-            <li key={row.attemptId} className="flex flex-wrap items-start justify-between gap-3 py-3">
-              <div className="min-w-0 flex-1">
-                <Link href={`/examiner/exams/${examId}/attempts/${row.attemptId}`} className="link-accent font-medium">{row.candidate}</Link>
-                {row.signals.length === 0 ? (
-                  <p className="text-[color:var(--muted)]">Nothing logged</p>
-                ) : (
-                  <ul className="mt-1 space-y-0.5 text-[color:var(--muted)]">
-                    {row.signals.map((signal) => (
-                      <li key={signal.label}>
-                        {signal.label}
-                        <span className="ml-2 tabular-nums">{signal.points > 0 ? `+${signal.points}` : '+0'}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {notes.get(row.attemptId) && <p className="mt-1">{notes.get(row.attemptId)}</p>}
+            <li key={row.attemptId} className="rounded-2xl border border-[var(--border)] p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <Link href={`/examiner/exams/${examId}/attempts/${row.attemptId}`} className="link-accent text-[15px] font-semibold">{row.candidate}</Link>
+                <div className="flex items-center gap-2.5">
+                  <span className={`chip ${TONE[row.level]} whitespace-nowrap`}>{WORDS[row.level]}</span>
+                  <span className="font-display text-xl font-semibold tabular-nums" aria-label={`Score ${row.score} of 100`}>{row.score}<span className="text-sm font-normal text-[color:var(--muted)]">/100</span></span>
+                </div>
               </div>
-              <span className={`chip ${TONE[row.level]} whitespace-nowrap tabular-nums`}>{WORDS[row.level]} · {row.score}</span>
+              {row.signals.length === 0 ? (
+                <p className="mt-3 text-sm text-[color:var(--muted)]">Nothing suspicious was logged.</p>
+              ) : (
+                <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 marker:text-[color:var(--muted)]">
+                  {row.signals.map((signal) => (
+                    <li key={signal.label}>
+                      <span className="first-letter:uppercase">{signal.label}</span>
+                      <span className="ml-2 whitespace-nowrap rounded-md bg-[var(--surface-muted)] px-1.5 py-0.5 text-xs font-medium tabular-nums text-[color:var(--muted)]">
+                        {signal.points > 0 ? `+${signal.points}` : 'not scored'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {notes.get(row.attemptId) && (
+                <p className="mt-4 rounded-xl bg-[var(--surface-muted)] p-3 text-sm leading-6">{notes.get(row.attemptId)}</p>
+              )}
             </li>
           ))}
         </ol>

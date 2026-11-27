@@ -48,7 +48,11 @@ const minutes = (seconds: number) => (seconds >= 90 ? `${Math.round(seconds / 60
 export function integrityScore(input: IntegrityInput): IntegrityScore {
   const { incidents, minutesTaken, writtenCharacters, closestOtherAnswer, closestAnswerLength, left } = input
   const signals: Signal[] = []
-  const add = (kind: Signal['kind'], label: string, points: number) => signals.push({ kind, label, points })
+  // Harmless slips that earn nothing are left out of the list, so the examiner only reads what matters
+  const add = (kind: Signal['kind'], label: string, points: number) => {
+    if (points === 0 && (kind === 'away' || kind === 'copy')) return
+    signals.push({ kind, label, points })
+  }
 
   // Leaving the page (other tab or other window). Short slips are ignored; what counts is how long, and how often.
   const away = find(incidents, 'TAB_HIDDEN', 'WINDOW_BLUR')
