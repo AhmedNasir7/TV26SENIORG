@@ -12,10 +12,8 @@
   padding: 14px 16px 14px 18px;
   border-radius: 16px;
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  background: var(--surface);
   color: var(--foreground);
-  backdrop-filter: blur(14px) saturate(1.2);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
   box-shadow: 0 24px 60px -24px rgb(0 0 0 / 0.55), 0 2px 6px rgb(0 0 0 / 0.12);
   --toast-accent: var(--accent);
 }
@@ -45,7 +43,18 @@
   color: var(--toast-accent);
 }
 [data-sonner-toast][data-type='success'] [data-icon] { background: #e4f222; color: #17181c; }
-[data-sonner-toast] [data-icon] svg { width: 16px; height: 16px; }
+[data-sonner-toast] [data-icon] > * { margin: 0 !important; width: 16px; height: 16px; display: block; }
+[data-sonner-toast] [data-icon] { display: flex !important; align-items: center; justify-content: center; }
+
+/* the close button sits inside the card's top-right corner, not hanging off the top-left */
+[data-sonner-toast] [data-close-button] {
+  inset: 10px 10px auto auto !important;
+  transform: none !important;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+}
+[data-sonner-toast] [data-content] { padding-right: 22px; }
 
 [data-sonner-toast] [data-content] { gap: 2px; }
 [data-sonner-toast] [data-title] {

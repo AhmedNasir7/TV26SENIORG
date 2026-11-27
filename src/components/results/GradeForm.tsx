@@ -52,7 +52,7 @@ export function GradeForm({ examId, answer, locked }: Props) {
     setMessage('')
     try {
       await apiRequest(`/api/exams/${examId}/grading/${answer.id}`, 'PUT', { marks: value, feedback, expectedVersion: answer.version })
-      setMessage('Saved')
+      setMessage('Marks saved')
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save the mark')
