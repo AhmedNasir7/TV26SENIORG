@@ -158,6 +158,8 @@ model Exam {
   allowBackNavigation Boolean    @default(true)
   blueprint           Json? // fair-paper recipe: counts per topic and difficulty
   monitoring          Json       @default("{}") // what is recorded; read through lib/monitoring
+  liveProctor         Boolean    @default(false) // camera required in a 100ms room while answering
+  liveRoomId          String?
   publishedAt         DateTime?
   resultsPublishedAt  DateTime?
   revealAnswers       Boolean    @default(false) // show correct answers with published results

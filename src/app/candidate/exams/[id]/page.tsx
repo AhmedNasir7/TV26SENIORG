@@ -6,6 +6,7 @@ import { Breadcrumbs } from '@/components/layout/Breadcrumbs'
 import { CandidateSteps } from '@/components/exams/CandidateSteps'
 import { AddToCalendar } from '@/components/exams/AddToCalendar'
 import { Countdown } from '@/components/exams/Countdown'
+import { CameraGate } from '@/components/live/CameraGate'
 import { AnnouncementList } from '@/components/attempt/AnnouncementList'
 import { RecordedNotice } from '@/components/attempt/RecordedNotice'
 import { StartAttemptButton } from '@/components/attempt/StartAttemptButton'
@@ -58,7 +59,7 @@ export default async function CandidateExamPage({ params }: { params: Promise<{ 
               {exam.access.state !== 'submitted' && exam.access.state !== 'closed' && (
                 <section className="surface-card p-8 text-sm leading-7">
                   <h2 className="font-display mb-4 text-lg font-semibold">What is recorded</h2>
-                  <RecordedNotice recorded={exam.recorded} />
+                  <RecordedNotice recorded={exam.recorded} live={exam.liveProctor} />
                 </section>
               )}
             </div>
@@ -73,7 +74,14 @@ export default async function CandidateExamPage({ params }: { params: Promise<{ 
               {exam.resultAvailable && (
                 <Link href={`/candidate/exams/${exam.id}/result`} className="btn-primary mt-5 inline-flex px-6 py-3 text-sm">View result</Link>
               )}
-              {exam.access.canEnter && <StartAttemptButton examId={exam.id} running={exam.access.state === 'in_progress'} />}
+              {exam.access.canEnter &&
+                (exam.liveProctor ? (
+                  <CameraGate examId={exam.id}>
+                    <StartAttemptButton examId={exam.id} running={exam.access.state === 'in_progress'} />
+                  </CameraGate>
+                ) : (
+                  <StartAttemptButton examId={exam.id} running={exam.access.state === 'in_progress'} />
+                ))}
             </section>
             {exam.access.state === 'upcoming' && (
               <AddToCalendar examId={exam.id} title={exam.title} startsAt={exam.startsAt} closesAt={exam.access.closesAt} />

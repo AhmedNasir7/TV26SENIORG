@@ -53,6 +53,7 @@ const EXAM_FIELDS = {
   allowBackNavigation: true,
   resultsPublishedAt: true,
   monitoring: true,
+  liveProctor: true,
   blueprint: true,
   _count: { select: { questions: true } },
 } as const

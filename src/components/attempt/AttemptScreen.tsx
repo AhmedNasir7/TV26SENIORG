@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { CandidateSteps } from '@/components/exams/CandidateSteps'
+import { useLiveRoom } from '@/components/live/LiveRoom'
 import { LocalTime } from '@/components/ui/LocalTime'
 import { apiRequest } from '@/lib/client/request'
 import { RunningAttempt } from './RunningAttempt'
@@ -14,6 +15,7 @@ import type { Attempt } from './types'
 /** `sandbox` is the examiner's trial run of their own examination. */
 export function AttemptScreen({ examId, sandbox = false }: { examId: number; sandbox?: boolean }) {
   const router = useRouter()
+  const leaveRoom = useLiveRoom()?.leave
   const [state, setState] = useState<{ attempt: Attempt; sessionId: string } | null>(null)
   const [error, setError] = useState('')
   const opened = useRef(false)
@@ -46,7 +48,8 @@ export function AttemptScreen({ examId, sandbox = false }: { examId: number; san
     if (!finished) return
     clearAttemptStorage()
     if (sandbox) router.refresh() // the page then shows the marked paper
-  }, [finished, router, sandbox])
+    else void leaveRoom?.()
+  }, [finished, leaveRoom, router, sandbox])
 
   const update = useCallback((attempt: Attempt) => setState((prev) => prev && { ...prev, attempt }), [])
 

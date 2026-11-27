@@ -15,6 +15,7 @@ import { announcementsFor } from '@/lib/services/announcements'
 import { audit } from '@/lib/services/audit'
 import { finalizeAttempt, finalizeExpired, GRACE_MS, isPastDeadline } from '@/lib/services/finalize'
 import { noteContact, recordIncident } from '@/lib/services/incidents'
+import { ensureRecording, requirePresence } from '@/lib/services/live-exam'
 import { candidateQuestion, toOptionIds } from '@/lib/services/paper'
 import { buildPaper, PAPER_QUESTIONS } from '@/lib/services/paper-build'
 import { getPreferences } from '@/lib/services/preferences'
@@ -72,8 +73,10 @@ export async function openAttempt(actor: Actor, examId: number, start: boolean, 
 
   if (!existing) {
     if (!start) throw new ApiError('CONFLICT', 'This attempt has not been started')
+    await requirePresence(actor.id, examId) // live examinations: in the room, camera first
     try {
       const created = await createAttempt(actor.id, examId)
+      void ensureRecording(examId)
       return { attempt: await viewAttempt(actor, created.id), sessionId: created.activeSessionId }
     } catch (error) {
       // A parallel request won the race: continue with its attempt

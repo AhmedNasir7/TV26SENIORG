@@ -1,5 +1,6 @@
 import { BackLink } from '@/components/ui/BackLink'
 import { AnnouncementPanel } from '@/components/monitor/AnnouncementPanel'
+import { LivePanel } from '@/components/live/LivePanel'
 import { HelpCall } from '@/components/monitor/HelpCall'
 import { MonitorBoard } from '@/components/monitor/MonitorBoard'
 import { MonitoringSettingsForm } from '@/components/monitor/MonitoringSettingsForm'
@@ -28,6 +29,7 @@ export default async function MonitorPage({ params }: { params: Promise<{ id: st
         description={isDraft ? 'Choose what to record before publishing.' : 'Live progress, indicators and announcements.'}
         actions={<BackLink href={`/examiner/exams/${exam.id}`}>Back to examination</BackLink>}
       />
+      <LivePanel examId={exam.id} />
       {!isDraft && <MonitorBoard examId={exam.id} initial={board} />}
       {!isDraft && <HelpCall examId={exam.id} />}
       <AnnouncementPanel examId={exam.id} initial={announcements} canSend={!isDraft} />
