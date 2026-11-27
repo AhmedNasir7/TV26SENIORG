@@ -12,7 +12,8 @@
     "seed:admin": "tsx scripts/seed-admin.ts",
     "seed:roles": "tsx scripts/seed-roles.ts",
     "db:migrate": "prisma migrate deploy",
-    "seed:demo": "tsx scripts/seed-demo.ts"
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "reset:demo": "tsx scripts/reset-demo.ts"
   },
   "dependencies": {
     "@100mslive/hms-video-store": "^0.12.39",

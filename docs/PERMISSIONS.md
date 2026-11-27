@@ -26,6 +26,10 @@ Y = allowed · own = only the caller's own records · — = refused
 | `GET/POST /api/topics`, `PATCH /api/topics/{id}` | — | — | own | Y |
 | `GET/POST /api/questions`, `GET/PATCH /api/questions/{id}`, `.../duplicate`, `.../archive` | — | — | own | Y |
 | `GET/PUT /api/exams/{id}/questions` (change drafts only) | — | — | own | Y |
+| `GET/POST /api/exams`, `GET/PATCH/DELETE /api/exams/{id}` | — | — | own | Y |
+| `POST /api/exams/{id}/publish`, `.../duplicate` | — | — | own | Y |
+| `GET /api/exams/{id}/candidates`, `GET/POST .../enrollments`, `PATCH/DELETE .../enrollments/{eid}` | — | — | own | Y |
+| `GET /api/me/exams`, `GET /api/me/exams/{id}` (no questions) | — | own | — | — |
 | `POST /api/email/send` | — | — | — | Y |
 | `POST /api/check-room`, `generate-code` | — | Y | Y | Y |
 | `POST /api/get-or-create-room` | — | — | Y | Y |
@@ -40,8 +44,8 @@ Y = allowed · own = only the caller's own records · — = refused
 | `/login` | Y | Y | Y | Y |
 | `/signup` (redirects while closed) | — | — | — | — |
 | `/profile`, `/chat`, `/support`, `/meeting`, `/stripe` | — | Y | Y | Y |
-| `/candidate` | — | Y | — | — |
-| `/examiner`, `/examiner/questions`, `/examiner/exams/{id}/questions`, `/admin/support` | — | — | Y | Y |
+| `/candidate`, `/candidate/exams/{id}` (enrolled, published) | — | own | — | — |
+| `/examiner`, `/examiner/questions`, `/examiner/exams/...`, `/admin/support` | — | — | Y | Y |
 | `/admin`, `/admin/users`, `/admin/audit-logs`, `/send-email` | — | — | — | Y |
 
 ## Record rules (`src/lib/policies`)

@@ -10,8 +10,9 @@ _Last updated: 2026-11-27_
 - **RULE: never remove services (Calendar, ElevenLabs, Supabase, Pusher, 100ms, Stripe, email, moderation,
   chat, support...). Only template content may go. ASK before removing anything.**
 - **RULE: no Claude co-author line in commits or pull requests.**
-- **Phase:** building. **Steps 1–5 done.** Steps 4 and 5 are committed locally, **not pushed**.
-- **Next:** step 6 = EXM-1..3, ENR-1..3 (examinations and enrolment). Wait for the user.
+- **Phase:** building. **Steps 1–6 done.** Steps 4–6 are committed locally, **not pushed**.
+- **Next:** step 7 = ATT-1..4 (attempt engine: start, frozen paper, server timing, candidate-safe paper
+  API). It must reuse `lib/services/access.ts` (gate and `attemptDeadline`). Wait for the user.
 - **Progress view:** top of `docs/TASKS.md`. After each step: tick subtasks, raise `FINISHED_STEP` in
   `scripts/task-progress.py`, run it. The user relies on this to follow the work.
 - **Waiting for the user:** whether to bring back non-service items removed in step 1: admin analytics,
@@ -71,7 +72,7 @@ _Last updated: 2026-11-27_
   after dependency change: `... up -d --build -V`
 - Containers `secureexam-app-dev`, `secureexam-db-dev`; database `secureexam`
 - **State:** containers running; migration applied; demo accounts seeded (see `docs/TEST-ACCOUNTS.md`)
-- Access check: `python scripts/access-check.py` (107/107 passed after step 5)
+- Access check: `python scripts/access-check.py` (149/149 passed after step 6)
 - The built-in browser pane stalled on large dev scripts (connection reset); Playwright Chromium worked.
 - New migration for schema changes (never wipe data without asking): `prisma/migrations/<n>_name`,
   then `... exec -T app pnpm run db:migrate`
@@ -123,6 +124,10 @@ _Last updated: 2026-11-27_
 9. **Step 5:** question bank (topics, versioned questions, three types with marking rules, search, filters,
    paging, duplicate, archive, version history, usage count), draft exam question selection with ordering and
    marks, basic screens under `/examiner`. Migration `1_question_bank` (`currentText`, `maxLength`).
+
+10. **Step 6:** examination create, review, publish checklist, unpublish, duplicate, draft delete, state-based
+    editing; enrolment with candidate search, removal and audited extra time; candidate dashboard sections,
+    server-synced countdown and instructions page; `reset:demo` script (never run).
 
 Earlier, separate work in the parent folder (not the competition): the `obol` site, `DESIGN-PIPELINE.md`
 and the skills `design-pipeline`, `scroll-video-hero`, `kinetic-details`. The user said to forget Obol.

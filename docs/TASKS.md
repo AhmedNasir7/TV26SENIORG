@@ -5,17 +5,17 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 <!-- progress:start -->
 ## Progress
 
-**Steps finished: 5 of 16** · required subtasks ticked: 69 of 239 · **next: step 6, Examinations and enrolment**
+**Steps finished: 6 of 16** · required subtasks ticked: 94 of 243 · **next: step 7, Attempt engine and server timing**
 
 | Step | Work | Tasks | Subtasks | Status |
 |---:|---|---|---:|---|
 | 1 | Remove template content | FND-1 | 4/4 | ✅ Done |
 | 2 | Project structure and database | FND-2, FND-3, DB-1, DB-2 | 22/22 | ✅ Done |
-| 3 | Sign-in and permissions | AUTH-1, AUTH-2, AUTH-3 | 15/17 | ✅ Done (2 carried over) |
-| 4 | User management and sample data | USR-1, USR-2, DB-3 | 11/12 | ✅ Done (1 carried over) |
+| 3 | Sign-in and permissions | AUTH-1, AUTH-2, AUTH-3 | 17/19 | ✅ Done (2 carried over) |
+| 4 | User management and sample data | USR-1, USR-2, DB-3 | 12/12 | ✅ Done |
 | 5 | Question bank | QB-1, QB-2, QB-3 | 13/13 | ✅ Done |
-| 6 | Examinations and enrolment | EXM-1, EXM-2, EXM-3, ENR-1, ENR-2, ENR-3 | 0/23 | ▶️ Next |
-| 7 | Attempt engine and server timing | ATT-1, ATT-2, ATT-3, ATT-4 | 0/12 | ⬜ Not started |
+| 6 | Examinations and enrolment | EXM-1, EXM-2, EXM-3, ENR-1, ENR-2, ENR-3 | 22/25 | ✅ Done (3 carried over) |
+| 7 | Attempt engine and server timing | ATT-1, ATT-2, ATT-3, ATT-4 | 0/12 | ▶️ Next |
 | 8 | Exam screen: autosave, resume, submit | WS-1, WS-2, WS-3, WS-4 | 0/16 | ⬜ Not started |
 | 9 | Grading and results | GRD-1, GRD-2, GRD-3, RES-1, RES-2, RES-3, RES-4 | 3/22 | 🟡 Started early |
 | 10 | Monitoring and announcements | MON-1, MON-2, MON-3, MON-4 | 0/13 | ⬜ Not started |
@@ -28,9 +28,11 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 
 ### Carried over from finished steps
 
-- **DB-3** (step 4): Reset command for the demo (it deletes data: ask the user first)
-- **AUTH-3** (step 3): Examiner: exams, question bank, candidates, monitoring, grading, results
-- **AUTH-3** (step 3): Candidate: upcoming, available, completed exams, results
+- **AUTH-3** (step 3): Examiner: monitoring, grading, results (arrive in steps 9 and 10)
+- **AUTH-3** (step 3): Candidate: results (arrives in step 9)
+- **ENR-1** (step 6): Bulk enrol from import results
+- **ENR-3** (step 6): Instructions screen with explicit "Start"
+- **ENR-3** (step 6): **Sec:** the same gate guards fetching, saving and submitting, not only the page
 
 ### Already done ahead of its step
 
@@ -141,13 +143,13 @@ Covers: T5, T6, T12
 - [x] Foreign keys with deliberate delete rules; never cascade-delete attempts or results
 - [x] Indexes for exam lists, attempts by exam and status, incidents by exam, audit by date
 
-### DB-3 Seed data · P0 · S — 🟡 Partly done (step 4)
+### DB-3 Seed data · P0 · S — ✅ Done (step 4)
 Covers: D4, D7
 - [x] Admin, 2 examiners, ~30 fictional candidates with documented passwords
 - [x] Question bank of 60+ across 4 topics and 3 difficulties, all 3 types
 - [x] One completed and published exam with attempts (feeds analytics), one live, one upcoming, one draft
 - [x] Safe to re-run
-- [ ] Reset command for the demo (it deletes data: ask the user first)
+- [x] Reset command for the demo (`reset:demo`; deletes demo data, written but never run: ask the user first)
 
 ---
 
@@ -177,8 +179,10 @@ Covers: A5, A6, T1
 Covers: A2
 - [x] Redirect to the right dashboard after sign-in
 - [x] Admin: users, system overview, audit log
-- [ ] Examiner: exams, question bank, candidates, monitoring, grading, results
-- [ ] Candidate: upcoming, available, completed exams, results
+- [x] Examiner: exams, question bank, candidates
+- [ ] Examiner: monitoring, grading, results (arrive in steps 9 and 10)
+- [x] Candidate: upcoming, available, completed exams
+- [ ] Candidate: results (arrives in step 9)
 
 ---
 
@@ -229,50 +233,50 @@ Covers: Q4
 
 ## EXM. Examination management
 
-### EXM-1 Create and configure · P0 · M — ⬜ Not started (step 6)
+### EXM-1 Create and configure · P0 · M — ✅ Done (step 6)
 Covers: E1, E5
-- [ ] Title, instructions, start, end, duration, total marks, pass mark
-- [ ] Settings: shuffle questions, shuffle options, allow backward navigation
-- [ ] Validate end > start, duration > 0 and fitting the window, marks > 0
-- [ ] Store UTC; show local time with zone
-- [ ] Examiner list with state filter; edit; delete drafts only
-- [ ] ★ Duplicate an exam
+- [x] Title, instructions, start, end, duration, total marks, pass mark
+- [x] Settings: shuffle questions, shuffle options, allow backward navigation
+- [x] Validate end > start, duration > 0 and fitting the window, marks > 0
+- [x] Store UTC; show local time with zone
+- [x] Examiner list with state filter; edit; delete drafts only
+- [x] ★ Duplicate an exam
 
-### EXM-2 Lifecycle · P0 · M — ⬜ Not started (step 6)
+### EXM-2 Lifecycle · P0 · M — ✅ Done (step 6)
 Covers: E2, E3
-- [ ] Stored `DRAFT` / `PUBLISHED`; `ONGOING` and `COMPLETED` derived from server time (no scheduler needed)
-- [ ] One state function used by every page and API
-- [ ] Allowed edits per state: draft all; published-before-start limited, or unpublish; ongoing and completed locked
-- [ ] Unpublish only while no attempt exists
-- [ ] **Sec:** candidate responses never include drafts, or questions before start
+- [x] Stored `DRAFT` / `PUBLISHED`; `ONGOING` and `COMPLETED` derived from server time (no scheduler needed)
+- [x] One state function used by every page and API
+- [x] Allowed edits per state: draft all; published-before-start limited, or unpublish; ongoing and completed locked
+- [x] Unpublish only while no attempt exists
+- [x] **Sec:** candidate responses never include drafts, or questions before start
 
-### EXM-3 Review and publish · P0 · S — ⬜ Not started (step 6)
+### EXM-3 Review and publish · P0 · S — ✅ Done (step 6)
 Covers: E4
-- [ ] Preview of all settings, questions, marks, enrolled count
-- [ ] Publish blocked with a clear checklist: no questions, marks mismatch, past schedule, no candidates (warn)
-- [ ] Publishing is idempotent and audited
+- [x] Preview of all settings, questions, marks, enrolled count
+- [x] Publish blocked with a clear checklist: no questions, marks mismatch, past schedule, no candidates (warn)
+- [x] Publishing is idempotent and audited
 
 ---
 
 ## ENR. Candidate management
 
-### ENR-1 Enrolment · P0 · M — ⬜ Not started (step 6)
+### ENR-1 Enrolment · P0 · M — 🟡 Partly done (step 6)
 Covers: C1, C2
-- [ ] Search candidates; enrol one or many; remove before they start
-- [ ] List with status: not started, in progress, submitted, graded
+- [x] Search candidates; enrol one or many; remove before they start
+- [x] List with status: not started, in progress, submitted, graded
 - [ ] Bulk enrol from import results
-- [ ] **Sec:** only the exam owner; only active candidate accounts
-- [ ] ★ Extra time per candidate with a reason (accessibility accommodation), audited
+- [x] **Sec:** only the exam owner; only active candidate accounts
+- [x] ★ Extra time per candidate with a reason (accessibility accommodation), audited
 
-### ENR-2 Candidate dashboard · P0 · M — ⬜ Not started (step 6)
+### ENR-2 Candidate dashboard · P0 · M — ✅ Done (step 6)
 Covers: C3, C4
-- [ ] Sections: available, upcoming, completed
-- [ ] Instructions, schedule, duration, marks, access status and why ("opens in 2 h", "closed", "submitted")
-- [ ] Server-synced countdown to opening
+- [x] Sections: available, upcoming, completed
+- [x] Instructions, schedule, duration, marks, access status and why ("opens in 2 h", "closed", "submitted")
+- [x] Server-synced countdown to opening
 
-### ENR-3 Entry gate · P0 · S — ⬜ Not started (step 6)
+### ENR-3 Entry gate · P0 · S — 🟡 Partly done (step 6)
 Covers: C5, C6, E3
-- [ ] Server check: signed in, active, enrolled, published, inside window, not already submitted
+- [x] Server check: signed in, active, enrolled, published, inside window, not already submitted
 - [ ] Instructions screen with explicit "Start"
 - [ ] **Sec:** the same gate guards fetching, saving and submitting, not only the page
 

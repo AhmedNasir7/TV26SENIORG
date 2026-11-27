@@ -15,6 +15,15 @@ export type ActivityAction =
   | 'question_updated'
   | 'question_archived'
   | 'exam_questions_updated'
+  | 'exam_created'
+  | 'exam_updated'
+  | 'exam_published'
+  | 'exam_unpublished'
+  | 'exam_deleted'
+  | 'exam_duplicated'
+  | 'enrollment_added'
+  | 'enrollment_removed'
+  | 'extra_time_granted'
   | 'system_event'
 
 type LogActivityParams = {

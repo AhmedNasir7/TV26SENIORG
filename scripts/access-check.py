@@ -230,4 +230,80 @@ for page_path in ["/examiner/questions", f"/examiner/exams/{draft['exam']['id']}
     status, _, body = call(examiner, "GET", page_path)
     check(f"page {page_path} renders", status == 200 and "NEXT_REDIRECT" not in body, status)
 
+# examinations and enrolment (creates a throwaway draft and deletes it again)
+from datetime import datetime, timedelta, timezone
+
+def iso(delta):
+    return (datetime.now(timezone.utc) + delta).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+examiner, _, _ = login("Examiner")
+candidate, _, _ = login("Candidate")
+base = {"title": "Access check exam", "instructions": "x", "startsAt": iso(timedelta(days=2)), "endsAt": iso(timedelta(days=3)),
+        "durationMinutes": 30, "totalMarks": 1, "passMarks": None}
+check("end before start rejected", call(examiner, "POST", "/api/exams", {**base, "endsAt": iso(timedelta(days=1))})[0] == 400)
+check("duration longer than window rejected", call(examiner, "POST", "/api/exams", {**base, "endsAt": iso(timedelta(days=2, minutes=10))})[0] == 400)
+check("pass mark above total rejected", call(examiner, "POST", "/api/exams", {**base, "passMarks": 5})[0] == 400)
+check("client cannot set status or owner", call(examiner, "POST", "/api/exams", {**base, "status": "PUBLISHED", "ownerId": 1})[0] == 400)
+check("candidate cannot create exams", call(candidate, "POST", "/api/exams", base)[0] == 403)
+status, _, body = call(examiner, "POST", "/api/exams", base)
+check("examiner creates a draft", status == 201, body[:150])
+eid = json.loads(body)["exam"]["id"]
+exam_url = f"/api/exams/{eid}"
+status, _, body = call(examiner, "POST", exam_url + "/publish", {"published": True})
+check("publish blocked without questions", status == 409 and "question" in body, body[:150])
+question = next(q for q in json.loads(call(examiner, "GET", "/api/questions?type=SINGLE_CHOICE")[2])["questions"])
+check("marks mismatch blocks publish",
+      call(examiner, "PUT", exam_url + "/questions", {"items": [{"questionId": question["id"], "marks": 2}]})[0] == 200
+      and call(examiner, "POST", exam_url + "/publish", {"published": True})[0] == 409)
+call(examiner, "PUT", exam_url + "/questions", {"items": [{"questionId": question["id"], "marks": 1}]})
+people = json.loads(call(examiner, "GET", exam_url + "/candidates?search=candidate.demo")[2])["candidates"]
+check("candidate search returns names and emails only", len(people) == 1 and set(people[0]) == {"id", "name", "email"}, people)
+demo_id = people[0]["id"]
+admin_id = json.loads(call(login("Administrator")[0], "GET", "/api/auth/me")[2])["user"]["id"]
+check("staff accounts cannot be enrolled", call(examiner, "POST", exam_url + "/enrollments", {"candidateIds": [admin_id]})[0] == 400)
+check("draft is invisible to the candidate", call(candidate, "GET", f"/api/me/exams/{eid}")[0] == 404)
+status, _, body = call(examiner, "POST", exam_url + "/enrollments", {"candidateIds": [demo_id]})
+check("candidate enrolled", status == 201 and json.loads(body)["added"] == 1, body[:150])
+check("enrolling twice adds nothing", json.loads(call(examiner, "POST", exam_url + "/enrollments", {"candidateIds": [demo_id]})[2])["added"] == 0)
+check("still invisible while draft", call(candidate, "GET", f"/api/me/exams/{eid}")[0] == 404)
+check("publish succeeds", call(examiner, "POST", exam_url + "/publish", {"published": True})[0] == 200)
+check("publishing again is harmless", call(examiner, "POST", exam_url + "/publish", {"published": True})[0] == 200)
+status, _, body = call(candidate, "GET", f"/api/me/exams/{eid}")
+view = json.loads(body)["exam"]
+check("candidate sees upcoming, cannot enter", view["access"]["state"] == "upcoming" and view["access"]["canEnter"] is False, view["access"])
+check("no questions or answers in candidate view", question["text"] not in body and '"correct"' not in body and '"options"' not in body)
+check("published schedule is locked", call(examiner, "PATCH", exam_url, {**base, "durationMinutes": 60})[0] == 400)
+check("published wording can change", call(examiner, "PATCH", exam_url, {"title": "Access check exam", "instructions": "new"})[0] == 200)
+check("published exam cannot be deleted", call(examiner, "DELETE", exam_url)[0] == 409)
+rows = json.loads(call(examiner, "GET", exam_url + "/enrollments")[2])["enrollments"]
+row = f"{exam_url}/enrollments/{rows[0]['id']}"
+check("extra time needs a reason", call(examiner, "PATCH", row, {"extraMinutes": 15})[0] == 400)
+check("extra time recorded", call(examiner, "PATCH", row, {"extraMinutes": 15, "reason": "Accessibility"})[0] == 200
+      and json.loads(call(candidate, "GET", f"/api/me/exams/{eid}")[2])["exam"]["extraMinutes"] == 15)
+other_candidate = client()
+call(other_candidate, "POST", "/api/auth/login", {"email": "candidate01@secureexam.test", "password": second})
+check("unenrolled candidate gets 404", call(other_candidate, "GET", f"/api/me/exams/{eid}")[0] == 404)
+for method, path in [("GET", exam_url), ("GET", exam_url + "/enrollments"), ("GET", exam_url + "/candidates"), ("POST", exam_url + "/publish")]:
+    status = call(other, method, path, {"published": False} if method == "POST" else None)[0]
+    check(f"other examiner refused {method} {path.split('/')[-1]}", status == 404, status)
+check("candidate cannot manage the exam", call(candidate, "GET", exam_url)[0] == 403)
+for page_path in [f"/examiner/exams/{eid}", f"/examiner/exams/{eid}/candidates", "/examiner/exams/new", "/examiner?phase=ONGOING"]:
+    status, _, body = call(examiner, "GET", page_path)
+    check(f"page {page_path} renders", status == 200 and "NEXT_REDIRECT" not in body, status)
+for page_path in ["/candidate", f"/candidate/exams/{eid}"]:
+    status, _, body = call(candidate, "GET", page_path)
+    check(f"page {page_path} renders", status == 200 and "Access check exam" in body, status)
+check("candidate kept out of examiner pages", goes_to(candidate, f"/examiner/exams/{eid}", "/")[0])
+state = {e["title"]: e["access"]["state"] for e in json.loads(call(candidate, "GET", "/api/me/exams")[2])["exams"]}
+check("dashboard states are right", state.get("Database Systems: Quiz") == "available"
+      and state.get("Computer Networks: Final") == "upcoming" and state.get("Programming Fundamentals: Midterm") == "submitted", state)
+status, _, body = call(examiner, "POST", exam_url + "/duplicate")
+check("exam duplicated as draft", status == 201, body[:120])
+copy = json.loads(body)["exam"]["id"]
+detail = json.loads(call(examiner, "GET", f"/api/exams/{copy}")[2])["exam"]
+check("copy keeps questions, not candidates", detail["phase"] == "DRAFT" and detail["questions"] == 1 and detail["enrolled"] == 0, detail)
+check("enrolment can be removed", call(examiner, "DELETE", row)[0] == 200)
+check("unpublish works with no attempts", call(examiner, "POST", exam_url + "/publish", {"published": False})[0] == 200)
+check("throwaway exams deleted", call(examiner, "DELETE", exam_url)[0] == 200 and call(examiner, "DELETE", f"/api/exams/{copy}")[0] == 200)
+
 print(f"\n{sum(results)}/{len(results)} checks passed")
