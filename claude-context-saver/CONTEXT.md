@@ -7,20 +7,48 @@ _Last updated: 2026-11-27_
 
 ## 1. Right now
 
-- **Competition day (2026-11-27).** Big request in progress; the user said "dont ask about anything just do it" and
-  "please test and deploy". Done and being deployed: bulk import, question insights, signed PDF reports with
-  verification, fair randomized papers, disputes, confirmation popups, scratchpad dock with calculator, AI
-  features (Groq; need `GROQ_API_KEY`, see `scripts/set-groq.sh`), voice, reminder emails with a server timer,
-  calendar links, 100ms help call, request-origin check and security headers, product name **Invigil** with new
-  logo, public landing page at `/` (Attio template look, real screenshots in `public/landing`, retake with
-  `node scripts/landing-shots.mjs`), new sign-in pages, administrator-only sign-up behind `ADMIN_SIGNUP_CODE`
-  (deploy.sh generates it on the server), usernames and admin-chosen passwords, dark theme by default,
-  collapsible side panel, themed dropdowns, candidate display settings hidden (user's request).
-- **Still to build (user, same day):** 100ms live camera examinations with recording (candidate joins with camera
-  before starting; examiner watches), calendar reminders the candidate sets, shorter reminder timer for testing,
-  AI integrity score over all attempts, AI help while writing exams and questions.
-- Migrations 5 and 6 added. Local test setup code is in `docker-compose.dev.yml`.
-- Dev server on this machine can serve stale CSS after many edits: stop it, delete `.next`, start again.
+### Handover (2026-11-27, session ended on a usage limit)
+
+**On `main` (pushed, commit fd275c7, deploy run 45998693789 was still running: CHECK with `gh run list`,
+then curl https://seniorgrade.site/api/health, /, /login, a PDF route):** bulk import, question insights, signed
+PDF reports and verification (`/verify` lets anyone check a report's code or QR is genuine), fair papers, disputes,
+popups, scratchpad + calculator, AI (attempt review, suggested mark, question drafts; Groq), voice, reminder emails
++ systemd timer (`deploy/cron.sh`, every 5 min, 24 h and 1 h), calendar links/.ics, 100ms help call, origin check
+and headers, name Invigil, landing page, new sign-in pages, admin-only sign-up with `ADMIN_SIGNUP_CODE`, usernames,
+dark default, collapsible side panel, themed dropdowns (`public/select.css`), display settings hidden from
+candidates (user asked; this was secondary feature PREF, tell the user it costs that item).
+Checks before that push: tsc, eslint (2 old warnings), unit tests 11/11, access check 279/280 (the one failure
+was leftover test data, since archived).
+
+**In progress on branch `live-exams-wip` (NOT merged, NOT tested): 100ms live camera examinations.**
+Written: migration `7_live_proctoring` (already applied to the local DB), `lib/server/hms-api.ts`,
+`lib/services/live-exam.ts`, routes `api/exams/[id]/live(/token,/recording)` and `api/me/exams/[id]/live`,
+`components/live/{LiveRoom,CameraGate,LivePanel}.tsx`, candidate exam layout + camera gate, presence check and
+auto-recording in `attempts.openAttempt`, recorded-notice text, panel on the monitor page.
+Left: run tsc/eslint again; test join with a fake camera (Chrome `--use-fake-device-for-media-stream`); check the
+template's role names (`HMS_STAFF_ROLE`, `HMS_CANDIDATE_ROLE` override; the candidate role should not see other
+candidates), recording start without `meeting_url` (`HMS_RECORDING_URL` if refused); the active-room peers
+endpoint used for the presence check is unverified; add those env names to the example files, PERMISSIONS.md and
+the access check; then merge to main and push (deploys).
+
+**Still to build (user's last requests):**
+1. Calendar: candidate picks reminder time (event/.ics with alarms), visible on exam page and cards.
+2. Reminder timer: make interval short/configurable for testing (e.g. every minute, `REMINDER_MINUTES=1440,60,10`),
+   plus an examiner "send reminders now" button. Emails need real addresses and the verified Resend domain.
+3. AI integrity score: deterministic score from every candidate's logged events + similarity, ranked per exam,
+   one batched AI explanation on button press (cached).
+4. AI help while writing exams/questions (instructions writer, question checker, editable drafts, count and focus).
+5. Tell the user which AI features exist and how to test them.
+6. README (required for submission), tick `docs/TASKS.md` + `scripts/task-progress.py`, `docs/PERMISSIONS.md`.
+
+**User must do:** server Groq key: `ssh` in, `cd ~/secureexam && bash set-groq.sh` (local: `bash scripts/set-groq.sh`).
+Server setup code for admin sign-up: `grep ADMIN_SIGNUP_CODE ~/secureexam/.env`. Add seniorgrade.site to Firebase
+authorized domains; register `/api/calendar/callback` in Google Cloud; turn off HTTP/3 in Cloudflare.
+Claude does not write secret keys into `.env` files.
+
+**Tools:** local app = preview `app-local`; if styles look stale, stop it, delete `.next`, restart. Screenshots:
+`node scripts/landing-shots.mjs`. Do not push after the competition deadline.
+
 - **RULE: never remove services (Calendar, ElevenLabs, Supabase, Pusher, 100ms, Stripe, email, moderation,
   chat, support...). Only template content may go. ASK before removing anything.**
 - **RULE: no Claude co-author line in commits or pull requests.**
