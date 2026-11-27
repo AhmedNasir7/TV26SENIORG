@@ -1,4 +1,6 @@
 import { Badge } from '@/components/ui/badge'
+import { MessageSquare } from 'lucide-react'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export type SupportMessageItem = {
   id: number
@@ -25,7 +27,7 @@ export function SupportMessageHistory({
       {loading ? (
         <div className="p-8 text-center text-sm text-[color:var(--muted)]">Loading...</div>
       ) : messages.length === 0 ? (
-        <div className="p-8 text-center text-sm text-[color:var(--muted)]">No messages yet.</div>
+        <EmptyState icon={MessageSquare} title="No messages yet" description="Messages you send to support appear here with their replies." />
       ) : (
         <div>
           {messages.map((m) => (

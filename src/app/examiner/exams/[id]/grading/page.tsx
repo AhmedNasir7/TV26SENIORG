@@ -6,6 +6,8 @@ import { STAFF_ROLES } from '@/lib/roles'
 import { loadById } from '@/lib/server/page'
 import { gradingQueue } from '@/lib/services/grading'
 import { gradingQuerySchema } from '@/lib/validation/grading'
+import { PenLine } from 'lucide-react'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | undefined>> }
 
@@ -57,7 +59,7 @@ export default async function GradingPage({ params, searchParams }: Props) {
       </form>
 
       {queue.answers.length === 0 ? (
-        <p className="surface-card p-5 text-sm text-[color:var(--muted)]">Nothing to show here.</p>
+        <div className="surface-card"><EmptyState icon={PenLine} title="Nothing to show here" description="Answers that match this filter will appear here." /></div>
       ) : (
         <ul className="space-y-4">
           {queue.answers.map((answer) => (

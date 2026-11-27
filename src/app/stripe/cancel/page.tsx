@@ -5,8 +5,8 @@ export default function StripeCancelPage() {
     <div className="page-shell min-h-screen py-14">
       <div className="content-wrap max-w-2xl">
         <div className="surface-card p-8 text-center sm:p-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
-            Payment Cancelled
+          <p className="eyebrow">
+            Payment cancelled
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight">No charge was made</h1>
           <p className="mx-auto mt-3 max-w-[44ch] text-sm text-[color:var(--muted)]">

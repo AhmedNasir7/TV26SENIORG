@@ -14,7 +14,15 @@ export function CandidateExamList({ title, exams, serverNow, empty }: { title: s
         {exams.map((exam) => (
           <li key={exam.id} className="hairline-row flex flex-wrap items-center justify-between gap-3 px-5 py-4">
             <div>
-              <p className="font-medium">{exam.title}</p>
+              <p className="flex flex-wrap items-center gap-2 font-medium">
+                {exam.title}
+                {exam.access.canEnter && (
+                  <span className="badge-highlight">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" aria-hidden="true" />
+                    Open now
+                  </span>
+                )}
+              </p>
               <p className="text-sm text-[color:var(--muted)]">
                 <LocalTime iso={exam.startsAt} /> to <LocalTime iso={exam.access.closesAt} /> · {exam.durationMinutes + exam.extraMinutes} min ·{' '}
                 {exam.totalMarks} marks

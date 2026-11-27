@@ -23,12 +23,12 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section aria-label="Examinations" className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <StatTile label="Open now" value={exams.ongoing} tone="success" />
+        <StatTile label="Open now" value={exams.ongoing} tone="success" variant="highlight" />
         <StatTile label="Upcoming" value={exams.upcoming} />
         <StatTile label="Completed" value={exams.completed} tone="muted" />
         <StatTile label="Drafts" value={exams.draft} tone="muted" />
         <StatTile label="Attempts in progress" value={activeAttempts} tone="success" />
-        <StatTile label="Incidents to review" value={openIncidents} />
+        <StatTile label="Incidents to review" value={openIncidents} variant="glow" />
       </section>
 
       <section className="surface-card p-6">

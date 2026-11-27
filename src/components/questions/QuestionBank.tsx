@@ -8,6 +8,8 @@ import { QuestionFilters } from './QuestionFilters'
 import { TopicManager } from './TopicManager'
 import { DIFFICULTY_LABEL, TYPE_LABEL, type QuestionDetail, type QuestionRow } from './types'
 import { useQuestionList } from './useQuestionList'
+import { SearchX } from 'lucide-react'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export function QuestionBank() {
   const { filters, updateFilter, page, setPage, list, topics, error, setError, reload } = useQuestionList()
@@ -43,7 +45,7 @@ export function QuestionBank() {
       {!list ? (
         <p className="surface-card p-8 text-center text-sm text-[color:var(--muted)]">Loading questions...</p>
       ) : list.questions.length === 0 ? (
-        <p className="surface-card p-8 text-center text-sm text-[color:var(--muted)]">No questions match these filters.</p>
+        <div className="surface-card"><EmptyState icon={SearchX} title="No questions match these filters" description="Try another topic, type or difficulty, or clear the search." /></div>
       ) : (
         <ul className="surface-card">
           {list.questions.map((q) => (

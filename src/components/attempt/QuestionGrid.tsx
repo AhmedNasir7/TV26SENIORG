@@ -13,7 +13,9 @@ export function QuestionGrid({ items, current, onSelect }: { items: GridItem[]; 
               aria-current={item.position === current ? 'step' : undefined}
               aria-label={`Question ${item.position}, ${item.answered ? 'answered' : 'not answered'}${item.marked ? ', marked for review' : ''}`}
               onClick={() => onSelect(item.position)}
-              className={`h-11 min-w-11 px-2 text-sm tabular-nums disabled:opacity-40 ${item.position === current ? 'btn-primary' : 'btn-secondary'}`}
+              data-answered={item.answered}
+              data-marked={item.marked}
+              className={`qgrid-btn h-11 min-w-11 px-2 text-sm tabular-nums disabled:opacity-40 ${item.position === current ? 'btn-primary' : 'btn-secondary'}`}
             >
               {item.position}
               {item.answered && <span aria-hidden="true"> ✓</span>}

@@ -5,6 +5,8 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { toast } from '@/components/ui/ToasterProvider'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StaffSupportCard, type StaffSupportMessage } from '@/components/admin/support/StaffSupportCard'
+import { LifeBuoy } from 'lucide-react'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export default function AdminSupportPage() {
   const [messages, setMessages] = useState<StaffSupportMessage[]>([])
@@ -77,7 +79,7 @@ export default function AdminSupportPage() {
 
           <TabsContent value="open">
             {open.length === 0 ? (
-              <p className="text-sm text-[color:var(--muted)]">No open messages.</p>
+              <div className="surface-card"><EmptyState icon={LifeBuoy} title="No open messages" description="New requests from users will show up here." /></div>
             ) : (
               <div className="space-y-4">
                 {open.map((m) => (
@@ -89,7 +91,7 @@ export default function AdminSupportPage() {
 
           <TabsContent value="resolved">
             {resolved.length === 0 ? (
-              <p className="text-sm text-[color:var(--muted)]">No resolved messages yet.</p>
+              <div className="surface-card"><EmptyState icon={LifeBuoy} title="No resolved messages yet" description="Requests you answer move here." /></div>
             ) : (
               <div className="space-y-4">
                 {resolved.map((m) => (

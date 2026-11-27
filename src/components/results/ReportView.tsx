@@ -11,7 +11,10 @@ export function ReportView({ report }: { report: Report }) {
           {report.score === null ? 'Not fully marked' : `${report.score} / ${report.maximum}`}
         </p>
         {report.passed !== null && (
-          <p className="mt-1 font-medium">{report.passed ? 'Passed' : 'Not passed'} (pass mark {report.passMarks})</p>
+          <p className="mt-2 flex items-center gap-2 font-medium">
+            <span className={`chip ${report.passed ? 'chip-success' : 'chip-danger'}`}>{report.passed ? 'Passed' : 'Not passed'}</span>
+            <span className="text-[color:var(--muted)]">pass mark {report.passMarks}</span>
+          </p>
         )}
         <p className="mt-2 text-[color:var(--muted)]">
           {report.timedOut ? 'Submitted automatically when time ran out' : 'Submitted'}
@@ -23,25 +26,30 @@ export function ReportView({ report }: { report: Report }) {
       <ol className="space-y-3">
         {report.questions.map((q) => (
           <li key={q.id} className="surface-card p-5 text-sm">
-            <p className="text-xs text-[color:var(--muted)]">
-              Question {q.position} · {q.marks ?? 'unmarked'} of {q.maximum} marks
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs text-[color:var(--muted)]">Question {q.position}</p>
+              <span className={`chip ${q.marks === null ? '' : q.marks === q.maximum ? 'chip-success' : q.marks === 0 ? 'chip-danger' : 'chip-warning'}`}>
+                {q.marks ?? 'unmarked'} of {q.maximum} marks
+              </span>
+            </div>
             <p className="mt-1 whitespace-pre-wrap break-words font-medium">{q.text}</p>
             {q.type === 'WRITTEN' ? (
               <p className="mt-3 whitespace-pre-wrap break-words rounded-[var(--radius-sm)] border border-[var(--border)] p-3">
                 {q.written?.trim() || 'No answer'}
               </p>
             ) : (
-              <ul className="mt-3 space-y-1">
+              <ul className="mt-3">
                 {q.options.map((option, index) => (
-                  <li key={index} className="break-words">
-                    <span aria-hidden="true">{option.chosen ? '● ' : '○ '}</span>
-                    {option.text}
-                    {option.chosen && <span className="text-[color:var(--muted)]"> (selected)</span>}
-                    {option.correct && <span style={{ color: 'var(--success)' }}> ✓ correct</span>}
+                  <li key={index} className="option-row break-words" data-chosen={option.chosen} data-correct={option.correct === undefined ? undefined : option.correct}>
+                    <span className="option-mark" aria-hidden="true" />
+                    <span className="flex-1">
+                      {option.text}
+                      {option.chosen && <span className="text-[color:var(--muted)]"> (selected)</span>}
+                    </span>
+                    {option.correct && <span className="chip chip-success shrink-0">✓ correct</span>}
                   </li>
                 ))}
-                {!q.options.some((o) => o.chosen) && <li className="text-[color:var(--muted)]">No answer</li>}
+                {!q.options.some((o) => o.chosen) && <li className="mt-2 text-[color:var(--muted)]">No answer</li>}
               </ul>
             )}
             {q.feedback && <p className="mt-3"><span className="font-medium">Feedback:</span> {q.feedback}</p>}

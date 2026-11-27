@@ -18,11 +18,11 @@ export function ProfileHero({
   onAvatarChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 }) {
   return (
-    <div className="border-b border-[var(--border)]">
+    <div className="border-b border-[var(--border)] bg-[radial-gradient(120%_80%_at_50%_0%,color-mix(in_srgb,var(--glow-to)_14%,transparent),transparent_70%)]">
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-end sm:gap-8">
           <div className="group relative">
-            <div className="h-28 w-28 shrink-0 overflow-hidden rounded-[var(--radius)] border border-[var(--border)] bg-[color:var(--surface-muted)] sm:h-32 sm:w-32">
+            <div className="glow-card h-28 w-28 shrink-0 overflow-hidden rounded-[var(--radius-xl)] shadow-[var(--shadow-md)] sm:h-32 sm:w-32">
               {user.imageUrl ? (
                 <Image
                   src={user.imageUrl}
@@ -35,7 +35,7 @@ export function ProfileHero({
               ) : (
                 <div
                   className="font-display flex h-full w-full items-center justify-center text-4xl font-semibold"
-                  style={{ color: 'var(--accent-strong)', background: 'var(--accent-soft)' }}
+                  style={{ color: 'var(--foreground)' }}
                 >
                   {displayName.charAt(0).toUpperCase()}
                 </div>

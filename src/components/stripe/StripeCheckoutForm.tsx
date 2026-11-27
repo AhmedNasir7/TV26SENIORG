@@ -94,7 +94,7 @@ export function StripeCheckoutForm() {
   return (
     <div className="surface-card p-7 sm:p-8">
       <div className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
+        <p className="eyebrow">
           Payments
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">Create Checkout Session</h1>
@@ -106,7 +106,7 @@ export function StripeCheckoutForm() {
           type="button"
           onClick={handleInstantTestCheckout}
           disabled={loading}
-          className="btn-primary mt-5 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/20 disabled:opacity-60"
+          className="btn-primary mt-5 flex w-full items-center justify-center gap-2 px-4 py-3 text-sm disabled:opacity-60"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
             <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
@@ -116,14 +116,14 @@ export function StripeCheckoutForm() {
 
         <div className="relative my-6 flex items-center">
           <div className="flex-grow border-t border-[var(--border)]"></div>
-          <span className="mx-4 flex-shrink text-xs text-[color:var(--muted)] uppercase tracking-wider">Or Custom Checkout</span>
+          <span className="mx-4 flex-shrink text-xs text-[color:var(--muted)]">or custom checkout</span>
           <div className="flex-grow border-t border-[var(--border)]"></div>
         </div>
       </div>
 
       <form onSubmit={handleCheckout} className="space-y-4">
         {error && (
-          <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/35 dark:text-red-300">
+          <div className="rounded-[var(--radius-sm)] border border-[var(--danger)] bg-[var(--danger-soft)] px-4 py-3 text-sm text-[color:var(--danger)]">
             {error}
           </div>
         )}

@@ -31,7 +31,9 @@ _Last updated: 2026-11-27_
 - **Step order** (reordered 2026-11-27 at the user's request: core first, then straightforward ones; ticks
   unchanged): 1–9 done · 10 MON (core) · 11 NET, SBX, PAD, PREF · 12 IMP, QAN ·
   13 PDF, VER · 14 FAIR (innovation) · 15 SEC, REL pass · 16 TST, SHIP
-- UI/UX (20 marks) is not a numbered step yet: the user deferred the design pass; raise it again.
+- **UI/UX (20 marks): design pass applied 2026-11-27** at teammate Slothdemon22's request, **pushed to `origin/main`
+  the same day**: Attio design system + Linear highlighter colours, class-based light/dark with an animated toggle on
+  every page. Rules are in `GUIDELINES.md` → Styling. Not a numbered step; later screens should follow it.
 - **Decided:** testing on Dockerized app and Postgres; hosting later, before the deadline; public sign-up closed.
 - **Still unanswered:** deadline, team size, template rule, explicit confirmation of innovation 5.2.
 
@@ -106,6 +108,18 @@ _Last updated: 2026-11-27_
   `src/app/api/auth/google/route.ts` (the user's choice)
 - GitHub CLI signed in as `AhmedNasir7`
 - Deploy workflow kept by the user's choice: **fails on every push**
+- **Second machine (teammate Slothdemon22, Kali Linux), 2026-11-27:** clone at
+  `/home/bacillus/University/FYP-Cerberus-Vanguard/TV26SENIORG`, own `.env` (gitignored). Port 3000 there
+  is taken by another project, so the app runs natively with `next dev -p 3300` against only the compose
+  `postgres` service (`docker compose -f docker-compose.dev.yml up -d postgres`), with `DATABASE_URL`
+  overridden to `localhost:5432/secureexam`. Migrated and seeded (admin, roles, demo); access check
+  223/223, unit tests 4/4, `tsc` clean. Keys checked read-only against each provider: Supabase (bucket
+  exists), Resend (domain `seniorgrade.site` verified), Stripe test, ElevenLabs (free tier), Pusher, 100ms
+  (key + secret + template) and Google OAuth client are valid; `GEMINI_API_KEY` and `API_KEY` (Groq) are
+  rejected but unused by the code. The remote `.env` database (Neon) still holds the old real-estate schema
+  with no Prisma migrations: untouched. `RESEND_FROM_EMAIL` must be `@seniorgrade.site` (not `.site.com`).
+- Hosting target prepared: AWS EC2 (Amazon Linux 2023) behind `https://seniorgrade.site` with Docker,
+  Compose, nginx and a Let's Encrypt certificate (auto-renew). Nothing deployed yet.
 
 ## 7. History
 
@@ -156,6 +170,31 @@ _Last updated: 2026-11-27_
     topics, candidates, history), publication checks and withdrawal with a reason, candidate result page,
     staff paper view. Migration `3_grading` (`Answer.gradeVersion`). Tried once in the browser pane:
     mark, publish, candidate view.
+
+14. **Design pass (2026-11-27, Linux clone, pushed):** `globals.css` rebuilt on the Attio system (Inter/Inter
+    Display, Newsreader, JetBrains Mono; Attio neutrals, strokes, shadows, buttons, eyebrow pills) with Linear
+    highlighters (lime `#e4f222`, sky → lavender gradient) via `.highlight-card`, `.glow-card`, `.badge-highlight`,
+    `.mark-highlight`, lime active-nav marker and dark-mode lime primary buttons. Token names unchanged, so every
+    page re-themed itself. Dark mode is now a `.dark` class (no-flash script in `app/layout.tsx`,
+    `lib/theme.ts`, `hooks/useTheme.ts`, `components/theme/ThemeToggle.tsx`): circular View Transition reveal
+    from the toggle with a lime ring, cross-fade fallback, instant with reduced motion; stored in localStorage,
+    OS setting until chosen. Component CSS moved into `@layer components` (base rules into `@layer base`), which
+    also fixed utilities like `hidden md:inline-flex` being overridden (mobile header overflow). New sign-in
+    layout with highlighter showcase. Verified with Playwright: 62 page loads (every route, both themes, all
+    roles, live exam screen) with 0 contrast failures, no overflow at 1440 and 390 px, toggle behaviour tests;
+    access check 223/223, unit tests, `tsc` and ESLint (0 errors) pass.
+
+15. **UI/UX pass across every page (2026-11-27, pushed, no behaviour changes):** shared `StatusPill`,
+    `Checklist`, `EmptyState`, upgraded `PageHeader`; sidebar icons and user card; Ctrl/⌘+K command menu in
+    both shells; header links with icons and current-page state; exam list with status column and segmented
+    filter with counts; exam settings as a facts grid; icon publication checklists; gradient score bars, data
+    tables and pass/fail chips on results; answer papers with styled option rows (correctness only shown when
+    the server sends it, i.e. staff); candidate home summary tiles, status pill and highlighted start card;
+    exam timer turns amber under 5 min and red under 1 min (display only); answered/flagged grid states;
+    tokens re-scoped inside highlighter cards so text stays readable in dark mode; Stripe labels sentence case.
+    Playwright: 62 page loads, 0 contrast failures, command menu and toggle tests; access check 223/223.
+    Dev note: on the Linux box the dev server's file watcher can miss edits when several dev servers run
+    (inotify limit 65536); restart `next dev` with `.next` cleared if a change doesn't show.
 
 Earlier, separate work in the parent folder (not the competition): the `obol` site, `DESIGN-PIPELINE.md`
 and the skills `design-pipeline`, `scroll-video-hero`, `kinetic-details`. The user said to forget Obol.

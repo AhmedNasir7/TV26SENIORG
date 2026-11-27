@@ -7,6 +7,8 @@ import { roundMarks } from '@/lib/grading'
 import { QuestionFilters } from './QuestionFilters'
 import { DIFFICULTY_LABEL, TYPE_LABEL, type Difficulty, type QuestionType } from './types'
 import { useQuestionList } from './useQuestionList'
+import { ListPlus } from 'lucide-react'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 type Item = { questionId: number; marks: number; text: string; type: QuestionType; difficulty: Difficulty; topic: string }
 type Data = {
@@ -58,7 +60,7 @@ export function ExamQuestionPicker({ initial }: { initial: Data }) {
           {items.length} questions · {total} of {examTotal} marks{total === examTotal ? '' : ' · totals do not match'}
         </p>
         <ol className="surface-card">
-          {items.length === 0 && <li className="p-6 text-sm text-[color:var(--muted)]">No questions selected.</li>}
+          {items.length === 0 && <li><EmptyState icon={ListPlus} title="No questions selected" description="Pick questions from the bank to build this paper." /></li>}
           {items.map((item, index) => (
             <li key={item.questionId} className="hairline-row flex items-start gap-3 px-4 py-3">
               <span className="text-sm text-[color:var(--muted)]">{index + 1}.</span>

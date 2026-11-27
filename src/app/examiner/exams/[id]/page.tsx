@@ -3,8 +3,9 @@ import { ExamActions } from '@/components/exams/ExamActions'
 import { ExamForm } from '@/components/exams/ExamForm'
 import { LocalTime } from '@/components/ui/LocalTime'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { Checklist } from '@/components/ui/Checklist'
+import { StatusPill } from '@/components/ui/StatusPill'
 import { requirePageUser } from '@/lib/auth'
-import { PHASE_LABEL } from '@/lib/exam-labels'
 import { STAFF_ROLES } from '@/lib/roles'
 import { loadById } from '@/lib/server/page'
 import { getExam } from '@/lib/services/exams'
@@ -16,13 +17,15 @@ export default async function ExamReviewPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="space-y-6 p-8">
-      <PageHeader eyebrow={PHASE_LABEL[exam.phase]} title={exam.title} description="Review the examination before candidates see it." />
+      <PageHeader status={<StatusPill phase={exam.phase} />} title={exam.title} description="Review the examination before candidates see it." />
 
-      <section className="surface-card space-y-3 p-5 text-sm">
-        <p>
-          Opens <LocalTime iso={exam.startsAt} /> · closes <LocalTime iso={exam.endsAt} /> · {exam.durationMinutes} minutes ·{' '}
-          {exam.totalMarks} marks{exam.passMarks !== null && ` · pass ${exam.passMarks}`}
-        </p>
+      <section className="surface-card space-y-4 p-5 text-sm">
+        <dl className="facts">
+          <div><dt>Opens</dt><dd><LocalTime iso={exam.startsAt} /></dd></div>
+          <div><dt>Closes</dt><dd><LocalTime iso={exam.endsAt} /></dd></div>
+          <div><dt>Duration</dt><dd>{exam.durationMinutes} minutes</dd></div>
+          <div><dt>Marks</dt><dd>{exam.totalMarks}{exam.passMarks !== null && ` · pass ${exam.passMarks}`}</dd></div>
+        </dl>
         <p className="text-[color:var(--muted)]">
           {exam.shuffleQuestions ? 'Questions shuffled' : 'Fixed question order'} ·{' '}
           {exam.shuffleOptions ? 'options shuffled' : 'fixed option order'} ·{' '}
@@ -34,13 +37,13 @@ export default async function ExamReviewPage({ params }: { params: Promise<{ id:
           {!isDraft && <Link href={`/examiner/exams/${exam.id}/results`} className="btn-secondary px-3 py-1.5">Marking and results</Link>}
         </div>
         {isDraft && (
-          <ul aria-label="Publication checklist" className="space-y-1">
-            {exam.checks.map((check) => (
-              <li key={check.label} style={{ color: check.ok ? 'var(--success)' : check.blocking ? 'var(--danger)' : 'var(--muted)' }}>
-                {check.ok ? 'Done' : check.blocking ? 'Required' : 'Warning'}: {check.label}
-              </li>
-            ))}
-          </ul>
+          <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background)] p-4">
+            <p className="mb-2.5 font-medium">Ready to publish?</p>
+            <Checklist
+              label="Publication checklist"
+              items={exam.checks.map((check) => ({ label: check.label, state: check.ok ? 'done' : check.blocking ? 'required' : 'warning' }))}
+            />
+          </div>
         )}
         <ExamActions id={exam.id} isDraft={isDraft} canPublish={exam.checks.every((c) => c.ok || !c.blocking)} canUnpublish={exam.canUnpublish} />
       </section>

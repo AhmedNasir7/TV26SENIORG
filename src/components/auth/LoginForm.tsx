@@ -84,7 +84,7 @@ export function LoginForm({ allowSignup, demoAccounts }: { allowSignup: boolean;
     <div className="surface-card p-7 sm:p-8">
       <div className="mb-6">
         <p className="eyebrow">Account access</p>
-        <h1 className="font-display mt-2 text-3xl font-semibold tracking-tight">Sign in</h1>
+        <h2 className="font-display mt-3 text-2xl font-semibold tracking-tight">Sign in</h2>
         <p className="mt-2 text-sm text-[color:var(--muted)]">
           Use the account your institution gave you.
         </p>

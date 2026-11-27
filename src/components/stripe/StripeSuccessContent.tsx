@@ -11,8 +11,8 @@ export function StripeSuccessContent() {
     <div className="page-shell min-h-screen py-14">
       <div className="content-wrap max-w-2xl">
         <div className="surface-card p-8 text-center sm:p-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--accent)]">
-            Payment Confirmed
+          <p className="eyebrow">
+            Payment confirmed
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight">Transaction successful</h1>
           <p className="mx-auto mt-3 max-w-[44ch] text-sm text-[color:var(--muted)]">

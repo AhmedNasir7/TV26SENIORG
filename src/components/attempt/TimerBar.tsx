@@ -20,11 +20,14 @@ export function TimerBar({ title, remaining, save }: { title: string; remaining:
   const warning = [...WARNINGS].reverse().find((limit) => seconds <= limit)
 
   return (
-    <div className="surface-card sticky top-0 z-10 p-4">
+    <div className="surface-card sticky top-3 z-10 p-4 backdrop-blur-md [background:color-mix(in_srgb,var(--surface)_92%,transparent)]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-lg font-semibold">{title}</h1>
         <p className="text-sm">
-          Time left <span role="timer" className="stat-figure text-xl font-semibold tabular-nums">{clock(remaining)}</span>
+          Time left{' '}
+          <span role="timer" className={`stat-figure text-xl font-semibold tabular-nums ${seconds <= 60 ? 'timer-critical' : seconds <= 300 ? 'timer-low' : ''}`}>
+            {clock(remaining)}
+          </span>
         </p>
       </div>
       <p role="status" className="mt-1 text-xs" style={{ color: save.kind === 'retrying' || save.kind === 'blocked' ? 'var(--danger)' : 'var(--muted)' }}>
