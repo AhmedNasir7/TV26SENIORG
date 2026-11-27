@@ -16,6 +16,8 @@ export type ActivityAction =
   | 'question_archived'
   | 'exam_questions_updated'
   | 'exam_created'
+  | 'attempt_started'
+  | 'attempt_submitted'
   | 'exam_updated'
   | 'exam_published'
   | 'exam_unpublished'

@@ -9,6 +9,7 @@ import { prisma } from '@/lib/prisma'
 import { ApiError, parseInput } from '@/lib/server/api'
 import { examPhase, serverNow, type ExamPhase } from '@/lib/server/time'
 import { audit } from '@/lib/services/audit'
+import { finalizeExpired } from '@/lib/services/finalize'
 import { publicationChecks } from '@/lib/services/readiness'
 import { examSchema, publishedEditSchema } from '@/lib/validation/exams'
 
@@ -72,6 +73,7 @@ const checksFor = (exam: OwnedExam, now: Date) =>
 /** Everything the review screen needs, including what blocks publication. */
 export async function getExam(actor: Actor, id: number) {
   const exam = await findOwned(prisma, actor, id)
+  await finalizeExpired({ examId: id })
   const now = serverNow()
   const phase = examPhase(exam, now)
   return {

@@ -10,9 +10,10 @@ _Last updated: 2026-11-27_
 - **RULE: never remove services (Calendar, ElevenLabs, Supabase, Pusher, 100ms, Stripe, email, moderation,
   chat, support...). Only template content may go. ASK before removing anything.**
 - **RULE: no Claude co-author line in commits or pull requests.**
-- **Phase:** building. **Steps 1–6 done.** Steps 4–6 are committed locally, **not pushed**.
-- **Next:** step 7 = ATT-1..4 (attempt engine: start, frozen paper, server timing, candidate-safe paper
-  API). It must reuse `lib/services/access.ts` (gate and `attemptDeadline`). Wait for the user.
+- **Phase:** building. **Steps 1–7 done.** Commits since step 3 are local, **not pushed**.
+- **Next:** step 8 = WS-1..4 (exam screen: answer inputs, states, autosave with queue, resume, review and
+  submit). Server save, submit, takeover and receipt already exist; the screen is
+  `src/components/attempt/` and currently shows the paper without answer controls. Wait for the user.
 - **Progress view:** top of `docs/TASKS.md`. After each step: tick subtasks, raise `FINISHED_STEP` in
   `scripts/task-progress.py`, run it. The user relies on this to follow the work.
 - **Waiting for the user:** whether to bring back non-service items removed in step 1: admin analytics,
@@ -74,7 +75,7 @@ _Last updated: 2026-11-27_
 - **State:** containers running; migration applied; demo accounts seeded (see `docs/TEST-ACCOUNTS.md`)
 - Sign-in page has Admin / Examiner / Candidate fill buttons when `SHOW_DEMO_LOGINS=true` (set only in
   `docker-compose.dev.yml`). Never enable it with real data.
-- Access check: `python scripts/access-check.py` (149/149 passed after step 6)
+- Access check: `python scripts/access-check.py` (182/182 passed after step 7; it creates and removes its own attempt test data)
 - The built-in browser pane stalled on large dev scripts (connection reset); Playwright Chromium worked.
 - New migration for schema changes (never wipe data without asking): `prisma/migrations/<n>_name`,
   then `... exec -T app pnpm run db:migrate`
@@ -130,6 +131,11 @@ _Last updated: 2026-11-27_
 10. **Step 6:** examination create, review, publish checklist, unpublish, duplicate, draft delete, state-based
     editing; enrolment with candidate search, removal and audited extra time; candidate dashboard sections,
     server-synced countdown and instructions page; `reset:demo` script (never run).
+
+11. **Step 7:** attempt engine. Start freezes the paper (seeded shuffle, versions, marks) and is safe against
+    parallel requests; server deadline with 5 s grace; save with revisions; takeover by a new session;
+    submit and lazy expiry finalization with objective auto-grading and a receipt hash; candidate-safe paper
+    with opaque option keys `c1..`; optional `POST /api/cron/finalize` (`CRON_SECRET`).
 
 Earlier, separate work in the parent folder (not the competition): the `obol` site, `DESIGN-PIPELINE.md`
 and the skills `design-pipeline`, `scroll-video-hero`, `kinetic-details`. The user said to forget Obol.

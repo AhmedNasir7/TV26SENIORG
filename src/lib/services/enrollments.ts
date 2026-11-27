@@ -6,6 +6,7 @@ import { ApiError } from '@/lib/server/api'
 import { examPhase, serverNow } from '@/lib/server/time'
 import { attemptDeadline } from '@/lib/services/access'
 import { audit } from '@/lib/services/audit'
+import { finalizeExpired } from '@/lib/services/finalize'
 import type { ExtraTimeInput, PeopleQuery } from '@/lib/validation/exams'
 
 const PAGE_SIZE = 20
@@ -23,6 +24,7 @@ export type EnrollmentStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'GR
 
 export async function listEnrollments(actor: Actor, examId: number, { search, page }: PeopleQuery) {
   await ownedExam(prisma, actor, examId)
+  await finalizeExpired({ examId })
   const where: Prisma.EnrollmentWhereInput = { examId, candidate: matching(search) }
   const [rows, total] = await Promise.all([
     prisma.enrollment.findMany({
@@ -137,7 +139,9 @@ export function removeEnrollment(actor: Actor, examId: number, enrollmentId: num
 }
 
 /** Accessibility accommodation: moves the deadline of a running attempt too, and records why. */
-export function setExtraTime(actor: Actor, examId: number, enrollmentId: number, { extraMinutes, reason }: ExtraTimeInput) {
+export async function setExtraTime(actor: Actor, examId: number, enrollmentId: number, { extraMinutes, reason }: ExtraTimeInput) {
+  // An attempt whose time already ran out can't be revived by adding minutes
+  await finalizeExpired({ examId })
   return prisma.$transaction(
     async (tx) => {
       const exam = await ownedExam(tx, actor, examId)

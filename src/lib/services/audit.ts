@@ -6,7 +6,7 @@ export function audit(
   tx: Prisma.TransactionClient,
   actorId: number,
   action: ActivityAction,
-  entityType: 'user' | 'question' | 'exam',
+  entityType: 'user' | 'question' | 'exam' | 'attempt',
   entityId: number,
   metadata: Prisma.InputJsonObject = {}
 ) {

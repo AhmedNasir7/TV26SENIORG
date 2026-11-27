@@ -6,7 +6,7 @@ When a step is finished, raise FINISHED_STEP below.
 import os
 import re
 
-FINISHED_STEP = 6
+FINISHED_STEP = 7
 
 STEPS = [
     ("Remove template content", ["FND-1"]),

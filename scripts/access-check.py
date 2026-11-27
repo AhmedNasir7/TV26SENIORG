@@ -41,7 +41,7 @@ def call(c, method, path, body=None, headers=None):
 
 
 def check(name, ok, detail=""):
-    results.append(ok)
+    results.append(bool(ok))
     print(("PASS " if ok else "FAIL ") + name + ("" if ok else f"  -> {detail}"))
 
 
@@ -305,5 +305,114 @@ check("copy keeps questions, not candidates", detail["phase"] == "DRAFT" and det
 check("enrolment can be removed", call(examiner, "DELETE", row)[0] == 200)
 check("unpublish works with no attempts", call(examiner, "POST", exam_url + "/publish", {"published": False})[0] == 200)
 check("throwaway exams deleted", call(examiner, "DELETE", exam_url)[0] == 200 and call(examiner, "DELETE", f"/api/exams/{copy}")[0] == 200)
+
+# attempt engine (uses its own questions and exam, and removes them afterwards)
+from concurrent.futures import ThreadPoolExecutor
+
+def run_attempt_checks():
+    examiner, _, _ = login("Examiner")
+    topic = json.loads(call(examiner, "GET", "/api/topics")[2])["topics"][0]["id"]
+    def make(body):
+        return json.loads(call(examiner, "POST", "/api/questions", {"topicId": topic, "difficulty": "EASY", **body})[2])["question"]["id"]
+    q1 = make({"type": "SINGLE_CHOICE", "text": "ZZ attempt check single", "marks": 2,
+               "options": [{"text": "Right", "correct": True}, {"text": "Wrong", "correct": False}]})
+    q2 = make({"type": "WRITTEN", "text": "ZZ attempt check written", "marks": 3, "guidance": "SECRET-GUIDANCE", "maxLength": 50})
+    body = {"title": "ZZ attempt check", "instructions": "", "startsAt": iso(timedelta(minutes=-5)), "endsAt": iso(timedelta(hours=2)),
+            "durationMinutes": 30, "totalMarks": 5, "passMarks": None}
+    eid = json.loads(call(examiner, "POST", "/api/exams", body)[2])["exam"]["id"]
+    call(examiner, "PUT", f"/api/exams/{eid}/questions", {"items": [{"questionId": q1, "marks": 2}, {"questionId": q2, "marks": 3}]})
+    ids = []
+    for name in ["candidate01", "candidate02"]:
+        ids.append(json.loads(call(examiner, "GET", f"/api/exams/{eid}/candidates?search={name}")[2])["candidates"][0]["id"])
+    call(examiner, "POST", f"/api/exams/{eid}/enrollments", {"candidateIds": ids})
+    check("open attempt exam published", call(examiner, "POST", f"/api/exams/{eid}/publish", {"published": True})[0] == 200)
+
+    def candidate_client(email):
+        c = client()
+        call(c, "POST", "/api/auth/login", {"email": email, "password": second})
+        return c
+    one, two, outsider = (candidate_client(f"candidate{n}@secureexam.test") for n in ("01", "02", "03"))
+    start_url = f"/api/me/exams/{eid}/attempt"
+    check("resume before starting is refused", call(one, "POST", start_url, {"start": False})[0] == 409)
+    check("unenrolled candidate cannot start", call(outsider, "POST", start_url, {"start": True})[0] == 404)
+    check("examiner cannot start an attempt", call(examiner, "POST", start_url, {"start": True})[0] == 403)
+    with ThreadPoolExecutor(4) as pool:
+        replies = list(pool.map(lambda _: call(one, "POST", start_url, {"start": True}), range(4)))
+    attempts = {json.loads(r[2])["attempt"]["id"] for r in replies if r[0] == 200}
+    check("parallel starts give one attempt", len(attempts) == 1 and all(r[0] == 200 for r in replies), [r[0] for r in replies])
+    status, _, raw = call(one, "POST", start_url, {"start": True})
+    opened = json.loads(raw)
+    attempt, session = opened["attempt"], opened["sessionId"]
+    aid = attempt["id"]
+    check("paper hides answers and notes", all(k not in raw for k in ('"correct"', "SECRET-GUIDANCE", '"difficulty', '"o1"', "optionOrder", "autoMarks")))
+    check("server returns clock and deadline", attempt["serverNow"] < attempt["deadlineAt"])
+    single = next(q for q in attempt["questions"] if q["type"] == "SINGLE_CHOICE")
+    written = next(q for q in attempt["questions"] if q["type"] == "WRITTEN")
+    key = next(o["key"] for o in single["options"] if o["text"] == "Right")
+
+    call(examiner, "PATCH", f"/api/questions/{q1}", {"expectedVersion": 1, "question": {"type": "SINGLE_CHOICE", "topicId": topic,
+         "difficulty": "EASY", "text": "ZZ attempt check CHANGED", "marks": 9, "options": [{"text": "New", "correct": True}, {"text": "Other", "correct": False}]}})
+    again = call(one, "GET", f"/api/attempts/{aid}")[2]
+    check("editing the bank leaves the paper unchanged", "CHANGED" not in again and "ZZ attempt check single" in again)
+
+    def save(who, question, revision, response, sid=None):
+        return call(who, "PUT", f"/api/attempts/{aid}/answers/{question}",
+                    {"sessionId": sid or session, "revision": revision, "markedForReview": False, "response": response})
+    check("answer saves", save(one, single["id"], 2, {"optionKeys": [key]})[0] == 200)
+    stale = json.loads(save(one, single["id"], 1, {"optionKeys": []})[2])
+    check("older revision is ignored", stale["saved"] is False and stale["revision"] == 2, stale)
+    check("unknown option rejected", save(one, single["id"], 3, {"optionKeys": ["c9"]})[0] == 400)
+    check("two options on single choice rejected", save(one, single["id"], 3, {"optionKeys": ["c1", "c2"]})[0] == 400)
+    check("too long written answer rejected", save(one, written["id"], 1, {"text": "x" * 51})[0] == 400)
+    check("another candidate cannot read the attempt", call(two, "GET", f"/api/attempts/{aid}")[0] == 404)
+    check("another candidate cannot save into it", save(two, single["id"], 9, {"optionKeys": [key]})[0] == 404)
+    check("another candidate cannot submit it", call(two, "POST", f"/api/attempts/{aid}/submit", {"sessionId": session})[0] == 404)
+
+    taken = json.loads(call(one, "POST", start_url, {"start": False})[2])
+    check("second session takes over", taken["sessionId"] != session)
+    check("old session can no longer save", save(one, single["id"], 5, {"optionKeys": [key]})[0] == 409)
+    session = taken["sessionId"]
+    restored = next(q for q in taken["attempt"]["questions"] if q["id"] == single["id"])
+    check("saved answer is restored", restored["answer"]["response"] == {"optionKeys": [key]}, restored["answer"])
+    check("written answer saves", save(one, written["id"], 1, {"text": "my answer"})[0] == 200)
+
+    status, _, raw = call(one, "POST", f"/api/attempts/{aid}/submit", {"sessionId": session})
+    result = json.loads(raw)["attempt"]
+    check("submit succeeds", status == 200 and result["status"] == "SUBMITTED" and result["submitReason"] == "MANUAL" and result["receipt"], raw[:150])
+    check("no questions after submitting", result["questions"] == [])
+    repeat = json.loads(call(one, "POST", f"/api/attempts/{aid}/submit", {"sessionId": session})[2])["attempt"]
+    check("submitting again is the same result", repeat["receipt"] == result["receipt"] and repeat["submittedAt"] == result["submittedAt"])
+    check("no saving after submit", save(one, single["id"], 8, {"optionKeys": [key]})[0] == 409)
+    check("cannot start again", call(one, "POST", start_url, {"start": True})[0] == 409)
+    row = db(f'select "gradingState", coalesce(score::text,\'none\') from "Attempt" where id={aid}')
+    check("written answer waits for the examiner", row == "PENDING_MANUAL|none", row)
+    check("objective answer auto graded", db(f'select w."autoMarks" from "Answer" w where w."attemptQuestionId"={single["id"]}') == "2.00")
+
+    other_open = json.loads(call(two, "POST", start_url, {"start": True})[2])
+    bid = other_open["attempt"]["id"]
+    sql(f'UPDATE "Attempt" SET "startedAt"=now() at time zone \'utc\' - interval \'40 min\', "deadlineAt"=now() at time zone \'utc\' - interval \'1 min\' WHERE id={bid}')
+    q = other_open["attempt"]["questions"][0]["id"]
+    late = call(two, "PUT", f"/api/attempts/{bid}/answers/{q}", {"sessionId": other_open["sessionId"], "revision": 1, "markedForReview": True, "response": None})
+    check("save after the deadline rejected", late[0] == 409, late[0])
+    row = db(f'select status, "submitReason", "gradingState", score from "Attempt" where id={bid}')
+    check("expired attempt finalized and graded", row == "SUBMITTED|TIME_EXPIRED|GRADED|0.00", row)
+    check("late save recorded as incident", db(f'select count(*) from "Incident" where "attemptId"={bid} and type=\'LATE_SAVE_REJECTED\'') == "1")
+    rows = json.loads(call(examiner, "GET", f"/api/exams/{eid}/enrollments")[2])["enrollments"]
+    check("examiner sees attempt status", sorted(r["status"] for r in rows) == ["GRADED", "SUBMITTED"], [r["status"] for r in rows])
+    check("sweep endpoint needs the secret", call(client(), "POST", "/api/cron/finalize")[0] == 401)
+    status, _, body = call(one, "GET", f"/candidate/exams/{eid}/attempt")
+    check("attempt page renders", status == 200 and "NEXT_REDIRECT" not in body, status)
+
+    # remove only what this block created
+    sql(f'DELETE FROM "Attempt" WHERE "examId"={eid}')
+    sql(f'DELETE FROM "Exam" WHERE id={eid}')
+    sql(f'DELETE FROM "QuestionVersion" WHERE "questionId" IN ({q1},{q2})')
+    sql(f'DELETE FROM "Question" WHERE id IN ({q1},{q2})')
+
+def db(query):
+    out = subprocess.run(["docker", "compose", "-f", "docker-compose.dev.yml", "exec", "-T", "postgres", "psql", "-U", "postgres", "-d", "secureexam", "-tAc", query], capture_output=True, text=True, check=True)
+    return out.stdout.strip()
+
+run_attempt_checks()
 
 print(f"\n{sum(results)}/{len(results)} checks passed")

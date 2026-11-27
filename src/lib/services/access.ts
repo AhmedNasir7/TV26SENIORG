@@ -5,6 +5,7 @@
 import { canAttemptExam, ensureFound, type Actor } from '@/lib/policies'
 import { prisma } from '@/lib/prisma'
 import { serverNow } from '@/lib/server/time'
+import { finalizeExpired } from '@/lib/services/finalize'
 
 export type AccessState = 'upcoming' | 'available' | 'in_progress' | 'submitted' | 'closed'
 
@@ -51,6 +52,7 @@ const EXAM_FIELDS = {
 } as const
 
 async function loadEnrollments(candidateId: number, examId?: number) {
+  await finalizeExpired({ candidateId, examId })
   return prisma.enrollment.findMany({
     // Drafts don't exist as far as candidates are concerned
     where: { candidateId, examId, exam: { status: 'PUBLISHED' } },

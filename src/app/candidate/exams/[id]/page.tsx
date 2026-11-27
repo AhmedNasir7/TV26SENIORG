@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Countdown } from '@/components/exams/Countdown'
+import { StartAttemptButton } from '@/components/attempt/StartAttemptButton'
 import { AppHeader } from '@/components/layout/AppHeader'
 import { LocalTime } from '@/components/ui/LocalTime'
 import { requirePageUser } from '@/lib/auth'
@@ -38,7 +39,7 @@ export default async function CandidateExamPage({ params }: { params: Promise<{ 
           {exam.access.state === 'upcoming' && <> · opens in <Countdown key={serverNow} target={exam.startsAt} serverNow={serverNow} /></>}
         </p>
         {exam.access.canEnter && (
-          <p className="mt-2 text-sm text-[color:var(--muted)]">Starting an attempt arrives with the next build step.</p>
+          <StartAttemptButton examId={exam.id} running={exam.access.state === 'in_progress'} />
         )}
       </main>
     </div>

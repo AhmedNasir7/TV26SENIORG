@@ -5,7 +5,7 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 <!-- progress:start -->
 ## Progress
 
-**Steps finished: 6 of 16** · required subtasks ticked: 94 of 243 · **next: step 7, Attempt engine and server timing**
+**Steps finished: 7 of 16** · required subtasks ticked: 113 of 245 · **next: step 8, Exam screen: autosave, resume, submit**
 
 | Step | Work | Tasks | Subtasks | Status |
 |---:|---|---|---:|---|
@@ -14,10 +14,10 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 | 3 | Sign-in and permissions | AUTH-1, AUTH-2, AUTH-3 | 17/19 | ✅ Done (2 carried over) |
 | 4 | User management and sample data | USR-1, USR-2, DB-3 | 12/12 | ✅ Done |
 | 5 | Question bank | QB-1, QB-2, QB-3 | 13/13 | ✅ Done |
-| 6 | Examinations and enrolment | EXM-1, EXM-2, EXM-3, ENR-1, ENR-2, ENR-3 | 22/25 | ✅ Done (3 carried over) |
-| 7 | Attempt engine and server timing | ATT-1, ATT-2, ATT-3, ATT-4 | 0/12 | ▶️ Next |
-| 8 | Exam screen: autosave, resume, submit | WS-1, WS-2, WS-3, WS-4 | 0/16 | ⬜ Not started |
-| 9 | Grading and results | GRD-1, GRD-2, GRD-3, RES-1, RES-2, RES-3, RES-4 | 3/22 | 🟡 Started early |
+| 6 | Examinations and enrolment | EXM-1, EXM-2, EXM-3, ENR-1, ENR-2, ENR-3 | 24/25 | ✅ Done (1 carried over) |
+| 7 | Attempt engine and server timing | ATT-1, ATT-2, ATT-3, ATT-4 | 13/13 | ✅ Done |
+| 8 | Exam screen: autosave, resume, submit | WS-1, WS-2, WS-3, WS-4 | 3/17 | ▶️ Next |
+| 9 | Grading and results | GRD-1, GRD-2, GRD-3, RES-1, RES-2, RES-3, RES-4 | 4/22 | 🟡 Started early |
 | 10 | Monitoring and announcements | MON-1, MON-2, MON-3, MON-4 | 0/13 | ⬜ Not started |
 | 11 | Innovation: fair randomized papers | FAIR-1, FAIR-2, FAIR-3 | 0/10 | ⬜ Not started |
 | 12 | Network status, preferences, scratchpad | NET-1, PREF-1, PAD-1 | 0/12 | ⬜ Not started |
@@ -31,12 +31,14 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 - **AUTH-3** (step 3): Examiner: monitoring, grading, results (arrive in steps 9 and 10)
 - **AUTH-3** (step 3): Candidate: results (arrives in step 9)
 - **ENR-1** (step 6): Bulk enrol from import results
-- **ENR-3** (step 6): Instructions screen with explicit "Start"
-- **ENR-3** (step 6): **Sec:** the same gate guards fetching, saving and submitting, not only the page
 
 ### Already done ahead of its step
 
+- **WS-2** (step 8): Idempotent per-answer save with a revision number; older revisions ignored
+- **WS-4** (step 8): Repeat submit returns the same successful result
+- **WS-4** (step 8): ★ Submission receipt: time and a hash of the submitted answers
 - **GRD-1** (step 9): Pure function per type and rule; unanswered = 0
+- **GRD-1** (step 9): Grades against the attempt's frozen question versions
 - **GRD-1** (step 9): Exact decimal handling with one rounding rule
 - **GRD-1** (step 9): Re-running gives the same result
 - **TST-1** (step 16): Permission script from AUTH-2
@@ -274,42 +276,42 @@ Covers: C3, C4
 - [x] Instructions, schedule, duration, marks, access status and why ("opens in 2 h", "closed", "submitted")
 - [x] Server-synced countdown to opening
 
-### ENR-3 Entry gate · P0 · S — 🟡 Partly done (step 6)
+### ENR-3 Entry gate · P0 · S — ✅ Done (step 6)
 Covers: C5, C6, E3
 - [x] Server check: signed in, active, enrolled, published, inside window, not already submitted
-- [ ] Instructions screen with explicit "Start"
-- [ ] **Sec:** the same gate guards fetching, saving and submitting, not only the page
+- [x] Instructions screen with explicit "Start"
+- [x] **Sec:** the same gate guards fetching, saving and submitting, not only the page
 
 ---
 
 ## ATT. Attempt engine
 
-### ATT-1 Start and freeze the paper · P0 · M — ⬜ Not started (step 7)
+### ATT-1 Start and freeze the paper · P0 · M — ✅ Done (step 7)
 Covers: Q9, Q10, T7, T5
-- [ ] In one transaction: create attempt, compute `deadlineAt`, write `AttemptQuestion` rows
-- [ ] Shuffle question and option order with a stored seed; options keep stable IDs so marking is unaffected
-- [ ] Repeated or parallel "start" returns the same attempt
+- [x] In one transaction: create attempt, compute `deadlineAt`, write `AttemptQuestion` rows
+- [x] Shuffle question and option order with a stored seed; options keep stable IDs so marking is unaffected
+- [x] Repeated or parallel "start" returns the same attempt
 - **Done when:** editing the bank mid-attempt changes nothing for that attempt.
 
-### ATT-2 Server-authoritative timing · P0 · M — ⬜ Not started (step 7)
+### ATT-2 Server-authoritative timing · P0 · M — ✅ Done (step 7)
 Covers: I7, T4, E3
-- [ ] API returns `serverNow` and `deadlineAt`
-- [ ] Client counts down from a monotonic timer plus offset; re-syncs on focus and reconnect
-- [ ] Every write rejected after deadline + fixed network grace (e.g. 5 s)
-- [ ] **Sec:** client timestamps are never trusted
+- [x] API returns `serverNow` and `deadlineAt`
+- [x] Client counts down from a monotonic timer plus offset; re-syncs on focus and reconnect
+- [x] Every write rejected after deadline + fixed network grace (e.g. 5 s)
+- [x] **Sec:** client timestamps are never trusted
 
-### ATT-3 Finalization · P0 · M — ⬜ Not started (step 7)
+### ATT-3 Finalization · P0 · M — ✅ Done (step 7)
 Covers: I8, T5, T6
-- [ ] `finalize(attempt, reason)`: `MANUAL`, `TIME_EXPIRED`, `EXAMINER`
-- [ ] Atomic status change from `IN_PROGRESS` only; then auto-grade once
-- [ ] Triggered by client at zero, and lazily whenever anyone reads an attempt (or its exam) past deadline + grace
-- [ ] ★ Scheduled sweep endpoint protected by a secret
+- [x] `finalize(attempt, reason)`: `MANUAL`, `TIME_EXPIRED`, `EXAMINER`
+- [x] Atomic status change from `IN_PROGRESS` only; then auto-grade once
+- [x] Triggered by client at zero, and lazily whenever anyone reads an attempt (or its exam) past deadline + grace
+- [x] ★ Scheduled sweep endpoint protected by a secret
 - **Done when:** a candidate who closes the browser is still finalized with accepted answers only.
 
-### ATT-4 Candidate-safe paper API · P0 · S — ⬜ Not started (step 7)
+### ATT-4 Candidate-safe paper API · P0 · S — ✅ Done (step 7)
 Covers: T2, T3, A6
-- [ ] Serializer that whitelists fields: text, option IDs and text, marks, own answers
-- [ ] **Sec:** no correct flags, marking notes, difficulty or other candidates' data in any response or page payload
+- [x] Serializer that whitelists fields: text, option IDs and text, marks, own answers
+- [x] **Sec:** no correct flags, marking notes, difficulty or other candidates' data in any response or page payload
 - **Done when:** searching network responses during an attempt finds no answer data.
 
 ---
@@ -324,10 +326,10 @@ Covers: I1, I2
 - [ ] Keyboard operable, labelled controls, time warnings announced to screen readers
 - [ ] ★ Keyboard shortcuts for next, previous, mark
 
-### WS-2 Autosave · P0 · L — ⬜ Not started (step 8)
+### WS-2 Autosave · P0 · L — 🟡 Partly done (step 8)
 Covers: I3, T10, T11
 - [ ] Save on change; debounce typing; flush on question change and tab hide
-- [ ] Idempotent per-answer save with a revision number; older revisions ignored
+- [x] Idempotent per-answer save with a revision number; older revisions ignored
 - [ ] Local pending queue; retry with back-off
 - [ ] Visible state: saving, saved at time, not saved
 - [ ] **Sec:** answer must belong to this attempt; option IDs validated; length capped; rate limited
@@ -339,12 +341,12 @@ Covers: I4, I5
 - [ ] Single active session: a new device takes over, the old one becomes read only, event recorded
 - [ ] Clear local data after submission and on sign-out (shared computers)
 
-### WS-4 Review and submit · P0 · S — ⬜ Not started (step 8)
+### WS-4 Review and submit · P0 · S — 🟡 Partly done (step 8)
 Covers: I6, T5
 - [ ] Summary of answered, unanswered, marked; jump to any
 - [ ] Flush pending saves, then confirm and submit; button disabled while working
-- [ ] Repeat submit returns the same successful result
-- [ ] ★ Submission receipt: time and a hash of the submitted answers
+- [x] Repeat submit returns the same successful result
+- [x] ★ Submission receipt: time and a hash of the submitted answers
 
 ---
 
@@ -384,7 +386,7 @@ Covers: M5
 ### GRD-1 Auto-grading · P0 · M — 🟡 Partly done (step 9)
 Covers: G1, T6
 - [x] Pure function per type and rule; unanswered = 0
-- [ ] Grades against the attempt's frozen question versions
+- [x] Grades against the attempt's frozen question versions
 - [x] Exact decimal handling with one rounding rule
 - [x] Re-running gives the same result
 - [ ] Unit tests: all-correct, partial, over-selection, none, invalid option

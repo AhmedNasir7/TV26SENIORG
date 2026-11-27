@@ -30,6 +30,9 @@ Y = allowed · own = only the caller's own records · — = refused
 | `POST /api/exams/{id}/publish`, `.../duplicate` | — | — | own | Y |
 | `GET /api/exams/{id}/candidates`, `GET/POST .../enrollments`, `PATCH/DELETE .../enrollments/{eid}` | — | — | own | Y |
 | `GET /api/me/exams`, `GET /api/me/exams/{id}` (no questions) | — | own | — | — |
+| `POST /api/me/exams/{id}/attempt` (start or resume) | — | own | — | — |
+| `GET /api/attempts/{id}`, `.../clock`, `PUT .../answers/{qid}`, `POST .../submit` | — | own | — | — |
+| `POST /api/cron/finalize` (needs `CRON_SECRET`, no session) | secret | secret | secret | secret |
 | `POST /api/email/send` | — | — | — | Y |
 | `POST /api/check-room`, `generate-code` | — | Y | Y | Y |
 | `POST /api/get-or-create-room` | — | — | Y | Y |
