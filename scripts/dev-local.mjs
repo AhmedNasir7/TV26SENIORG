@@ -28,6 +28,12 @@ for (const name of ['SHOW_DEMO_LOGINS', 'DEMO_ADMIN_PASSWORD', 'DEMO_EXAMINER_PA
   if (settings[name]) local[name] = settings[name]
 }
 
+// `--captcha-test`: Cloudflare's published test keys, which always pass, to try the bot check locally
+if (process.argv.includes('--captcha-test')) {
+  local.TURNSTILE_SITE_KEY = '1x00000000000000000000AA'
+  local.TURNSTILE_SECRET_KEY = '1x0000000000000000000000000000000AA'
+}
+
 // Values set here win over .env
 const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'dev', '-p', '3000'], {
   stdio: 'inherit',
