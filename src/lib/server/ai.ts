@@ -8,7 +8,8 @@ import { ApiError } from '@/lib/server/api'
 import { rateLimit } from '@/lib/server/rate-limit'
 
 const URL = 'https://api.groq.com/openai/v1/chat/completions'
-const DEFAULT_MODEL = 'llama-3.3-70b-versatile'
+// Groq retires models now and then: GROQ_MODEL overrides this without a code change
+const DEFAULT_MODEL = 'openai/gpt-oss-120b'
 
 export const aiConfigured = () => Boolean(process.env.GROQ_API_KEY)
 
@@ -21,6 +22,7 @@ export async function askAi<Schema extends z.ZodType>(
   rateLimit(`ai:${userId}`, 8, 60_000)
   rateLimit('ai:all', Number(process.env.AI_DAILY_LIMIT) || 200, 86_400_000)
 
+  const model = process.env.GROQ_MODEL || DEFAULT_MODEL
   let content: unknown
   try {
     const response = await fetch(URL, {
@@ -28,9 +30,11 @@ export async function askAi<Schema extends z.ZodType>(
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
       signal: AbortSignal.timeout(25_000),
       body: JSON.stringify({
-        model: process.env.GROQ_MODEL || DEFAULT_MODEL,
+        model,
         temperature: 0.2,
-        max_tokens: maxTokens,
+        // A reasoning model spends part of the limit thinking, so leave room for the answer
+        max_tokens: maxTokens + 1500,
+        ...(model.includes('gpt-oss') && { reasoning_effort: 'low' }),
         response_format: { type: 'json_object' },
         messages: [
           {
