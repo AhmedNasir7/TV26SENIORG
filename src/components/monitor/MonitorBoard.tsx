@@ -1,5 +1,6 @@
 'use client'
 
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { LocalTime } from '@/components/ui/LocalTime'
 import { StatTile } from '@/components/ui/StatTile'
@@ -113,15 +114,22 @@ export function MonitorBoard({ examId, initial }: { examId: number; initial: Boa
 
         {board.totalPages > 1 && (
           <nav aria-label="Pages" className="mt-3 flex items-center gap-3">
-            <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)} className="btn-secondary px-3 py-1.5 disabled:opacity-40">Previous</button>
+            <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)} className="btn-secondary px-3 py-1.5 disabled:opacity-40"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Previous</button>
             <span>Page {board.page} of {board.totalPages}</span>
-            <button type="button" disabled={page >= board.totalPages} onClick={() => setPage(page + 1)} className="btn-secondary px-3 py-1.5 disabled:opacity-40">Next</button>
+            <button type="button" disabled={page >= board.totalPages} onClick={() => setPage(page + 1)} className="btn-secondary px-3 py-1.5 disabled:opacity-40">Next<ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
           </nav>
         )}
       </section>
 
       {selected !== null && (
-        <AttemptTimeline key={selected} examId={examId} attemptId={selected} onClose={() => setSelected(null)} onReviewed={load} />
+        <AttemptTimeline
+          key={selected}
+          examId={examId}
+          attemptId={selected}
+          candidate={board.rows.find((row) => row.attemptId === selected)}
+          onClose={() => setSelected(null)}
+          onReviewed={load}
+        />
       )}
     </div>
   )

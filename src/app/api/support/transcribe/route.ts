@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { transcribeAudio } from '@/lib/elevenlabs'
+import { rateLimit } from '@/lib/server/rate-limit'
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024 // 10MB — a few minutes of recorded voice
 
@@ -9,6 +10,12 @@ export async function POST(req: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    try {
+      rateLimit(`transcribe:${user.id}`, 8, 60_000)
+    } catch {
+      return NextResponse.json({ error: 'Too many recordings. Wait a moment.' }, { status: 429 })
     }
 
     const formData = await req.formData()

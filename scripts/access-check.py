@@ -209,7 +209,7 @@ check("type cannot change", call(examiner, "PATCH", f"/api/questions/{qid}", {"e
 body = call(admin, "GET", "/api/questions?search=NULL")[2]
 page = call(examiner, "GET", "/examiner")[2]
 import re as _re
-ids = sorted({int(i) for i in _re.findall(r"/examiner/exams/(\d+)/questions", page)})
+ids = sorted({int(i) for i in _re.findall(r"/examiner/exams/(\d+)", page)})
 check("examiner home lists exams", len(ids) >= 4, ids)
 exams = {i: json.loads(call(examiner, "GET", f"/api/exams/{i}/questions")[2]) for i in ids}
 draft = next(e for e in exams.values() if e["exam"]["editable"])

@@ -5,7 +5,7 @@ import { LocalTime } from '@/components/ui/LocalTime'
 import { apiRequest } from '@/lib/client/request'
 import type { Announcement } from '@/lib/services/announcements'
 
-export function AnnouncementPanel({ examId, initial, canSend }: { examId: number; initial: Announcement[]; canSend: boolean }) {
+export function AnnouncementPanel({ examId, initial, canSend }: { examId: number; initial: Array<Announcement & { to?: string | null; readBy?: number }>; canSend: boolean }) {
   const [sent, setSent] = useState(initial)
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
@@ -47,7 +47,11 @@ export function AnnouncementPanel({ examId, initial, canSend }: { examId: number
         {sent.map((a) => (
           <li key={a.id} className="hairline-row pb-2">
             <p className="whitespace-pre-wrap break-words">{a.message}</p>
-            <p className="text-xs text-[color:var(--muted)]"><LocalTime iso={a.createdAt} /></p>
+            <p className="text-xs text-[color:var(--muted)]">
+              <LocalTime iso={a.createdAt} />
+              {'to' in a && a.to ? ` · to ${a.to}` : ''}
+              {'readBy' in a && a.readBy !== undefined ? ` · read by ${a.readBy}` : ''}
+            </p>
           </li>
         ))}
         {sent.length === 0 && <li className="text-[color:var(--muted)]">Nothing sent yet.</li>}

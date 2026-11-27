@@ -1,3 +1,4 @@
+import { formatTime } from '@/lib/format-date'
 import type { ConnectionState } from '@/lib/connection'
 import type { SaveState } from './saveQueue'
 
@@ -13,7 +14,7 @@ function saveText(save: SaveState) {
   if (save.kind === 'saving') return 'Saving...'
   if (save.kind === 'retrying') return `Not saved yet: ${save.unsaved} waiting. Retrying.`
   if (save.kind === 'blocked') return `Not saved: ${save.message}`
-  return save.at ? `All answers saved at ${new Date(save.at).toLocaleTimeString()}` : 'All answers saved'
+  return save.at ? `All answers saved at ${formatTime(save.at)}` : 'All answers saved'
 }
 
 type Props = { title: string; remaining: number; save: SaveState; connection: ConnectionState; compact: boolean }

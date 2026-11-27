@@ -6,6 +6,7 @@ import { logActivity, notifyUser } from '@/lib/activity'
 import { hashPassword, setAuthCookie } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { ApiError, parseBody, route } from '@/lib/server/api'
+import { requireSetupCode } from '@/lib/server/signup-code'
 import { verifyHuman } from '@/lib/server/turnstile'
 
 const FIREBASE_PROJECT_ID = "technoverse26sg"
@@ -21,7 +22,7 @@ type FirebaseIdTokenPayload = JWTPayload & {
   picture?: string
 }
 
-const bodySchema = z.strictObject({ idToken: z.string().min(1).max(4096) })
+const bodySchema = z.strictObject({ idToken: z.string().min(1).max(4096), setupCode: z.string().max(200).optional() })
 
 async function verifyFirebaseIdToken(idToken: string): Promise<FirebaseIdTokenPayload> {
   try {
@@ -36,10 +37,13 @@ async function verifyFirebaseIdToken(idToken: string): Promise<FirebaseIdTokenPa
   }
 }
 
-/** Google sign-in for accounts that already exist. It never creates one. */
+/**
+ * Google is for administrators. An existing administrator is signed in; a new Google account becomes
+ * an administrator only with the setup code. Examiners and candidates sign in with a password.
+ */
 export const POST = route(async (request: Request) => {
-  await verifyHuman(request, 'login')
-  const { idToken } = await parseBody(request, bodySchema, 8192)
+  await verifyHuman(request, 'signup')
+  const { idToken, setupCode } = await parseBody(request, bodySchema, 8192)
   const payload = await verifyFirebaseIdToken(idToken)
 
   const email = payload.email?.trim().toLowerCase()
@@ -47,9 +51,17 @@ export const POST = route(async (request: Request) => {
     throw new ApiError('UNAUTHORIZED', 'Google email is not verified')
   }
 
-  const existing = await prisma.user.findUnique({ where: { email } })
-  if (!existing || existing.status !== 'ACTIVE') {
-    throw new ApiError('FORBIDDEN', 'There is no active account for this Google email. Ask your administrator.')
+  let existing = await prisma.user.findUnique({ where: { email } })
+  if (!existing) {
+    requireSetupCode(setupCode)
+    existing = await prisma.user.create({
+      // No password is usable until the owner sets one: Google proves who they are
+      data: { email, name: payload.name?.trim() || null, role: 'ADMIN', passwordHash: await hashPassword(randomUUID()) },
+    })
+    await logActivity({ action: 'user_registered', entityType: 'user', entityId: existing.id, userId: existing.id, metadata: { method: 'google', email } })
+  }
+  if (existing.status !== 'ACTIVE' || existing.role !== 'ADMIN') {
+    throw new ApiError('FORBIDDEN', 'Google sign-in is for administrators. Use your email and password on the sign-in page.')
   }
 
   const user = await prisma.user.update({
@@ -79,7 +91,7 @@ export const POST = route(async (request: Request) => {
   await notifyUser({
     userId: user.id,
     title: 'New sign-in',
-    message: `You signed in with Google at ${new Date().toISOString()}`,
+    message: 'You signed in with Google.',
     type: 'user_logged_in',
     entityType: 'user',
     entityId: user.id,

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getManagementToken } from '@/lib/hms'
-import { getCurrentUser } from '@/lib/auth'
+import { requireStaff } from '@/lib/admin'
 
 export async function POST(req: Request) {
   try {
-    if (!(await getCurrentUser())) {
+    // A host code controls the room, so only staff may create one; others join with the code shared
+    if (!(await requireStaff())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

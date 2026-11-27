@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { apiRequest } from '@/lib/client/request'
 import { recordedList } from '@/lib/monitoring'
+import { DEFAULT_PREFERENCES } from '@/lib/preferences'
 import { AnnouncementList } from './AnnouncementList'
 import { DisplaySettings, usePreferences } from './DisplaySettings'
 import { FullscreenPrompt } from './FullscreenPrompt'
@@ -11,7 +12,7 @@ import { QuestionArea } from './QuestionArea'
 import type { GridItem } from './QuestionGrid'
 import { RecordedNotice } from './RecordedNotice'
 import { ReviewPanel } from './ReviewPanel'
-import { Scratchpad } from './Scratchpad'
+import { ScratchDock } from './ScratchDock'
 import { readPosition, writePosition } from './storage'
 import { TimerBar } from './TimerBar'
 import type { Attempt } from './types'
@@ -34,9 +35,8 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [announcements, setAnnouncements] = useState(attempt.announcements)
-  const [padOpen, setPadOpen] = useState(false)
   const display = usePreferences(attempt.preferences)
-  const { preferences } = display
+  const preferences = attempt.isSandbox ? display.preferences : DEFAULT_PREFERENCES
   const connection = useConnection(save.kind === 'retrying')
 
   const submit = useCallback(
@@ -147,10 +147,7 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
 
       {/* Tools sit together so they are easy to find and stay out of the way of the question */}
       <div aria-label="Examination tools" role="group" className="flex flex-wrap items-start gap-2 [&>details[open]]:w-full">
-        <button type="button" aria-expanded={padOpen} onClick={() => setPadOpen((open) => !open)} className="btn-secondary px-4 py-2 text-sm">
-          {padOpen ? 'Hide scratchpad' : 'Open scratchpad'}
-        </button>
-        <DisplaySettings {...display} listAllowed={backAllowed} />
+        {attempt.isSandbox && <DisplaySettings {...display} listAllowed={backAllowed} />}
         {attempt.exam.instructions && (
           <details className="surface-card p-4 text-sm">
             <summary className="cursor-pointer font-medium">Instructions</summary>
@@ -163,8 +160,7 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
         </details>
       </div>
 
-      <div className={padOpen ? 'grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]' : ''}>
-        <div className="min-w-0">
+      <div className="min-w-0">
           {reviewing ? (
             <ReviewPanel
               items={items}
@@ -188,9 +184,8 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
               onReview={() => setReviewing(true)}
             />
           )}
-        </div>
-        {padOpen && <Scratchpad attemptId={attempt.id} sessionId={sessionId} readOnly={takenOver || remaining <= 0} onClose={() => setPadOpen(false)} />}
       </div>
+      <ScratchDock attemptId={attempt.id} sessionId={sessionId} readOnly={takenOver || remaining <= 0} />
 
       {error && <p role="alert" className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
       {remaining <= 0 && error && (

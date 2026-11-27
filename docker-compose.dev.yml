@@ -36,6 +36,8 @@ services:
       - WATCHPACK_POLLING=true
       # Demo fill buttons on the sign-in page: local testing only (passwords as in CREDENTIALS.md)
       - SHOW_DEMO_LOGINS=true
+      # Local test value only: needed on the administrator sign-up page
+      - ADMIN_SIGNUP_CODE=local-setup-code
       - DEMO_ADMIN_PASSWORD=Demo-chqRodTGUQGO
       - DEMO_EXAMINER_PASSWORD=Demo-4JHnGboxMAq-
       - DEMO_CANDIDATE_PASSWORD=Demo-mrEY8GNJI506

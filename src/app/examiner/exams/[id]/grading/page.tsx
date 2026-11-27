@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { GradeForm } from '@/components/results/GradeForm'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -24,6 +25,7 @@ export default async function GradingPage({ params, searchParams }: Props) {
     const next = new URLSearchParams({ show: query.show, page: String(page) })
     if (query.questionVersionId) next.set('questionVersionId', String(query.questionVersionId))
     if (query.attemptId) next.set('attemptId', String(query.attemptId))
+    if (query.hideNames) next.set('hideNames', '1')
     return `${base}/grading?${next}`
   }
 
@@ -54,7 +56,11 @@ export default async function GradingPage({ params, searchParams }: Props) {
             ))}
           </select>
         </label>
-        <button type="submit" className="btn-secondary px-4 py-2">Filter</button>
+        <label className="flex items-center gap-2 py-2">
+          <input type="checkbox" name="hideNames" value="1" defaultChecked={query.hideNames === '1'} />
+          Hide names while marking
+        </label>
+        <button type="submit" className="btn-secondary px-4 py-2">Apply</button>
         {query.attemptId && <Link href={`${base}/grading`} className="link-accent py-2">Showing one candidate: show everyone</Link>}
       </form>
 
@@ -79,9 +85,9 @@ export default async function GradingPage({ params, searchParams }: Props) {
 
       {queue.totalPages > 1 && (
         <nav aria-label="Pages" className="flex items-center gap-3 text-sm">
-          {queue.page > 1 && <Link href={pageLink(queue.page - 1)} className="btn-secondary px-3 py-1.5">Previous</Link>}
+          {queue.page > 1 && <Link href={pageLink(queue.page - 1)} className="btn-secondary px-3 py-1.5"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Previous</Link>}
           <span>Page {queue.page} of {queue.totalPages}</span>
-          {queue.page < queue.totalPages && <Link href={pageLink(queue.page + 1)} className="btn-secondary px-3 py-1.5">Next</Link>}
+          {queue.page < queue.totalPages && <Link href={pageLink(queue.page + 1)} className="btn-secondary px-3 py-1.5">Next<ChevronRight className="h-4 w-4" aria-hidden="true" /></Link>}
         </nav>
       )}
     </div>

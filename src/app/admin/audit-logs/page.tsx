@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { IntegrityCheck } from '@/components/admin/audit-logs/IntegrityCheck'
 import { AuditLogFilters, type AuditLogFilterState } from '@/components/admin/audit-logs/AuditLogFilters'
 import { AuditLogTable, type AuditLogEntry } from '@/components/admin/audit-logs/AuditLogTable'
 import { Pagination } from '@/components/admin/audit-logs/Pagination'
@@ -53,6 +54,8 @@ export default function AuditLogsPage() {
         title="Platform activity"
         description="Every logged action across the platform, searchable and filterable."
       />
+
+      <IntegrityCheck />
 
       <AuditLogFilters
         filters={filters}

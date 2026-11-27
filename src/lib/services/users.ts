@@ -11,6 +11,7 @@ const PAGE_SIZE = 20
 const PUBLIC_FIELDS = {
   id: true,
   email: true,
+  username: true,
   name: true,
   role: true,
   status: true,
@@ -36,6 +37,7 @@ export async function listUsers({ search, role, status, page }: UserListFilter) 
       OR: [
         { email: { contains: search, mode: 'insensitive' } },
         { name: { contains: search, mode: 'insensitive' } },
+        { username: { contains: search, mode: 'insensitive' } },
       ],
     }),
   }
@@ -52,14 +54,16 @@ export async function listUsers({ search, role, status, page }: UserListFilter) 
   return { users, total, page, totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)) }
 }
 
-export async function createUser(actorId: number, { email, name, role }: CreateUserInput) {
-  const password = temporaryPassword()
+/** The administrator may choose the password; otherwise a temporary one is made and shown once. */
+export async function createUser(actorId: number, { email, name, role, username, password: chosen, mustChangePassword }: CreateUserInput) {
+  const password = chosen ?? temporaryPassword()
   const passwordHash = await hashPassword(password)
 
-  // A duplicate email violates the unique constraint and becomes a 409 in route()
+  // A duplicate email or username violates a unique constraint and becomes a 409 in route()
   const user = await prisma.$transaction(async (tx) => {
     const created = await tx.user.create({
-      data: { email, name: name || null, role, passwordHash, mustChangePassword: true },
+      // A generated password must always be replaced
+      data: { email, username: username ?? null, name: name || null, role, passwordHash, mustChangePassword: chosen ? (mustChangePassword ?? true) : true },
       select: PUBLIC_FIELDS,
     })
     await audit(tx, actorId, 'user_created', created.id, { email, role })
@@ -67,7 +71,7 @@ export async function createUser(actorId: number, { email, name, role }: CreateU
   })
 
   const emailed = await deliverCredentials(email, password)
-  return { user, emailed, temporaryPassword: emailed ? undefined : password }
+  return { user, emailed, temporaryPassword: emailed || chosen ? undefined : password }
 }
 
 export async function updateUser(actorId: number, targetId: number, input: UpdateUserInput) {

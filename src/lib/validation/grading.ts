@@ -5,6 +5,7 @@ export const gradingQuerySchema = z.strictObject({
   questionVersionId: idSchema.optional(),
   attemptId: idSchema.optional(),
   show: z.enum(['pending', 'all']).default('pending'),
+  hideNames: z.enum(['1']).optional(),
   page: z.coerce.number().int().min(1).max(10_000).default(1),
 })
 
@@ -19,7 +20,7 @@ export const gradeSchema = z.strictObject({
 })
 
 export const resultsPublishSchema = z.discriminatedUnion('published', [
-  z.strictObject({ published: z.literal(true) }),
+  z.strictObject({ published: z.literal(true), revealAnswers: z.boolean().optional() }),
   z.strictObject({
     published: z.literal(false),
     reason: z.string().trim().min(5, 'Say why the results are being withdrawn').max(500),

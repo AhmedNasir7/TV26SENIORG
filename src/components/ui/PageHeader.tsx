@@ -13,10 +13,10 @@ export function PageHeader({
   actions?: React.ReactNode
 }) {
   return (
-    <div className="page-enter mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div className="page-enter mb-10 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
         {status ? <div className="mb-3">{status}</div> : eyebrow && <p className="eyebrow mb-3">{eyebrow}</p>}
-        <h1 className="font-display text-[28px] font-semibold leading-[34px] tracking-[-0.02em] text-[color:var(--foreground)]">
+        <h1 className="font-display text-[32px] font-semibold leading-[40px] tracking-[-0.02em] text-[color:var(--foreground)]">
           {title}
         </h1>
         {description && (

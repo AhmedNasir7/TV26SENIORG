@@ -4,11 +4,14 @@
  * changes only, and started or finished exams are locked.
  */
 import { Prisma } from '@/generated/prisma/client'
+import { blueprintMarks, paperSize, readBlueprint } from '@/lib/blueprint'
 import { canManageExam, ensureFound, type Actor } from '@/lib/policies'
 import { prisma } from '@/lib/prisma'
 import { ApiError, parseInput } from '@/lib/server/api'
 import { examPhase, serverNow, type ExamPhase } from '@/lib/server/time'
 import { audit } from '@/lib/services/audit'
+import { poolShortfall } from '@/lib/services/fair'
+import { emailLater } from '@/lib/services/emails'
 import { finalizeExpired } from '@/lib/services/finalize'
 import { publicationChecks } from '@/lib/services/readiness'
 import { examSchema, publishedEditSchema } from '@/lib/validation/exams'
@@ -39,7 +42,7 @@ export async function listExams(actor: Actor, phase?: ExamPhase) {
     endsAt: exam.endsAt.toISOString(),
     durationMinutes: exam.durationMinutes,
     totalMarks: Number(exam.totalMarks),
-    questions: exam._count.questions,
+    questions: paperSize(exam.blueprint, exam._count.questions),
     enrolled: exam._count.enrollments,
   }))
 }
@@ -59,16 +62,21 @@ async function findOwned(client: Tx, actor: Actor, id: number) {
 
 type OwnedExam = Awaited<ReturnType<typeof findOwned>>
 
-const checksFor = (exam: OwnedExam, now: Date) =>
-  publicationChecks({
+async function checksFor(client: Tx, exam: OwnedExam, now: Date) {
+  const rules = readBlueprint(exam.blueprint)
+  const checks = publicationChecks({
     startsAt: exam.startsAt,
     endsAt: exam.endsAt,
     durationMinutes: exam.durationMinutes,
     totalMarks: Number(exam.totalMarks),
-    questionMarks: exam.questions.map((q) => Number(q.marks)),
+    questionMarks: rules ? blueprintMarks(rules) : exam.questions.map((q) => Number(q.marks)),
     enrolled: exam._count.enrollments,
     now,
   })
+  if (!rules) return checks
+  const short = await poolShortfall(client, exam.ownerId, rules)
+  return [{ label: 'The question bank covers the fair paper recipe', ok: short.length === 0, blocking: true }, ...checks]
+}
 
 /** Everything the review screen needs, including what blocks publication. */
 export async function getExam(actor: Actor, id: number) {
@@ -89,10 +97,11 @@ export async function getExam(actor: Actor, id: number) {
     shuffleOptions: exam.shuffleOptions,
     allowBackNavigation: exam.allowBackNavigation,
     phase,
-    questions: exam.questions.length,
+    questions: paperSize(exam.blueprint, exam.questions.length),
+    fair: readBlueprint(exam.blueprint) !== null,
     enrolled: exam._count.enrollments,
     attempts: exam._count.attempts,
-    checks: checksFor(exam, now),
+    checks: await checksFor(prisma, exam, now),
     canEdit: phase === 'DRAFT' ? ('all' as const) : phase === 'PUBLISHED' ? ('wording' as const) : ('none' as const),
     canUnpublish: exam.status === 'PUBLISHED' && exam._count.attempts === 0,
   }
@@ -132,14 +141,15 @@ export function updateExam(actor: Actor, id: number, body: unknown) {
 }
 
 /** Publishing or unpublishing twice is harmless. */
-export function setPublished(actor: Actor, id: number, published: boolean) {
-  return prisma.$transaction(
+export async function setPublished(actor: Actor, id: number, published: boolean) {
+  let announce: { ids: number[]; title: string } | null = null
+  const outcome = await prisma.$transaction(
     async (tx) => {
       const exam = await findOwned(tx, actor, id)
       if ((exam.status === 'PUBLISHED') === published) return { id, published }
 
       if (published) {
-        const failed = checksFor(exam, serverNow()).filter((check) => check.blocking && !check.ok)
+        const failed = (await checksFor(tx, exam, serverNow())).filter((check) => check.blocking && !check.ok)
         if (failed.length) {
           throw new ApiError('CONFLICT', `Cannot publish yet: ${failed.map((c) => c.label).join('; ')}`)
         }
@@ -154,6 +164,7 @@ export function setPublished(actor: Actor, id: number, published: boolean) {
 
       if (published) {
         const enrolled = await tx.enrollment.findMany({ where: { examId: id }, select: { candidateId: true } })
+        announce = { ids: enrolled.map((e) => e.candidateId), title: exam.title }
         await tx.notification.createMany({
           data: enrolled.map(({ candidateId }) => ({
             userId: candidateId,
@@ -170,6 +181,10 @@ export function setPublished(actor: Actor, id: number, published: boolean) {
     },
     { isolationLevel: 'Serializable' }
   )
+  // Email follows the saved change and never holds it up
+  const mail = announce as { ids: number[]; title: string } | null
+  if (mail) emailLater(mail.ids, 'Examination assigned', `"${mail.title}" is now on your list.`)
+  return outcome
 }
 
 export function deleteDraft(actor: Actor, id: number) {

@@ -17,6 +17,6 @@ export const GET = route(async (_request: Request, { params }: Context) => {
 export const POST = route(async (request: Request, { params }: Context) => {
   const actor = await requireUser(STAFF_ROLES)
   const id = parseInput((await params).id, idSchema)
-  const { message } = await parseBody(request, announcementSchema, 8192)
-  return NextResponse.json({ announcement: await sendAnnouncement(actor, id, message) }, { status: 201 })
+  const { message, candidateId } = await parseBody(request, announcementSchema, 8192)
+  return NextResponse.json({ announcement: await sendAnnouncement(actor, id, message, candidateId) }, { status: 201 })
 })

@@ -2,12 +2,13 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useConfirm } from '@/components/ui/ConfirmDialog'
 import { apiRequest } from '@/lib/client/request'
 import { readSession, storeSession } from './session'
 
 export function StartAttemptButton({ examId, running }: { examId: number; running: boolean }) {
   const router = useRouter()
-  const [confirming, setConfirming] = useState(false)
+  const confirm = useConfirm()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -29,16 +30,15 @@ export function StartAttemptButton({ examId, running }: { examId: number; runnin
 
   return (
     <div className="mt-4 space-y-3">
-      {confirming && !running && (
-        <p className="text-sm">Once you start, the timer runs on the server and cannot be paused.</p>
-      )}
       <button
         type="button"
         disabled={busy}
-        onClick={() => (running || confirming ? open() : setConfirming(true))}
-        className="btn-primary px-5 py-2.5 text-sm disabled:opacity-60"
+        onClick={async () => {
+          if (running || (await confirm({ title: 'Start the examination?', body: 'The timer runs on the server and cannot be paused.', action: 'Start now' }))) void open()
+        }}
+        className="btn-primary px-6 py-3 text-sm disabled:opacity-60"
       >
-        {busy ? 'Opening...' : running ? 'Resume attempt' : confirming ? 'Start now' : 'Start attempt'}
+        {busy ? 'Opening...' : running ? 'Resume attempt' : 'Start attempt'}
       </button>
       {error && <p role="alert" className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
     </div>

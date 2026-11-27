@@ -1,26 +1,21 @@
 import { NextResponse } from 'next/server'
 import { logActivity } from '@/lib/activity'
 import { hashPassword, setAuthCookie } from '@/lib/auth'
-import { isSignupOpen } from '@/lib/config'
 import { prisma } from '@/lib/prisma'
-import { ApiError, parseBody, route } from '@/lib/server/api'
-import { signupSchema } from '@/lib/validation/auth'
+import { parseBody, route } from '@/lib/server/api'
+import { requireSetupCode } from '@/lib/server/signup-code'
 import { verifyHuman } from '@/lib/server/turnstile'
+import { signupSchema } from '@/lib/validation/auth'
 
-/**
- * Public sign-up is closed unless ALLOW_PUBLIC_SIGNUP=true. Even when open it only ever creates
- * candidates; administrators come from the seed script or another administrator.
- */
+/** Creates an administrator for someone who holds the setup code. */
 export const POST = route(async (request: Request) => {
-  if (!isSignupOpen()) {
-    throw new ApiError('FORBIDDEN', 'Sign-up is closed. Ask your administrator for an account.')
-  }
-
   await verifyHuman(request, 'signup')
-  const { email, password, name } = await parseBody(request, signupSchema, 4096)
+  const { email, password, name, setupCode } = await parseBody(request, signupSchema, 4096)
+  requireSetupCode(setupCode)
+
   // The unique email constraint turns a duplicate into a 409 in route()
   const user = await prisma.user.create({
-    data: { email, name: name || null, passwordHash: await hashPassword(password), role: 'CANDIDATE' },
+    data: { email, name: name || null, passwordHash: await hashPassword(password), role: 'ADMIN' },
   })
   await setAuthCookie(user)
 
@@ -32,5 +27,5 @@ export const POST = route(async (request: Request) => {
     metadata: { email: user.email, role: user.role },
   })
 
-  return NextResponse.json({ user: { id: user.id, email: user.email, name: user.name } }, { status: 201 })
+  return NextResponse.json({ user: { id: user.id, email: user.email, name: user.name, role: user.role } }, { status: 201 })
 })

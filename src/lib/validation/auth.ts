@@ -12,7 +12,7 @@ export const newPasswordSchema = z
   .max(MAX_PASSWORD_LENGTH, `Use at most ${MAX_PASSWORD_LENGTH} characters`)
 
 export const loginSchema = z.strictObject({
-  email: z.string().trim().toLowerCase().min(1, 'Email is required').max(254),
+  email: z.string().trim().toLowerCase().min(1, 'Enter your email or username').max(254),
   password: z.string().min(1, 'Password is required').max(200),
 })
 
@@ -20,7 +20,14 @@ export const signupSchema = z.strictObject({
   email: emailSchema,
   password: newPasswordSchema,
   name: z.string().trim().max(100).optional(),
+  setupCode: z.string().max(200).optional(),
 })
+
+export const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9._-]{3,30}$/, 'Use 3 to 30 letters, numbers, dots, dashes or underscores')
 
 export const changePasswordSchema = z
   .strictObject({

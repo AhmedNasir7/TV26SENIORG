@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "./theme-motion.css";
+@import "./controls.css";
 
 /*
  * Design system: Attio (layout, type, neutrals, buttons, badges, elevation) with the
@@ -230,20 +231,21 @@
   }
 
   .content-wrap {
-    max-width: 80rem;
+    width: 100%;
+    max-width: 104rem;
     margin-inline: auto;
     padding-inline: 1rem;
   }
 
   @media (min-width: 640px) {
     .content-wrap {
-      padding-inline: 1.5rem;
+      padding-inline: 2rem;
     }
   }
 
   @media (min-width: 1024px) {
     .content-wrap {
-      padding-inline: 2rem;
+      padding-inline: clamp(3rem, 8vw, 10rem);
     }
   }
 
@@ -896,8 +898,8 @@
   /* Key/value facts grid (exam settings, attempt details) */
   .facts {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 16px 24px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 28px 40px;
   }
   .facts dt {
     font-size: 0.75rem;
@@ -974,3 +976,49 @@
 button.btn-ghost { border: 1px solid var(--border-strong); }
 .btn-danger { border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent); }
 
+/* ---------- scratchpad dock: a six-sided button, then half the screen ---------- */
+.pad-hex {
+  position: fixed;
+  right: 14px;
+  top: 50%;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 68px;
+  margin-top: -34px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: var(--highlight);
+  color: var(--highlight-foreground);
+  cursor: pointer;
+}
+.pad-hex:focus-visible { outline: none; background: var(--foreground); color: var(--surface); }
+.pad-panel {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 55;
+  width: 50vw;
+  border-left: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: -24px 0 48px -32px rgb(0 0 0 / 0.35);
+}
+main.page-shell { transition: padding-right 450ms cubic-bezier(0.2, 0, 0, 1); }
+@media (min-width: 900px) {
+  html[data-pad="open"] main.page-shell { padding-right: 50vw; }
+}
+@media (max-width: 899px) {
+  .pad-panel { inset: auto 0 0 0; width: 100%; height: 75vh; border-left: 0; border-top: 1px solid var(--border-strong); }
+}
+@media (prefers-reduced-motion: reduce) { main.page-shell { transition: none; } }
+
+/* ---------- room to breathe on working pages ---------- */
+.surface-card.p-5 { padding: 1.75rem; }
+.data-table tbody td { padding-top: 0.9rem; padding-bottom: 0.9rem; }
+
+.dark .brand-logo { --logo-tile: #e4f222; --logo-line: #17181c; }
+.console-body > div { max-width: 96rem; margin-inline: auto; padding: clamp(1.5rem, 3vw, 3rem) clamp(1.5rem, 5vw, 6rem); }
+/* the pad already takes half the screen */
+html[data-pad="open"] .content-wrap { padding-inline: 2rem; }
+.hairline-row { padding-block: 1.25rem; }
+
+.console-body > div + div { padding-top: 0.5rem; }

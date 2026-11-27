@@ -26,7 +26,7 @@ export async function gradingQueue(actor: Actor, examId: number, query: GradingQ
   )
   await finalizeExpired({ examId })
 
-  const { questionVersionId, attemptId, show, page } = query
+  const { questionVersionId, attemptId, show, page, hideNames } = query
   const where: Prisma.AttemptQuestionWhereInput = {
     attempt: { ...submitted(examId), ...(attemptId && { id: attemptId }) },
     questionVersion: written,
@@ -78,7 +78,7 @@ export async function gradingQueue(actor: Actor, examId: number, query: GradingQ
         id: row.id,
         attemptId: row.attemptId,
         position: row.position,
-        candidate: row.attempt.candidate.name || row.attempt.candidate.email,
+        candidate: hideNames ? `Candidate ${row.attemptId}` : row.attempt.candidate.name || row.attempt.candidate.email,
         question: row.questionVersion.text,
         guidance: row.questionVersion.guidance,
         maximum: Number(row.marks),

@@ -5,6 +5,20 @@ const nextConfig: NextConfig = {
   // symlinks it needs without developer mode, so local builds there skip it.
   output: process.platform === 'win32' ? undefined : 'standalone',
   poweredByHeader: false,
+  headers: async () => [
+    {
+      source: '/:path*',
+      headers: [
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'X-Frame-Options', value: 'DENY' },
+        { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), geolocation=()' },
+        { key: 'Strict-Transport-Security', value: 'max-age=31536000' },
+      ],
+    },
+  ],
+  serverExternalPackages: ['pdfkit'],
+  outputFileTracingIncludes: { '/api/**': ['./node_modules/.pnpm/pdfkit*/node_modules/pdfkit/js/data/**'] },
 
   // The development badge sat on top of the sidebar's Profile button
   devIndicators: false,

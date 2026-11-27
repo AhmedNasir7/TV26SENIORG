@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { BackLink } from '@/components/ui/BackLink'
 import { AttemptScreen } from '@/components/attempt/AttemptScreen'
 import { SandboxControls } from '@/components/exams/SandboxControls'
 import { ReportView } from '@/components/results/ReportView'
@@ -16,12 +16,12 @@ export default async function SandboxPage({ params }: { params: Promise<{ id: st
   const report = state === 'submitted' ? await sandboxReport(actor, exam.id) : null
 
   return (
-    <div className="max-w-3xl space-y-5 p-8">
+    <div className="space-y-5 p-8">
       <PageHeader
         eyebrow="Sandbox"
         title={exam.title}
         description="Take the examination as a candidate would. Trial runs never reach results, monitoring or statistics."
-        actions={<Link href={`/examiner/exams/${exam.id}`} className="btn-secondary px-4 py-2 text-sm">Back to examination</Link>}
+        actions={<BackLink href={`/examiner/exams/${exam.id}`}>Back to examination</BackLink>}
       />
       {exam.questions === 0 ? (
         <p className="surface-card p-5 text-sm">Add questions to the examination before trying it.</p>

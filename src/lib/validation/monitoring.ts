@@ -36,6 +36,7 @@ export const eventsSchema = z.strictObject({
 
 export const announcementSchema = z.strictObject({
   message: z.string().trim().min(1, 'Write a message').max(1000),
+  candidateId: z.number().int().positive().optional(),
 })
 
 export const reviewSchema = z.strictObject({ note: z.string().trim().max(1000).default('') })

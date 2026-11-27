@@ -17,17 +17,8 @@ export function ThemeToggle({ placement = 'header' }: { placement?: 'header' | '
     const onStorage = (event: StorageEvent) => {
       if (event.key === THEME_STORAGE_KEY) setRootTheme(storedTheme() ?? currentTheme())
     }
-    // Follow the operating system until the user picks a theme
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const onSystem = () => {
-      if (!storedTheme()) setRootTheme(media.matches ? 'dark' : 'light')
-    }
     window.addEventListener('storage', onStorage)
-    media.addEventListener('change', onSystem)
-    return () => {
-      window.removeEventListener('storage', onStorage)
-      media.removeEventListener('change', onSystem)
-    }
+    return () => window.removeEventListener('storage', onStorage)
   }, [])
 
   function toggle(event: React.MouseEvent<HTMLButtonElement>) {

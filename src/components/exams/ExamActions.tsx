@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useConfirm } from '@/components/ui/ConfirmDialog'
 import { apiRequest } from '@/lib/client/request'
 
 type Props = { id: number; isDraft: boolean; canPublish: boolean; canUnpublish: boolean }
@@ -10,7 +11,7 @@ export function ExamActions({ id, isDraft, canPublish, canUnpublish }: Props) {
   const router = useRouter()
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const confirm = useConfirm()
 
   async function run(action: () => Promise<unknown>) {
     setBusy(true)
@@ -25,17 +26,26 @@ export function ExamActions({ id, isDraft, canPublish, canUnpublish }: Props) {
     }
   }
 
-  const publish = (published: boolean) => run(() => apiRequest(`/api/exams/${id}/publish`, 'POST', { published }))
+  async function publish(published: boolean) {
+    const ok = await confirm(
+      published
+        ? { title: 'Publish this examination?', body: 'Enrolled candidates will see it and be notified.', action: 'Publish' }
+        : { title: 'Unpublish it?', body: 'It returns to draft and candidates no longer see it.', action: 'Unpublish', danger: true }
+    )
+    if (ok) await run(() => apiRequest(`/api/exams/${id}/publish`, 'POST', { published }))
+  }
   const duplicate = () =>
     run(async () => {
       const result = await apiRequest<{ exam: { id: number } }>(`/api/exams/${id}/duplicate`, 'POST')
       router.push(`/examiner/exams/${result.exam.id}`)
     })
-  const remove = () =>
-    run(async () => {
+  async function remove() {
+    if (!(await confirm({ title: 'Delete this draft?', body: 'This cannot be undone.', action: 'Delete draft', danger: true }))) return
+    await run(async () => {
       await apiRequest(`/api/exams/${id}`, 'DELETE')
       router.push('/examiner')
     })
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -52,15 +62,9 @@ export function ExamActions({ id, isDraft, canPublish, canUnpublish }: Props) {
       <button type="button" disabled={busy} onClick={duplicate} className="btn-secondary px-4 py-2 text-sm">
         Duplicate
       </button>
-      {isDraft &&
-        (confirmDelete ? (
-          <>
-            <button type="button" disabled={busy} onClick={remove} className="btn-danger px-4 py-2 text-sm">Delete this draft</button>
-            <button type="button" onClick={() => setConfirmDelete(false)} className="btn-ghost px-3 py-2 text-sm">Keep it</button>
-          </>
-        ) : (
-          <button type="button" onClick={() => setConfirmDelete(true)} className="btn-danger px-4 py-2 text-sm">Delete</button>
-        ))}
+      {isDraft && (
+        <button type="button" disabled={busy} onClick={remove} className="btn-danger px-4 py-2 text-sm">Delete</button>
+      )}
       {error && <p role="alert" className="w-full text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
     </div>
   )

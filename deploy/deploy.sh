@@ -21,6 +21,22 @@ db_password="$(value POSTGRES_PASSWORD)"
 db_user="$(value POSTGRES_USER)"; db_user="${db_user:-secureexam}"
 db_name="$(value POSTGRES_DB)"; db_name="${db_name:-secureexam}"
 
+# The timer and the app share this token; it is made here once and never leaves the server
+if [ -z "$(value CRON_SECRET)" ]; then
+  echo "== Creating the timer token"
+  sed -i '/^CRON_SECRET=/d' .env
+  [ -z "$(tail -c 1 .env)" ] || echo >> .env
+  echo "CRON_SECRET=$(openssl rand -hex 32)" >> .env
+fi
+
+# Needed to sign up a new administrator. Read it with: grep ADMIN_SIGNUP_CODE ~/secureexam/.env
+if [ -z "$(value ADMIN_SIGNUP_CODE)" ]; then
+  echo "== Creating the administrator setup code"
+  sed -i '/^ADMIN_SIGNUP_CODE=/d' .env
+  [ -z "$(tail -c 1 .env)" ] || echo >> .env
+  echo "ADMIN_SIGNUP_CODE=$(openssl rand -hex 12)" >> .env
+fi
+
 echo "== Removing leftovers from the earlier template"
 docker rm -f estatepro >/dev/null 2>&1 || true
 docker network rm nascon-net >/dev/null 2>&1 || true
@@ -68,6 +84,32 @@ fi
 
 curl -fsS --retry 20 --retry-delay 3 --retry-all-errors http://127.0.0.1:3000/api/health >/dev/null
 echo "== Healthy"
+
+echo "== Reminder timer (every 5 minutes)"
+sudo -n tee /etc/systemd/system/secureexam-cron.service >/dev/null <<UNIT
+[Unit]
+Description=Examination reminders and attempt closing
+After=docker.service
+
+[Service]
+Type=oneshot
+User=$(id -un)
+ExecStart=/usr/bin/env bash $(pwd)/cron.sh
+UNIT
+sudo -n tee /etc/systemd/system/secureexam-cron.timer >/dev/null <<UNIT
+[Unit]
+Description=Run examination reminders every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target
+UNIT
+sudo -n systemctl daemon-reload
+sudo -n systemctl enable --now secureexam-cron.timer
+sudo -n systemctl start secureexam-cron.service || echo "The first reminder run failed: check journalctl -u secureexam-cron"
 
 # Old versions of our image only; volumes are never touched
 docker images "$IMAGE" --format '{{.Tag}}' | { grep -vxE "latest|$TOOLS_TAG|$TAG" || true; } | while read -r old; do

@@ -14,7 +14,9 @@ export function ExamNav({ exam }: Props) {
   const base = `/examiner/exams/${exam.id}`
   const steps = examSteps(exam)
   // A candidate's paper belongs to the results step
-  const current = pathname.startsWith(`${base}/attempts`)
+  const current = pathname.startsWith(`${base}/fair`)
+    ? 'questions'
+    : pathname.startsWith(`${base}/attempts`)
     ? 'results'
     : (steps.find((s) => s.href !== base && pathname.startsWith(s.href))?.key ?? 'details')
   const next = nextAction(exam)

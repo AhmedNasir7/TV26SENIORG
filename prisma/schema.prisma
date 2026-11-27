@@ -30,6 +30,7 @@ enum UserStatus {
 model User {
   id                 Int        @id @default(autoincrement())
   email              String     @unique // stored lowercase
+  username           String?    @unique // stored lowercase; an alternative to the email at sign-in
   name               String?
   passwordHash       String
   role               Role       @default(CANDIDATE)
@@ -159,6 +160,7 @@ model Exam {
   monitoring          Json       @default("{}") // what is recorded; read through lib/monitoring
   publishedAt         DateTime?
   resultsPublishedAt  DateTime?
+  revealAnswers       Boolean    @default(false) // show correct answers with published results
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
 
@@ -166,6 +168,7 @@ model Exam {
   enrollments   Enrollment[]
   attempts      Attempt[]
   announcements Announcement[]
+  reminders     Reminder[]
 
   @@index([ownerId])
   @@index([status, startsAt])
@@ -246,6 +249,8 @@ model Attempt {
   incidents  Incident[]
   scratchpad Scratchpad?
   reports    ResultReport[]
+  disputes   Dispute[]
+  aiReviews  AiReview[]
 
   @@unique([examId, candidateId, realSlot])
   @@index([examId, status])
@@ -383,6 +388,7 @@ model ActivityLog {
   userId     Int?
   user       User?    @relation(fields: [userId], references: [id])
   metadata   String?  @default("{}") // JSON string for additional data
+  seal       String? // chain hash; a changed or removed sealed entry breaks it
   createdAt  DateTime @default(now())
 
   @@index([createdAt])
@@ -443,3 +449,55 @@ model ChatMessage {
   @@index([authorId])
   @@index([createdAt])
 }
+
+// ---------- trust, AI and reminders ----------
+
+enum DisputeStatus {
+  OPEN
+  ACCEPTED
+  REJECTED
+}
+
+/// A candidate's challenge to one marked question, with the examiner's reasoned answer.
+model Dispute {
+  id                Int           @id @default(autoincrement())
+  attemptId         Int
+  attempt           Attempt       @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  attemptQuestionId Int
+  reason            String
+  status            DisputeStatus @default(OPEN)
+  response          String?
+  resolvedById      Int?
+  createdAt         DateTime      @default(now())
+  resolvedAt        DateTime?
+
+  @@unique([attemptQuestionId])
+  @@index([attemptId])
+}
+
+/// A saved AI suggestion. Kept so the same request is never paid for twice.
+model AiReview {
+  id          Int      @id @default(autoincrement())
+  attemptId   Int
+  attempt     Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  kind        String // "integrity" or "marking:<attemptQuestionId>"
+  inputHash   String
+  content     Json
+  createdById Int
+  createdAt   DateTime @default(now())
+
+  @@unique([attemptId, kind])
+}
+
+/// One row per reminder sent, so a repeated run never sends it again.
+model Reminder {
+  id          Int      @id @default(autoincrement())
+  examId      Int
+  exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  candidateId Int
+  kind        String // "day" or "hour"
+  sentAt      DateTime @default(now())
+
+  @@unique([examId, candidateId, kind])
+}
+

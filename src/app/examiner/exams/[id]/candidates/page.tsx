@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { BackLink } from '@/components/ui/BackLink'
 import { EnrollmentManager } from '@/components/exams/EnrollmentManager'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { requirePageUser } from '@/lib/auth'
@@ -16,7 +16,7 @@ export default async function ExamCandidatesPage({ params }: { params: Promise<{
         eyebrow="Candidates"
         title={exam.title}
         description="Enrol candidates and grant extra time."
-        actions={<Link href={`/examiner/exams/${exam.id}`} className="btn-secondary px-4 py-2 text-sm">Back to examination</Link>}
+        actions={<BackLink href={`/examiner/exams/${exam.id}`}>Back to examination</BackLink>}
       />
       <EnrollmentManager examId={exam.id} open={exam.phase !== 'COMPLETED'} />
     </div>

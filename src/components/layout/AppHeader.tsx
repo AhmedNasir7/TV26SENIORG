@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useMemo } from 'react'
-import { ClipboardList, LayoutDashboard, LifeBuoy, MessagesSquare, UserRound, Video, type LucideIcon } from 'lucide-react'
+import { ClipboardList, LayoutDashboard, LifeBuoy, LogOut, MessagesSquare, UserRound, Video, type LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { UserNotificationsBell } from '@/components/notifications/UserNotificationsBell'
 import { BrandMark } from '@/components/layout/BrandMark'
@@ -65,6 +65,7 @@ export function AppHeader() {
               Profile
             </Link>
             <button type="button" onClick={logout} className="btn-secondary px-3 py-2 text-sm">
+              <LogOut className="h-4 w-4" aria-hidden="true" />
               Sign out
             </button>
             <ThemeToggle />

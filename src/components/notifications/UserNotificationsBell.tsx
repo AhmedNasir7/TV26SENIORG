@@ -1,5 +1,6 @@
 'use client'
 
+import { formatDateTime } from '@/lib/format-date'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPusherClient } from '@/lib/pusher/client'
 
@@ -117,7 +118,7 @@ export function UserNotificationsBell({ userId }: { userId: number }) {
                   <p className="font-medium">{item.title}</p>
                   <p className="mt-1 text-xs text-[color:var(--muted)]">{item.message}</p>
                   <p className="mt-2 text-[11px] text-[color:var(--muted)]">
-                    {new Date(item.createdAt).toLocaleString()}
+                    {formatDateTime(item.createdAt)}
                   </p>
                 </div>
               ))

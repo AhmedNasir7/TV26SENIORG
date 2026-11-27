@@ -1,3 +1,4 @@
+import { formatDateTime } from '@/lib/format-date'
 import { formatActivityAction } from '@/lib/activity-format'
 
 export type AuditLogEntry = {
@@ -60,7 +61,7 @@ export function AuditLogTable({ logs, loading }: { logs: AuditLogEntry[]; loadin
                     {metadata.title || metadata.event || ''}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-xs text-[color:var(--muted)]">
-                    {new Date(log.createdAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
+                    {formatDateTime(log.createdAt)}
                   </td>
                 </tr>
               )

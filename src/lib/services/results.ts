@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma'
 import { ApiError } from '@/lib/server/api'
 import { examPhase, serverNow } from '@/lib/server/time'
 import { audit } from '@/lib/services/audit'
+import { emailLater } from '@/lib/services/emails'
 import { finalizeExpired } from '@/lib/services/finalize'
 import { resultHistory } from '@/lib/services/result-history'
 import { distribution, passRate, summarize } from '@/lib/stats'
@@ -28,6 +29,7 @@ const realAttempts = (client: Client, examId: number) =>
       score: true,
       maxScore: true,
       submittedAt: true,
+      paperDifficulty: true,
       candidate: { select: { name: true, email: true } },
     },
   })
@@ -108,6 +110,7 @@ export async function examResults(actor: Actor, examId: number) {
       totalMarks: Number(exam.totalMarks),
       passMarks,
       publishedAt: exam.resultsPublishedAt?.toISOString() ?? null,
+      fair: exam.blueprint !== null && Array.isArray(exam.blueprint) && exam.blueprint.length > 0,
     },
     summary: {
       enrolled,
@@ -126,6 +129,7 @@ export async function examResults(actor: Actor, examId: number) {
       email: a.candidate.email,
       state: attemptState(a, exam.resultsPublishedAt !== null),
       score: a.score === null ? null : Number(a.score),
+      difficulty: a.paperDifficulty,
       maximum: Number(a.maxScore),
       passed: passMarks === null || a.score === null ? null : Number(a.score) >= passMarks,
       timedOut: a.submitReason === 'TIME_EXPIRED',
@@ -140,7 +144,8 @@ export async function examResults(actor: Actor, examId: number) {
 export async function setResultsPublished(actor: Actor, examId: number, input: ResultsPublishInput) {
   await loadExam(prisma, actor, examId)
   await finalizeExpired({ examId })
-  return prisma.$transaction(
+  let mail: { ids: number[]; title: string } | null = null
+  const outcome = await prisma.$transaction(
     async (tx) => {
       const exam = await loadExam(tx, actor, examId)
       if ((exam.resultsPublishedAt !== null) === input.published) return { published: input.published }
@@ -150,7 +155,11 @@ export async function setResultsPublished(actor: Actor, examId: number, input: R
         const failed = publicationChecks(exam, attempts, serverNow()).filter((c) => !c.ok)
         if (failed.length) throw new ApiError('CONFLICT', `Cannot publish yet: ${failed.map((c) => c.label).join('; ')}`)
       }
-      await tx.exam.update({ where: { id: examId }, data: { resultsPublishedAt: input.published ? serverNow() : null } })
+      await tx.exam.update({
+        where: { id: examId },
+        data: { resultsPublishedAt: input.published ? serverNow() : null, ...(input.published && { revealAnswers: Boolean(input.revealAnswers) }) },
+      })
+      if (input.published) mail = { ids: attempts.map((a) => a.candidateId), title: exam.title }
       await tx.notification.createMany({
         data: attempts.map((a) => ({
           userId: a.candidateId,
@@ -175,4 +184,7 @@ export async function setResultsPublished(actor: Actor, examId: number, input: R
     },
     { isolationLevel: 'Serializable' }
   )
+  const send = mail as { ids: number[]; title: string } | null
+  if (send) emailLater(send.ids, 'Result available', `Your result for "${send.title}" is ready.`)
+  return outcome
 }

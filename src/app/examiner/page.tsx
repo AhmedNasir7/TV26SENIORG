@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ClipboardList, Plus } from 'lucide-react'
+import { ArrowRight, ClipboardList, Plus } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { StatusPill } from '@/components/ui/StatusPill'
 import { LocalTime } from '@/components/ui/LocalTime'
@@ -26,7 +26,7 @@ export default async function ExaminerHomePage({ searchParams }: Props) {
 
   return (
     <div className="p-8">
-      <PageHeader eyebrow="Examinations" title="Your workspace" description="Examinations and questions you manage." />
+      <PageHeader eyebrow="Examinations" title="Your workspace" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile label="Examinations" value={all.length} />
         <StatTile label="Open now" value={all.filter((e) => e.phase === 'ONGOING').length} tone="success" variant="highlight" />
@@ -48,14 +48,14 @@ export default async function ExaminerHomePage({ searchParams }: Props) {
         </Link>
       </div>
 
-      <ul className="surface-card mt-4">
+      <ul className="surface-card mt-6">
         {exams.length === 0 && (
           <li>
             <EmptyState icon={ClipboardList} title="No examinations here" description="Examinations in this state will appear here. Create one to get started." />
           </li>
         )}
         {exams.map((exam) => (
-          <li key={exam.id} className="hairline-row flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+          <li key={exam.id} className="hairline-row flex flex-wrap items-center justify-between gap-4 px-8 py-6">
             <div className="flex min-w-0 items-start gap-3">
               <span className="w-[7.25rem] shrink-0"><StatusPill phase={exam.phase} /></span>
               <div className="min-w-0">
@@ -66,9 +66,7 @@ export default async function ExaminerHomePage({ searchParams }: Props) {
               </div>
             </div>
             <div className="flex gap-2">
-              <Link href={`/examiner/exams/${exam.id}/questions`} className="btn-secondary px-3 py-1.5 text-sm">Questions</Link>
-              <Link href={`/examiner/exams/${exam.id}/candidates`} className="btn-secondary px-3 py-1.5 text-sm">Candidates</Link>
-              <Link href={`/examiner/exams/${exam.id}`} className="btn-primary px-3 py-1.5 text-sm">Manage</Link>
+              <Link href={`/examiner/exams/${exam.id}`} className="btn-primary px-3 py-1.5 text-sm">Manage<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
             </div>
           </li>
         ))}

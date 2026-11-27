@@ -11,5 +11,5 @@ function subscribe(onChange: () => void) {
 /** The active theme (class on <html>), re-rendering whenever any toggle changes it. */
 export function useTheme(): Theme {
   // The server can't know the stored choice; React swaps in the client value after hydration
-  return useSyncExternalStore(subscribe, currentTheme, () => 'light')
+  return useSyncExternalStore(subscribe, currentTheme, () => 'dark')
 }

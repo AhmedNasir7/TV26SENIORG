@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { DictateButton } from '@/components/audio/DictateButton'
+import { useFeatures } from '@/hooks/useFeatures'
 import { apiRequest } from '@/lib/client/request'
 
 type Props = {
@@ -17,6 +19,26 @@ export function GradeForm({ examId, answer, locked }: Props) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const features = useFeatures()
+  const [thinking, setThinking] = useState(false)
+  const [reason, setReason] = useState('')
+
+  async function suggest() {
+    setThinking(true)
+    setError('')
+    try {
+      const { suggestion } = await apiRequest<{ suggestion: { marks: number; feedback: string; reason: string } }>(
+        `/api/exams/${examId}/ai/mark`, 'POST', { attemptQuestionId: answer.id })
+      setMarks(String(suggestion.marks))
+      setFeedback(suggestion.feedback)
+      setReason(suggestion.reason)
+      setMessage('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No suggestion')
+    } finally {
+      setThinking(false)
+    }
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
@@ -51,6 +73,17 @@ export function GradeForm({ examId, answer, locked }: Props) {
         </label>
         <button type="submit" className="btn-primary px-4 py-2 text-sm">{busy ? 'Saving...' : 'Save mark'}</button>
       </fieldset>
+      {!locked && (
+        <div className="flex flex-wrap items-center gap-3">
+          {features.ai && (
+            <button type="button" disabled={thinking} onClick={suggest} className="btn-secondary px-3 py-2 text-xs disabled:opacity-60">
+              {thinking ? 'Reading...' : 'Suggest a mark with AI'}
+            </button>
+          )}
+          <DictateButton onText={(text) => setFeedback((f) => `${f}${f ? ' ' : ''}${text}`.slice(0, 2000))} />
+        </div>
+      )}
+      {reason && <p className="text-sm text-[color:var(--muted)]">AI suggestion, not saved until you save it. {reason}</p>}
       {message && <p role="status" className="text-sm" style={{ color: 'var(--success)' }}>{message}</p>}
       {error && <p role="alert" className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
     </form>

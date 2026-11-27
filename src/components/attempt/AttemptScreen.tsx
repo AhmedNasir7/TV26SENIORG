@@ -52,7 +52,7 @@ export function AttemptScreen({ examId, sandbox = false }: { examId: number; san
 
   return (
     <main className="page-shell min-h-screen">
-      <div className="content-wrap max-w-5xl py-6">
+      <div className="content-wrap py-8">
         {sandbox && (
           <div role="status" className="highlight-card mb-4 flex flex-wrap items-center justify-between gap-3 p-4 text-sm font-medium">
             <p>Sandbox: a trial run. Nothing here counts towards results, monitoring or statistics.</p>

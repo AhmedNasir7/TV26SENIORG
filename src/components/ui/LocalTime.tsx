@@ -1,20 +1,16 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
+import { formatDateTime, SERVER_ZONE } from '@/lib/format-date'
 
 const noSubscribe = () => () => {}
 
-const local = (iso: string) =>
-  new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) +
-  ' ' +
-  (new Intl.DateTimeFormat(undefined, { timeZoneName: 'short' }).formatToParts(new Date(iso)).find((p) => p.type === 'timeZoneName')?.value ?? '')
-
-/** A stored UTC instant shown in the viewer's own time zone. The server renders UTC first. */
+/** A stored UTC instant shown short, in the viewer's own time zone. */
 export function LocalTime({ iso }: { iso: string }) {
   const text = useSyncExternalStore(
     noSubscribe,
-    () => local(iso),
-    () => new Date(iso).toUTCString()
+    () => formatDateTime(iso),
+    () => formatDateTime(iso, SERVER_ZONE)
   )
   return <time dateTime={iso}>{text}</time>
 }

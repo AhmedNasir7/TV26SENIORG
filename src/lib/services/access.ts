@@ -2,6 +2,7 @@
  * The one gate for candidates. Pages, and later the attempt, save and submit routes, ask here,
  * so "may this candidate enter now?" has a single answer based on the server clock.
  */
+import { paperSize } from '@/lib/blueprint'
 import { readSettings, recordedList } from '@/lib/monitoring'
 import { canAttemptExam, ensureFound, type Actor } from '@/lib/policies'
 import { prisma } from '@/lib/prisma'
@@ -52,6 +53,7 @@ const EXAM_FIELDS = {
   allowBackNavigation: true,
   resultsPublishedAt: true,
   monitoring: true,
+  blueprint: true,
   _count: { select: { questions: true } },
 } as const
 
@@ -79,7 +81,7 @@ async function loadEnrollments(candidateId: number, examId?: number) {
 type Row = Awaited<ReturnType<typeof loadEnrollments>>[number]
 
 function present({ extraMinutes, exam }: Row, now: Date) {
-  const { attempts, _count, resultsPublishedAt, monitoring, ...details } = exam
+  const { attempts, _count, resultsPublishedAt, monitoring, blueprint, ...details } = exam
   const access = candidateAccess(exam, extraMinutes, attempts[0] ?? null, now)
   return {
     ...details,
@@ -87,7 +89,7 @@ function present({ extraMinutes, exam }: Row, now: Date) {
     endsAt: exam.endsAt.toISOString(),
     totalMarks: Number(exam.totalMarks),
     passMarks: exam.passMarks === null ? null : Number(exam.passMarks),
-    questionCount: _count.questions,
+    questionCount: paperSize(blueprint, _count.questions),
     // Candidates are told before starting
     recorded: recordedList(readSettings(monitoring)),
     extraMinutes,

@@ -1,3 +1,5 @@
+import { Check, Flag } from 'lucide-react'
+
 export type GridItem = { position: number; answered: boolean; marked: boolean; disabled: boolean }
 
 /** State is shown with symbols and spoken labels, never by colour alone. */
@@ -18,13 +20,16 @@ export function QuestionGrid({ items, current, onSelect }: { items: GridItem[]; 
               className={`qgrid-btn h-11 min-w-11 px-2 text-sm tabular-nums disabled:opacity-40 ${item.position === current ? 'btn-primary' : 'btn-secondary'}`}
             >
               {item.position}
-              {item.answered && <span aria-hidden="true"> ✓</span>}
-              {item.marked && <span aria-hidden="true"> ⚑</span>}
+              {item.answered && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
+              {item.marked && <Flag className="h-3.5 w-3.5" aria-hidden="true" />}
             </button>
           </li>
         ))}
       </ol>
-      <p className="mt-2 text-xs text-[color:var(--muted)]">✓ answered · ⚑ marked for review · plain number: not answered</p>
+      <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[color:var(--muted)]">
+        <span className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5" aria-hidden="true" /> answered</span>
+        <span className="inline-flex items-center gap-1.5"><Flag className="h-3.5 w-3.5" aria-hidden="true" /> marked for review</span>
+      </p>
     </nav>
   )
 }

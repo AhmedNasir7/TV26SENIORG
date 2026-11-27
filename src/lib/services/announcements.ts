@@ -20,6 +20,12 @@ export async function announcementsFor(candidateId: number, examId: number): Pro
     take: 50,
     select: { id: true, message: true, createdAt: true },
   })
+  if (rows.length) {
+    await prisma.announcementRead.createMany({
+      data: rows.map((row) => ({ announcementId: row.id, userId: candidateId })),
+      skipDuplicates: true,
+    })
+  }
   return rows.map(present)
 }
 
@@ -35,20 +41,33 @@ export async function listAnnouncements(actor: Actor, examId: number) {
     where: { examId },
     orderBy: { id: 'desc' },
     take: 100,
-    select: { id: true, message: true, createdAt: true },
+    select: {
+      id: true,
+      message: true,
+      createdAt: true,
+      recipient: { select: { name: true, email: true } },
+      _count: { select: { reads: true } },
+    },
   })
-  return rows.map(present)
+  return rows.map((row) => ({
+    ...present(row),
+    to: row.recipient ? row.recipient.name || row.recipient.email : null,
+    readBy: row._count.reads,
+  }))
 }
 
-export async function sendAnnouncement(actor: Actor, examId: number, message: string) {
+export async function sendAnnouncement(actor: Actor, examId: number, message: string, candidateId?: number) {
   const exam = await ownedExam(actor, examId)
   if (exam.status !== 'PUBLISHED') throw new ApiError('CONFLICT', 'Publish the examination before sending messages')
+  if (candidateId && !(await prisma.enrollment.findFirst({ where: { examId, candidateId }, select: { id: true } }))) {
+    throw new ApiError('BAD_REQUEST', 'That candidate is not enrolled')
+  }
   return prisma.$transaction(async (tx) => {
     const created = await tx.announcement.create({
-      data: { examId, authorId: actor.id, message },
+      data: { examId, authorId: actor.id, message, recipientId: candidateId ?? null },
       select: { id: true, message: true, createdAt: true },
     })
-    const enrolled = await tx.enrollment.findMany({ where: { examId }, select: { candidateId: true } })
+    const enrolled = await tx.enrollment.findMany({ where: { examId, ...(candidateId && { candidateId }) }, select: { candidateId: true } })
     await tx.notification.createMany({
       data: enrolled.map(({ candidateId }) => ({
         userId: candidateId,

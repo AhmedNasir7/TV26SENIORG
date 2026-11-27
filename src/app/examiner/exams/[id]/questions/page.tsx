@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ExamQuestionPicker } from '@/components/questions/ExamQuestionPicker'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -18,6 +19,10 @@ export default async function ExamQuestionsPage({ params }: { params: Promise<{ 
 
   return (
     <div className="p-8">
+      <Link href={`/examiner/exams/${(await params).id}/fair`} className="glow-card mb-6 flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
+        <span><strong>Fair randomized papers</strong> · give each candidate different questions of equal difficulty</span>
+        <span className="btn-primary px-3 py-2">Set up</span>
+      </Link>
       <PageHeader
         eyebrow="Examination questions"
         title={data.exam.title}

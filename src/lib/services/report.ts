@@ -7,11 +7,11 @@ import { canManageExam, canViewResult, ensureFound, type Actor } from '@/lib/pol
 import { prisma } from '@/lib/prisma'
 import { finalizeExpired } from '@/lib/services/finalize'
 
-async function buildReport(attemptId: number, forStaff: boolean) {
+async function buildReport(attemptId: number, forStaff: boolean, revealToCandidate = false) {
   const attempt = await prisma.attempt.findUniqueOrThrow({
     where: { id: attemptId },
     include: {
-      exam: { select: { id: true, title: true, passMarks: true, resultsPublishedAt: true } },
+      exam: { select: { id: true, title: true, passMarks: true, resultsPublishedAt: true, revealAnswers: true } },
       candidate: { select: { name: true, email: true } },
       questions: {
         orderBy: { position: 'asc' },
@@ -52,7 +52,8 @@ async function buildReport(attemptId: number, forStaff: boolean) {
         options: (item.optionOrder as string[]).map((id) => ({
           text: options.get(id)?.text ?? '',
           chosen: chosen.has(id),
-          correct: forStaff ? Boolean(options.get(id)?.correct) : null,
+          // The key reaches a candidate only when the examiner chose to reveal it with the results
+          correct: forStaff || (revealToCandidate && attempt.exam.revealAnswers) ? Boolean(options.get(id)?.correct) : null,
         })),
         guidance: forStaff ? item.questionVersion.guidance : null,
       }
@@ -91,5 +92,8 @@ export async function candidateResult(actor: Actor, examId: number) {
     attempt,
     (a) => actor.role === 'CANDIDATE' && canViewResult(actor, a, a.exam.resultsPublishedAt !== null)
   )
-  return buildReport(found.id, false)
+  return buildReport(found.id, false, true)
 }
+
+/** What a candidate's report states, without the answer key. For signing and verification only. */
+export const candidateReport = (attemptId: number) => buildReport(attemptId, false)

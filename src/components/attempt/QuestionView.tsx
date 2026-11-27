@@ -1,3 +1,7 @@
+'use client'
+
+import { ListenButton } from '@/components/audio/ListenButton'
+import { useFeatures } from '@/hooks/useFeatures'
 import type { Draft } from './storage'
 import type { Attempt } from './types'
 
@@ -10,6 +14,7 @@ type Props = {
 }
 
 export function QuestionView({ question, draft, readOnly, onChange }: Props) {
+  const features = useFeatures()
   const response = draft?.response ?? null
   const keys = response && 'optionKeys' in response ? response.optionKeys : []
   const text = response && 'text' in response ? response.text : ''
@@ -30,6 +35,15 @@ export function QuestionView({ question, draft, readOnly, onChange }: Props) {
       <h2 id={`q-${question.id}`} className="mt-2 whitespace-pre-wrap break-words text-base font-medium">
         {question.text}
       </h2>
+
+      {features.speech && (
+        <div className="mt-3">
+          <ListenButton
+            label="Read aloud"
+            text={`${question.text} ${question.options.map((o, i) => `Option ${i + 1}: ${o.text}.`).join(' ')}`.slice(0, 1000)}
+          />
+        </div>
+      )}
 
       <fieldset disabled={readOnly} className="mt-4 space-y-2 disabled:opacity-70">
         <legend className="sr-only">Your answer</legend>

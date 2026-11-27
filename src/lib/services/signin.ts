@@ -14,8 +14,9 @@ const dummyHash = hashPassword(randomUUID())
 // One message for wrong email, wrong password, locked and disabled: nothing to probe
 const REFUSED = `Invalid email or password. After ${MAX_FAILURES} failed attempts, sign-in pauses for ${LOCK_MINUTES} minutes.`
 
-export async function signInWithPassword(email: string, password: string) {
-  const user = await prisma.user.findUnique({ where: { email } })
+export async function signInWithPassword(identifier: string, password: string) {
+  // A username never contains "@", so the two can't be confused
+  const user = await prisma.user.findUnique({ where: identifier.includes('@') ? { email: identifier } : { username: identifier } })
   const passwordMatches = await verifyPassword(password, user?.passwordHash ?? (await dummyHash))
 
   if (!user || user.status !== 'ACTIVE' || (user.lockedUntil && user.lockedUntil > serverNow())) {

@@ -1,4 +1,4 @@
-// Light/dark theme: stored choice in localStorage, otherwise the operating system's setting.
+// Light/dark theme: dark unless the visitor chose light (kept in localStorage).
 // The init script runs before first paint (app/layout.tsx) so there is no flash of the wrong theme.
 
 export type Theme = 'light' | 'dark'
@@ -8,7 +8,7 @@ export const THEME_EVENT = 'secureexam:themechange'
 const REVEAL_MS = 700
 
 /** Inlined into <head>; keep it dependency-free and tiny. */
-export const themeInitScript = `(function(){try{var s=localStorage.getItem('${THEME_STORAGE_KEY}');var d=s==='dark'||(s!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;r.classList.toggle('dark',d);r.style.colorScheme=d?'dark':'light';}catch(e){}})();`
+export const themeInitScript = `(function(){try{var s=localStorage.getItem('${THEME_STORAGE_KEY}');var d=s!=='light';var r=document.documentElement;r.classList.toggle('dark',d);r.style.colorScheme=d?'dark':'light';}catch(e){}})();`
 
 export function currentTheme(): Theme {
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light'

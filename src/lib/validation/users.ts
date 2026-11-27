@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { ROLES } from '@/lib/roles'
-import { emailSchema } from '@/lib/validation/auth'
+import { emailSchema, newPasswordSchema, usernameSchema } from '@/lib/validation/auth'
 
 const status = z.enum(['ACTIVE', 'DISABLED'])
 const displayName = z.string().trim().max(100)
@@ -18,6 +18,9 @@ export const createUserSchema = z.strictObject({
   email: emailSchema,
   name: displayName.optional(),
   role: z.enum(ROLES),
+  username: usernameSchema.optional(),
+  password: newPasswordSchema.optional(),
+  mustChangePassword: z.boolean().optional(),
 })
 
 export const updateUserSchema = z

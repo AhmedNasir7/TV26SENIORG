@@ -3,6 +3,7 @@ import type { Role } from '@/lib/roles'
 export type UserRow = {
   id: number
   email: string
+  username: string | null
   name: string | null
   role: Role
   status: 'ACTIVE' | 'DISABLED'

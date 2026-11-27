@@ -1,3 +1,4 @@
+import { formatDateTime } from '@/lib/format-date'
 import { Badge } from '@/components/ui/badge'
 import { MessageSquare } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -37,7 +38,7 @@ export function SupportMessageHistory({
                 <Badge variant={m.status === 'resolved' ? 'success' : 'accent'}>{m.status}</Badge>
               </div>
               <p className="mt-1 text-xs text-[color:var(--muted)]">
-                {new Date(m.createdAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
+                {formatDateTime(m.createdAt)}
               </p>
               <p className="mt-2 text-sm text-[color:var(--muted)]">{m.message}</p>
               {m.response && (

@@ -75,7 +75,7 @@ export function StripeCheckoutForm() {
         body: JSON.stringify({
           amount: 10.0,
           currency: 'usd',
-          productName: 'SecureExam test payment',
+          productName: 'Invigil test payment',
         }),
       })
       const data = await response.json()

@@ -1,3 +1,4 @@
+import { formatDateTime } from '@/lib/format-date'
 import type { NotificationItem } from './types'
 
 export function NotificationsPanel({
@@ -49,10 +50,7 @@ export function NotificationsPanel({
                   </div>
                   <p className="mt-1 text-sm text-[color:var(--muted)]">{notification.message}</p>
                   <p className="mt-2 text-xs text-[color:var(--muted)]">
-                    {new Date(notification.createdAt).toLocaleString('en-US', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                    })}
+                    {formatDateTime(notification.createdAt)}
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-3">

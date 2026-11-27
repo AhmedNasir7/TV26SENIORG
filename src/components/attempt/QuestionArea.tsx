@@ -1,3 +1,4 @@
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Preferences } from '@/lib/preferences'
 import { QuestionGrid, type GridItem } from './QuestionGrid'
 import { QuestionView } from './QuestionView'
@@ -47,12 +48,12 @@ export function QuestionArea(props: Props) {
             <span />
           ) : (
             <div className="flex items-center gap-2">
-              <button type="button" disabled={!backAllowed || position === 1} onClick={() => onGo(position - 1)} className="btn-secondary px-4 py-2 text-sm disabled:opacity-40">Previous</button>
-              <button type="button" disabled={position === total} onClick={() => onGo(position + 1)} className="btn-secondary px-4 py-2 text-sm disabled:opacity-40">Next</button>
+              <button type="button" disabled={!backAllowed || position === 1} onClick={() => onGo(position - 1)} className="btn-secondary px-4 py-2 text-sm disabled:opacity-40"><ChevronLeft className="h-4 w-4" aria-hidden="true" />Previous</button>
+              <button type="button" disabled={position === total} onClick={() => onGo(position + 1)} className="btn-secondary px-4 py-2 text-sm disabled:opacity-40">Next<ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
               <span className="text-sm text-[color:var(--muted)]">{position} of {total}</span>
             </div>
           )}
-          <button type="button" disabled={submitDisabled} onClick={onReview} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">Review and submit</button>
+          <button type="button" disabled={submitDisabled} onClick={onReview} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">Review and submit<ArrowRight className="h-4 w-4" aria-hidden="true" /></button>
         </div>
         {!backAllowed && <p className="text-sm text-[color:var(--muted)]">You cannot return to a question after moving on.</p>}
         <p className="text-xs text-[color:var(--muted)]">Shortcuts: Alt + → next, Alt + ← previous, Alt + M mark for review.</p>

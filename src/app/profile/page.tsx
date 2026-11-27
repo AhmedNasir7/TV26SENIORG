@@ -1,8 +1,8 @@
 'use client'
 
+import { BackLink } from '@/components/ui/BackLink'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { AppHeader } from '@/components/layout/AppHeader'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from '@/components/ui/ToasterProvider'
@@ -193,9 +193,7 @@ export default function ProfilePage() {
           </Tabs>
 
           <div className="mt-8 flex justify-center">
-            <Link href="/" className="text-sm text-[color:var(--muted)] transition-colors hover:text-[color:var(--foreground)]">
-              ← Back to home
-            </Link>
+            <BackLink href="/">Back to home</BackLink>
           </div>
         </div>
       </main>

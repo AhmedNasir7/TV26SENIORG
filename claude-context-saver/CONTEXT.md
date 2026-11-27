@@ -7,6 +7,20 @@ _Last updated: 2026-11-27_
 
 ## 1. Right now
 
+- **Competition day (2026-11-27).** Big request in progress; the user said "dont ask about anything just do it" and
+  "please test and deploy". Done and being deployed: bulk import, question insights, signed PDF reports with
+  verification, fair randomized papers, disputes, confirmation popups, scratchpad dock with calculator, AI
+  features (Groq; need `GROQ_API_KEY`, see `scripts/set-groq.sh`), voice, reminder emails with a server timer,
+  calendar links, 100ms help call, request-origin check and security headers, product name **Invigil** with new
+  logo, public landing page at `/` (Attio template look, real screenshots in `public/landing`, retake with
+  `node scripts/landing-shots.mjs`), new sign-in pages, administrator-only sign-up behind `ADMIN_SIGNUP_CODE`
+  (deploy.sh generates it on the server), usernames and admin-chosen passwords, dark theme by default,
+  collapsible side panel, themed dropdowns, candidate display settings hidden (user's request).
+- **Still to build (user, same day):** 100ms live camera examinations with recording (candidate joins with camera
+  before starting; examiner watches), calendar reminders the candidate sets, shorter reminder timer for testing,
+  AI integrity score over all attempts, AI help while writing exams and questions.
+- Migrations 5 and 6 added. Local test setup code is in `docker-compose.dev.yml`.
+- Dev server on this machine can serve stale CSS after many edits: stop it, delete `.next`, start again.
 - **RULE: never remove services (Calendar, ElevenLabs, Supabase, Pusher, 100ms, Stripe, email, moderation,
   chat, support...). Only template content may go. ASK before removing anything.**
 - **RULE: no Claude co-author line in commits or pull requests.**

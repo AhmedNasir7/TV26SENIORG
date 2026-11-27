@@ -47,7 +47,7 @@ async function createAttempt(candidateId: number, examId: number) {
         startedAt: now,
         lastSeenAt: now,
         deadlineAt: attemptDeadline(now, exam, extraMinutes),
-        ...buildPaper(exam),
+        ...(await buildPaper(tx, exam)),
       },
       select: { id: true, activeSessionId: true },
     })

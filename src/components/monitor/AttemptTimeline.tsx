@@ -1,11 +1,18 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useConfirm } from '@/components/ui/ConfirmDialog'
 import { LocalTime } from '@/components/ui/LocalTime'
 import { apiRequest } from '@/lib/client/request'
 import type { Timeline } from '@/lib/services/monitor'
 
-type Props = { examId: number; attemptId: number; onClose: () => void; onReviewed: () => void }
+type Props = {
+  examId: number
+  attemptId: number
+  candidate: { candidateId: number; state: string } | undefined
+  onClose: () => void
+  onReviewed: () => void
+}
 type Incident = Timeline['incidents'][number]
 
 function measures({ details }: Incident) {
@@ -15,7 +22,9 @@ function measures({ details }: Incident) {
   return parts.join(' · ')
 }
 
-export function AttemptTimeline({ examId, attemptId, onClose, onReviewed }: Props) {
+export function AttemptTimeline({ examId, attemptId, candidate, onClose, onReviewed }: Props) {
+  const confirm = useConfirm()
+  const [done, setDone] = useState('')
   const [timeline, setTimeline] = useState<Timeline | null>(null)
   const [notes, setNotes] = useState<Record<number, string>>({})
   const [error, setError] = useState('')
@@ -40,6 +49,19 @@ export function AttemptTimeline({ examId, attemptId, onClose, onReviewed }: Prop
     if (loaded) heading.current?.focus()
   }, [loaded])
 
+  async function act(title: string, action: string, path: string, body: (reason: string) => unknown, danger = false) {
+    const reason = await confirm({ title, action, danger, reason: { label: danger ? 'Reason (sent to the candidate)' : 'Message', minLength: 5 } })
+    if (!reason) return
+    setError('')
+    try {
+      await apiRequest(`/api/exams/${examId}/${path}`, 'POST', body(reason))
+      setDone(danger ? 'Attempt submitted.' : 'Message sent.')
+      onReviewed()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'The action failed')
+    }
+  }
+
   async function review(id: number) {
     setError('')
     try {
@@ -59,6 +81,17 @@ export function AttemptTimeline({ examId, attemptId, onClose, onReviewed }: Prop
         </h2>
         <button type="button" onClick={onClose} className="btn-ghost px-3 py-1.5">Close</button>
       </div>
+      {candidate && candidate.state !== 'SUBMITTED' && (
+        <div className="flex flex-wrap gap-3">
+          <button type="button" onClick={() => act('Message this candidate', 'Send', 'announcements', (message) => ({ message, candidateId: candidate.candidateId }))} className="btn-secondary px-3 py-2">
+            Message this candidate
+          </button>
+          <button type="button" onClick={() => act('Submit this attempt now?', 'Submit attempt', `monitor/${attemptId}/submit`, (reason) => ({ reason }), true)} className="btn-danger px-3 py-2">
+            Submit their attempt
+          </button>
+        </div>
+      )}
+      {done && <p role="status" style={{ color: 'var(--success)' }}>{done}</p>}
       {error && <p role="alert" style={{ color: 'var(--danger)' }}>{error}</p>}
       {timeline?.incidents.length === 0 && <p className="text-[color:var(--muted)]">Nothing was noted for this attempt.</p>}
       <ul className="space-y-3">

@@ -1,3 +1,4 @@
+import { formatDate } from '@/lib/format-date'
 import { Badge } from '@/components/ui/badge'
 import { roleBadgeVariant, roleLabel } from '@/lib/roles'
 import type { UserRow } from './api'
@@ -31,7 +32,7 @@ export function UserTable({ users, selfId, now, onEdit, onReset, onUnlock }: Pro
               <tr key={user.id} className="hairline-row">
                 <td className="px-4 py-3">
                   <p className="font-medium">{user.name || '—'}</p>
-                  <p className="text-[color:var(--muted)]">{user.email}</p>
+                  <p className="text-[color:var(--muted)]">{user.email}{user.username && ` · @${user.username}`}</p>
                 </td>
                 <td className="px-4 py-3">
                   <Badge variant={roleBadgeVariant(user.role)}>{roleLabel(user.role)}</Badge>
@@ -47,7 +48,7 @@ export function UserTable({ users, selfId, now, onEdit, onReset, onUnlock }: Pro
                     <Badge variant="success">Active</Badge>
                   )}
                 </td>
-                <td className="px-4 py-3 text-[color:var(--muted)]">{new Date(user.createdAt).toLocaleDateString()}</td>
+                <td className="px-4 py-3 text-[color:var(--muted)]">{formatDate(user.createdAt)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   {locked && (
                     <button type="button" onClick={() => onUnlock(user)} className="btn-ghost px-2 py-1 text-xs">Unlock</button>

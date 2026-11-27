@@ -3,6 +3,7 @@
  * staff member, are excluded from every figure, and can never become a real attempt.
  */
 import { randomUUID } from 'node:crypto'
+import { paperSize, readBlueprint } from '@/lib/blueprint'
 import { canManageExam, ensureFound, type Actor } from '@/lib/policies'
 import { prisma } from '@/lib/prisma'
 import { ApiError } from '@/lib/server/api'
@@ -25,7 +26,7 @@ export async function sandboxStatus(actor: Actor, examId: number) {
   await finalizeExpired({ candidateId: actor.id, examId })
   const attempt = await prisma.attempt.findFirst({ where: mine(actor, examId), select: { status: true } })
   return {
-    exam: { id: exam.id, title: exam.title, durationMinutes: exam.durationMinutes, questions: exam.questions.length },
+    exam: { id: exam.id, title: exam.title, durationMinutes: exam.durationMinutes, questions: paperSize(exam.blueprint, exam.questions.length) },
     state: attempt ? (attempt.status === 'IN_PROGRESS' ? ('running' as const) : ('submitted' as const)) : ('none' as const),
   }
 }
@@ -33,7 +34,7 @@ export async function sandboxStatus(actor: Actor, examId: number) {
 /** Always a fresh paper, replacing any earlier trial. Works on drafts and ignores the schedule. */
 export async function startSandbox(actor: Actor, examId: number, minutes?: number) {
   const exam = await ownedExam(actor, examId)
-  if (!exam.questions.length) throw new ApiError('CONFLICT', 'Add questions before trying the examination')
+  if (!exam.questions.length && !readBlueprint(exam.blueprint)) throw new ApiError('CONFLICT', 'Add questions before trying the examination')
   const allowed = Math.min(minutes ?? exam.durationMinutes, exam.durationMinutes)
   const now = serverNow()
 
@@ -46,7 +47,7 @@ export async function startSandbox(actor: Actor, examId: number, minutes?: numbe
         startedAt: now,
         lastSeenAt: now,
         deadlineAt: new Date(now.getTime() + allowed * 60_000),
-        ...buildPaper(exam),
+        ...(await buildPaper(tx, exam)),
       },
       select: { activeSessionId: true },
     })

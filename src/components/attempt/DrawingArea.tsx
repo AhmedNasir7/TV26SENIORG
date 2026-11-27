@@ -28,13 +28,13 @@ export function DrawingArea({ drawing, disabled, onChange }: Props) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="flex h-full flex-col gap-2">
       <svg
         viewBox="0 0 1000 1000"
         preserveAspectRatio="none"
         role="img"
         aria-label={`Drawing area with ${drawing.length} lines`}
-        className="h-56 w-full touch-none rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)]"
+        className="min-h-72 w-full flex-1 touch-none rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--background)]"
         onPointerDown={(e) => {
           if (disabled || full) return
           e.currentTarget.setPointerCapture(e.pointerId)

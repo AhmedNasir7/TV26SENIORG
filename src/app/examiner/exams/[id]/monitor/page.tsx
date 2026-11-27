@@ -1,5 +1,6 @@
-import Link from 'next/link'
+import { BackLink } from '@/components/ui/BackLink'
 import { AnnouncementPanel } from '@/components/monitor/AnnouncementPanel'
+import { HelpCall } from '@/components/monitor/HelpCall'
 import { MonitorBoard } from '@/components/monitor/MonitorBoard'
 import { MonitoringSettingsForm } from '@/components/monitor/MonitoringSettingsForm'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -25,9 +26,10 @@ export default async function MonitorPage({ params }: { params: Promise<{ id: st
         status={<StatusPill phase={exam.phase} />}
         title={exam.title}
         description={isDraft ? 'Choose what to record before publishing.' : 'Live progress, indicators and announcements.'}
-        actions={<Link href={`/examiner/exams/${exam.id}`} className="btn-secondary px-4 py-2 text-sm">Back to examination</Link>}
+        actions={<BackLink href={`/examiner/exams/${exam.id}`}>Back to examination</BackLink>}
       />
       {!isDraft && <MonitorBoard examId={exam.id} initial={board} />}
+      {!isDraft && <HelpCall examId={exam.id} />}
       <AnnouncementPanel examId={exam.id} initial={announcements} canSend={!isDraft} />
       <MonitoringSettingsForm examId={exam.id} initial={settings} recordingLocked={recordingLocked} />
     </div>

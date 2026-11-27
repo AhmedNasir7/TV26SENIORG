@@ -32,6 +32,14 @@ export type ActivityAction =
   | 'monitoring_updated'
   | 'announcement_sent'
   | 'incident_reviewed'
+  | 'candidates_imported'
+  | 'questions_imported'
+  | 'report_issued'
+  | 'dispute_raised'
+  | 'dispute_resolved'
+  | 'question_voided'
+  | 'attempt_force_submitted'
+  | 'ai_requested'
   | 'system_event'
 
 type LogActivityParams = {

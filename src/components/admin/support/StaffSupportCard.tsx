@@ -1,5 +1,6 @@
 'use client'
 
+import { formatDateTime } from '@/lib/format-date'
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 
@@ -51,7 +52,7 @@ export function StaffSupportCard({
         <Badge variant={item.status === 'resolved' ? 'success' : 'accent'}>{item.status}</Badge>
       </div>
       <p className="text-xs text-[color:var(--muted)]">
-        {new Date(item.createdAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
+        {formatDateTime(item.createdAt)}
       </p>
       <p className="surface-muted mt-3 p-3 text-sm text-[color:var(--foreground)]">{item.message}</p>
 

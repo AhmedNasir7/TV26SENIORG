@@ -150,7 +150,7 @@ jobs:
         run: |
           ssh target 'mkdir -p ~/secureexam'
           scp deploy/docker-compose.prod.yml target:secureexam/docker-compose.yml
-          scp deploy/deploy.sh deploy/nginx-secureexam.conf deploy/env.production.example target:secureexam/
+          scp deploy/deploy.sh deploy/cron.sh deploy/nginx-secureexam.conf deploy/env.production.example scripts/set-groq.sh target:secureexam/
           ssh target 'test -f ~/secureexam/.env' || { echo "::error::Create ~/secureexam/.env on the server (see docs/DEPLOY.md)"; exit 1; }
 
       - name: Deploy

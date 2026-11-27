@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react'
 import { LocalTime } from '@/components/ui/LocalTime'
 import type { Report } from '@/lib/services/report'
 
@@ -46,7 +47,7 @@ export function ReportView({ report }: { report: Report }) {
                       {option.text}
                       {option.chosen && <span className="text-[color:var(--muted)]"> (selected)</span>}
                     </span>
-                    {option.correct && <span className="chip chip-success shrink-0">✓ correct</span>}
+                    {option.correct && <span className="chip chip-success inline-flex shrink-0 items-center gap-1"><Check className="h-3.5 w-3.5" aria-hidden="true" />correct</span>}
                   </li>
                 ))}
                 {!q.options.some((o) => o.chosen) && <li className="mt-2 text-[color:var(--muted)]">No answer</li>}

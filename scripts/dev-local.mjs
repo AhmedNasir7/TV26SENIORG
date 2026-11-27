@@ -24,7 +24,7 @@ const local = {
   DATABASE_URL: settings.DATABASE_URL.replace('@postgres:5432', '@localhost:5432'),
   NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
 }
-for (const name of ['SHOW_DEMO_LOGINS', 'DEMO_ADMIN_PASSWORD', 'DEMO_EXAMINER_PASSWORD', 'DEMO_CANDIDATE_PASSWORD']) {
+for (const name of ['ADMIN_SIGNUP_CODE', 'SHOW_DEMO_LOGINS', 'DEMO_ADMIN_PASSWORD', 'DEMO_EXAMINER_PASSWORD', 'DEMO_CANDIDATE_PASSWORD']) {
   if (settings[name]) local[name] = settings[name]
 }
 
