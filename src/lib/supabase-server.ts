@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { runtimeEnv } from '@/lib/server/runtime-env'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = runtimeEnv('NEXT_PUBLIC_SUPABASE_URL')!
+const supabaseAnonKey = runtimeEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY')!
 
 export async function createServerClient() {
   // Reading cookies here opts this route out of static rendering.

@@ -1,2 +1,4 @@
 # Prisma checksums migration files: keep identical line endings everywhere
 prisma/migrations/** text eol=lf
+*.sh text eol=lf
+deploy/* text eol=lf

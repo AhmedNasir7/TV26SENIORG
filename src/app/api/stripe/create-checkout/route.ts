@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { getCurrentUser } from '@/lib/auth'
+import { runtimeEnv } from '@/lib/server/runtime-env'
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
     const stripe = new Stripe(secretKey, { apiVersion: '2025-10-29.clover' })
     // Redirects go to our configured address, never to a caller-supplied origin
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const appUrl = runtimeEnv('NEXT_PUBLIC_APP_URL') || 'http://localhost:3000'
 
     const body = await request.json()
     const { amount, currency = 'usd', productName = 'Product' } = body

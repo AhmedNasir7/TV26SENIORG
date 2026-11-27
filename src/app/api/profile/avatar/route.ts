@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getSupabase } from '@/lib/supabase'
+import { runtimeEnv } from '@/lib/server/runtime-env'
 
-const BUCKET = process.env.NEXT_PUBLIC_SUPABASE_BUCKET || 'final-bucket'
+const BUCKET = runtimeEnv('NEXT_PUBLIC_SUPABASE_BUCKET') || 'final-bucket'
 const AVATAR_PREFIX = 'avatars/'
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024
 

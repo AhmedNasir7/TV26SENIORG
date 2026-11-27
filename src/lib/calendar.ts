@@ -1,6 +1,7 @@
 import { google } from 'googleapis'
+import { runtimeEnv } from '@/lib/server/runtime-env'
 
-const appUrl = () => process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+const appUrl = () => runtimeEnv('NEXT_PUBLIC_APP_URL') || 'http://localhost:3000'
 
 export function createOAuthClient() {
   const clientId = process.env.OAUTH_CLIENT_ID

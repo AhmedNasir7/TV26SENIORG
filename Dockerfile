@@ -45,8 +45,29 @@ COPY . .
 # ends and would otherwise get shipped by the COPY from this stage below.
 # Deleting it immediately after build closes that leak.
 ENV NODE_OPTIONS=--max-old-space-size=6144
-RUN --mount=type=secret,id=dotenv,target=/app/.env,required=true pnpm build \
+# The only settings a browser bundle needs are fixed at build time. Both are public and optional;
+# everything else comes from the server's .env when the container runs.
+ARG NEXT_PUBLIC_PUSHER_KEY=
+ARG NEXT_PUBLIC_PUSHER_CLUSTER=
+ENV NEXT_PUBLIC_PUSHER_KEY=$NEXT_PUBLIC_PUSHER_KEY NEXT_PUBLIC_PUSHER_CLUSTER=$NEXT_PUBLIC_PUSHER_CLUSTER
+# The two placeholders only satisfy the start-up checks while pages are collected; the real values are
+# supplied when the container runs. `public` may not exist yet, and the runner stage copies it.
+RUN mkdir -p public \
+    && DATABASE_URL=postgresql://build:build@localhost:5432/build JWT_SECRET=build-time-placeholder-not-a-real-secret pnpm build \
     && rm -f .next/standalone/.env .next/standalone/.env.*
+
+# Small separate image for database migrations and seeding: the app image carries no tooling
+FROM node:20-alpine AS tools
+WORKDIR /tools
+RUN npm install --no-audit --no-fund --no-package-lock prisma@7.4.0 @prisma/client@7.4.0 @prisma/adapter-pg@7.4.0 pg@8 bcryptjs@3 tsx@4 dotenv@16
+COPY prisma ./prisma
+COPY prisma.config.ts tsconfig.json ./
+COPY scripts ./scripts
+COPY src/lib ./src/lib
+COPY --from=builder /app/src/generated ./src/generated
+ENV NODE_ENV=production
+USER node
+CMD ["npx", "prisma", "migrate", "deploy"]
 
 # Production stage
 FROM node:20-alpine AS runner

@@ -5,20 +5,88 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
-env:
-  IMAGE: bacillus/nascon
+# One deployment at a time, never cancelled half way
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
-  build-and-push:
+  build:
+    name: Build and test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Write .env for build-time secret
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: |
+          npm install --global pnpm@10.32.1
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Generate the database client
         env:
-          ENV_FILE: ${{ secrets.ENV_FILE }}
-        run: printf '%s' "$ENV_FILE" > .env
+          DATABASE_URL: postgresql://build:build@localhost:5432/build
+        run: pnpm prisma generate
+
+      - name: Type check, lint and unit tests
+        run: |
+          pnpm exec next typegen
+          pnpm exec tsc --noEmit
+          pnpm exec eslint .
+          node --test "tests/*.test.mjs"
+
+  build-and-push:
+    name: Build images and push to Docker Hub
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check that the repository secrets exist
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          missing=0
+          for name in DOCKERHUB_USERNAME DOCKERHUB_TOKEN DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS; do
+            if [ -z "${!name}" ]; then echo "::error::Missing repository secret $name"; missing=1; fi
+          done
+          exit $missing
+
+      # Two public values are baked into the browser bundle. They are read from the server's own .env,
+      # so nothing about the application's settings has to be stored in GitHub.
+      - name: Read the browser's public settings from the server
+        id: public
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER_NAME: ${{ secrets.DEPLOY_USER }}
+        run: |
+          install -m 700 -d ~/.ssh
+          (umask 077; printf '%s\n' "$KEY" | tr -d '\r' > ~/.ssh/deploy_key)
+          printf '%s\n' "$KNOWN" | tr -d '\r' > ~/.ssh/known_hosts
+          for name in NEXT_PUBLIC_PUSHER_KEY NEXT_PUBLIC_PUSHER_CLUSTER; do
+            value=$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "$USER_NAME@$HOST" \
+              "sed -n 's/^$name=//p' ~/secureexam/.env | tail -1" | tr -d '\r\"' | tr -d "'")
+            [[ "$value" =~ ^[A-Za-z0-9_-]*$ ]] || value=""
+            echo "$name=$value" >> "$GITHUB_OUTPUT"
+          done
+          rm -f ~/.ssh/deploy_key
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -29,57 +97,76 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push the application
         uses: docker/build-push-action@v6
         with:
           context: .
+          target: runner
           push: true
           tags: |
-            ${{ env.IMAGE }}:latest
-            ${{ env.IMAGE }}:${{ github.sha }}
-          secret-files: |
-            dotenv=.env
+            ${{ secrets.DOCKERHUB_USERNAME }}/secureexam:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/secureexam:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_PUSHER_KEY=${{ steps.public.outputs.NEXT_PUBLIC_PUSHER_KEY }}
+            NEXT_PUBLIC_PUSHER_CLUSTER=${{ steps.public.outputs.NEXT_PUBLIC_PUSHER_CLUSTER }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Clean up build secret
-        if: always()
-        run: rm -f .env
+      - name: Build and push the migration tools
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: tools
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/secureexam:tools
+          build-args: |
+            NEXT_PUBLIC_PUSHER_KEY=${{ steps.public.outputs.NEXT_PUBLIC_PUSHER_KEY }}
+            NEXT_PUBLIC_PUSHER_CLUSTER=${{ steps.public.outputs.NEXT_PUBLIC_PUSHER_CLUSTER }}
+          cache-from: type=gha
 
   deploy:
+    name: Deploy on the server
     needs: build-and-push
     runs-on: ubuntu-latest
+    env:
+      HOST: ${{ secrets.DEPLOY_HOST }}
+      USER_NAME: ${{ secrets.DEPLOY_USER }}
     steps:
-      - name: Deploy to remote server over SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            set -e
-            IMAGE="bacillus/nascon:latest"
-            CONTAINER="estatepro"
+      - name: Checkout
+        uses: actions/checkout@v4
 
-            OLD_IMAGE_ID=$(docker inspect --format='{{.Image}}' "$CONTAINER" 2>/dev/null || true)
+      - name: Prepare SSH
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          (umask 077; printf '%s\n' "$KEY" | tr -d '\r' > ~/.ssh/deploy_key)
+          printf '%s\n' "$KNOWN" | tr -d '\r' > ~/.ssh/known_hosts
+          printf 'Host target\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/deploy_key\n  StrictHostKeyChecking yes\n' "$HOST" "$USER_NAME" > ~/.ssh/config
 
-            docker network create nascon-net 2>/dev/null || true
+      # The settings file lives only on the server; the pipeline never sees or copies it
+      - name: Copy deployment files
+        run: |
+          ssh target 'mkdir -p ~/secureexam'
+          scp deploy/docker-compose.prod.yml target:secureexam/docker-compose.yml
+          scp deploy/deploy.sh deploy/nginx-secureexam.conf deploy/env.production.example target:secureexam/
+          ssh target 'test -f ~/secureexam/.env' || { echo "::error::Create ~/secureexam/.env on the server (see docs/DEPLOY.md)"; exit 1; }
 
-            docker pull "$IMAGE"
+      - name: Deploy
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          TAG: ${{ github.sha }}
+        run: |
+          printf '%s' "$DOCKER_TOKEN" | ssh target "docker login -u '$DOCKER_USER' --password-stdin"
+          ssh target "IMAGE='$DOCKER_USER/secureexam' TAG='$TAG' bash ~/secureexam/deploy.sh"
 
-            docker stop "$CONTAINER" 2>/dev/null || true
-            docker rm "$CONTAINER" 2>/dev/null || true
+      - name: Forget the registry login and the key
+        if: always()
+        run: |
+          ssh target 'docker logout' || true
+          rm -f ~/.ssh/deploy_key
 
-            docker run -d \
-              --name "$CONTAINER" \
-              --restart unless-stopped \
-              --network nascon-net \
-              -p 3000:3000 \
-              --env-file ~/nascon/.env.docker \
-              "$IMAGE"
-
-            NEW_IMAGE_ID=$(docker inspect --format='{{.Image}}' "$CONTAINER")
-            if [ -n "$OLD_IMAGE_ID" ] && [ "$OLD_IMAGE_ID" != "$NEW_IMAGE_ID" ]; then
-              docker rmi "$OLD_IMAGE_ID" 2>/dev/null || true
-            fi
-            docker image prune -f
+      - name: Check the public site
+        run: curl -fsS --retry 10 --retry-delay 5 --retry-all-errors https://seniorgrade.site/api/health

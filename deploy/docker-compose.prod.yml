@@ -1,0 +1,53 @@
+# Production stack on the server. Images come from Docker Hub; nothing is built here.
+# Values are read from the .env file that already sits in the same folder on the server.
+name: secureexam
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-secureexam}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      - POSTGRES_DB=${POSTGRES_DB:-secureexam}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-secureexam} -d ${POSTGRES_DB:-secureexam}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # No published port: only the containers below can reach the database
+
+  app:
+    image: ${IMAGE:?}:${TAG:-latest}
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-secureexam}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-secureexam}?schema=public
+      - SHOW_DEMO_LOGINS=false
+      - ALLOW_PUBLIC_SIGNUP=false
+      - NEXT_PUBLIC_APP_URL=${PUBLIC_URL:-https://seniorgrade.site}
+      - TURNSTILE_HOSTNAMES=seniorgrade.site
+    ports:
+      - "127.0.0.1:3000:3000" # reached only through nginx
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  tools:
+    image: ${IMAGE:?}:${TOOLS_TAG:-tools}
+    profiles: [tools]
+    env_file: [.env]
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-secureexam}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-secureexam}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

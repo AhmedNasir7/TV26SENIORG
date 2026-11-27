@@ -12,8 +12,14 @@ _Last updated: 2026-11-27_
 - **RULE: no Claude co-author line in commits or pull requests.**
 - **Phase:** building. **Steps 1–11 done: all core features and 5 of 8 secondary features.** Everything through step 9 was **pushed** to `origin/main` on
   2026-11-27 at the user's request. Later commits stay local until the user asks again.
-- **Now:** the user asked (2026-11-27) to deploy to their EC2 server with CI/CD through Docker Hub on push to
-  `main`. That comes before step 12.
+- **Deployment (2026-11-27):** CI/CD on push to `main`: build and test, images to Docker Hub
+  (`<user>/secureexam`), then `deploy/deploy.sh` on EC2 `32.194.175.137` (user `ec2-user`, key outside the repo).
+  Settings live only in the server's `~/secureexam/.env` (copied from the local `.env` at the user's request,
+  without reading it; `POSTGRES_PASSWORD` generated on the server). Guide: `docs/DEPLOY.md`.
+  **Pushes to `main` now deploy to production.** Stop pushing before the competition deadline.
+- `TURNSTILE_SECRET_KEY` is empty in the server `.env`, so the bot check is off in production.
+- Local C: drive filled during image builds. npm/pnpm caches cleared, page file moved to P: (needs restart);
+  Docker's disk is still on C: (user was moving it).
 - **Next build step:** 12 = IMP-1, IMP-2, QAN-1. The user said "for now it is enough" about added complexity:
   **no new features unless asked**; keep the flow easy to follow.
 - **Navigation rules (user, 2026-11-27):** nothing removed, buttons clearly visible, breadcrumbs on nested pages,

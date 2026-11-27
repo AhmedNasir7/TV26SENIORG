@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { ApiError } from '@/lib/server/api'
 import type { Role } from '@/lib/roles'
+import { runtimeEnv } from '@/lib/server/runtime-env'
 
 const COOKIE = 'auth-token'
 const SESSION_SECONDS = 60 * 60 * 12
@@ -44,7 +45,7 @@ export async function setAuthCookie(user: { id: number; sessionVersion: number }
     .sign(signingKey())
 
   // Browsers drop Secure cookies on plain HTTP, so follow the deployment's real protocol
-  const isHttps = (process.env.NEXT_PUBLIC_APP_URL ?? '').startsWith('https://')
+  const isHttps = (runtimeEnv('NEXT_PUBLIC_APP_URL') ?? '').startsWith('https://')
 
   ;(await cookies()).set(COOKIE, token, {
     httpOnly: true,
