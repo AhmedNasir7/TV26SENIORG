@@ -1,3 +1,4 @@
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 export type AuditLogFilterState = {
   action: string
   email: string
@@ -48,21 +49,11 @@ export function AuditLogFilters({
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-[color:var(--foreground)]">From</label>
-          <input
-            type="date"
-            value={filters.from}
-            onChange={(e) => onChange({ ...filters, from: e.target.value })}
-            className="input-clean w-full px-3 py-2 text-sm"
-          />
+          <DateTimePicker mode="date" label="From date" value={filters.from} onChange={(value) => onChange({ ...filters, from: value })} placeholder="Any date" />
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-[color:var(--foreground)]">To</label>
-          <input
-            type="date"
-            value={filters.to}
-            onChange={(e) => onChange({ ...filters, to: e.target.value })}
-            className="input-clean w-full px-3 py-2 text-sm"
-          />
+          <DateTimePicker mode="date" label="To date" value={filters.to} onChange={(value) => onChange({ ...filters, to: value })} placeholder="Any date" />
         </div>
       </div>
       {hasActiveFilters && (

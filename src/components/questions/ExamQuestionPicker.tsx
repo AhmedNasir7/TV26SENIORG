@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/ToasterProvider'
 import { useState } from 'react'
 import { Pagination } from '@/components/admin/audit-logs/Pagination'
 import { apiRequest } from '@/lib/client/request'
@@ -45,7 +46,8 @@ export function ExamQuestionPicker({ initial }: { initial: Data }) {
       })
       setItems(data.items)
       setExamTotal(data.exam.totalMarks)
-      setMessage('Saved')
+      setMessage('')
+      toast.success('Questions saved')
     } catch (err) {
       setMessage(err instanceof Error ? err.message : 'Could not save')
     } finally {

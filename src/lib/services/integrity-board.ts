@@ -25,9 +25,11 @@ export async function integrityBoard(actor: Actor, examId: number) {
     take: MAX_ATTEMPTS,
     select: {
       id: true,
+      startedAt: true,
+      submittedAt: true,
       submitReason: true,
       candidate: { select: { name: true, email: true } },
-      incidents: { select: { type: true, occurrences: true } },
+      incidents: { select: { type: true, occurrences: true, details: true } },
       questions: { where: { questionVersion: { question: { type: 'WRITTEN' } } }, select: { questionVersionId: true, answer: { select: { response: true } } } },
     },
   })
@@ -41,12 +43,15 @@ export async function integrityBoard(actor: Actor, examId: number) {
       byQuestion.set(q.questionVersionId, [...(byQuestion.get(q.questionVersionId) ?? []), { attemptId: attempt.id, answer }])
     }
   }
-  const closest = new Map<number, number>()
+  const closest = new Map<number, { score: number; length: number }>()
+  const written = new Map<number, number>()
   for (const group of byQuestion.values()) {
     for (const a of group.slice(0, 60)) {
+      written.set(a.attemptId, (written.get(a.attemptId) ?? 0) + a.answer.length)
       for (const b of group.slice(0, 60)) {
         if (a.attemptId === b.attemptId) continue
-        closest.set(a.attemptId, Math.max(closest.get(a.attemptId) ?? 0, similarity(a.answer, b.answer)))
+        const score = similarity(a.answer, b.answer)
+        if (score > (closest.get(a.attemptId)?.score ?? 0)) closest.set(a.attemptId, { score, length: a.answer.length })
       }
     }
   }
@@ -55,7 +60,14 @@ export async function integrityBoard(actor: Actor, examId: number) {
     .map((attempt) => ({
       attemptId: attempt.id,
       candidate: attempt.candidate.name || attempt.candidate.email,
-      ...integrityScore({ incidents: attempt.incidents, closestOtherAnswer: closest.get(attempt.id) ?? 0, left: attempt.submitReason === 'LEFT' }),
+      ...integrityScore({
+        incidents: attempt.incidents.map((i) => ({ type: i.type, occurrences: i.occurrences, ...((i.details ?? {}) as object) })),
+        minutesTaken: Math.max(1, ((attempt.submittedAt ?? new Date()).getTime() - attempt.startedAt.getTime()) / 60_000),
+        writtenCharacters: written.get(attempt.id) ?? 0,
+        closestOtherAnswer: closest.get(attempt.id)?.score ?? 0,
+        closestAnswerLength: closest.get(attempt.id)?.length ?? 0,
+        left: attempt.submitReason === 'LEFT',
+      }),
     }))
     .sort((x, y) => y.score - x.score || x.attemptId - y.attemptId)
   return { rows }
@@ -70,10 +82,10 @@ export type IntegrityExplanation = z.infer<typeof explainSchema> & { createdAt: 
 /** One request for the ten highest scores, not one per candidate. Names are not sent. */
 export async function explainBoard(actor: Actor, examId: number): Promise<IntegrityExplanation> {
   const { rows } = await integrityBoard(actor, examId)
-  const top = rows.filter((r) => r.score > 0).slice(0, 10)
-  if (!top.length) throw new ApiError('CONFLICT', 'No candidate has a score above zero')
+  const top = rows.filter((r) => r.score > 0 && r.level !== 'low').slice(0, 10)
+  if (!top.length) throw new ApiError('CONFLICT', 'No candidate needs a closer look')
 
-  const facts = top.map(({ attemptId, score, level, reasons }) => ({ attemptId, score, level, reasons }))
+  const facts = top.map(({ attemptId, score, level, corroboration, reasons }) => ({ attemptId, score, level, independentEvidence: corroboration, reasons }))
   const inputHash = createHash('sha256').update(JSON.stringify(facts)).digest('hex')
   const anchor = top[0].attemptId
   const stored = await prisma.aiReview.findUnique({ where: { attemptId_kind: { attemptId: anchor, kind: 'board' } } })

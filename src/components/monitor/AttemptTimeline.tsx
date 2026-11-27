@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/ToasterProvider'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
 import { LocalTime } from '@/components/ui/LocalTime'
@@ -55,7 +56,8 @@ export function AttemptTimeline({ examId, attemptId, candidate, onClose, onRevie
     setError('')
     try {
       await apiRequest(`/api/exams/${examId}/${path}`, 'POST', body(reason))
-      setDone(danger ? 'Attempt submitted.' : 'Message sent.')
+      setDone('')
+      toast.success(danger ? 'Attempt submitted' : 'Message sent')
       onReviewed()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The action failed')

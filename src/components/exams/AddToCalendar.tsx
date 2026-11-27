@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/ToasterProvider'
 import { CalendarPlus } from 'lucide-react'
 import { useState } from 'react'
 import { useFeatures } from '@/hooks/useFeatures'
@@ -28,7 +29,7 @@ export function AddToCalendar({ examId, title, startsAt, closesAt, reminderMinut
     setMinutes(next)
     try {
       await apiRequest(`/api/me/exams/${examId}/reminder`, 'PUT', { minutes: next })
-      setNote(next ? 'Saved. You will get an email then, and the calendar file includes it.' : 'Reminder removed.')
+      toast.success(next ? 'Reminder saved' : 'Reminder removed', { description: next ? 'You will get an email then, and the calendar file includes it.' : undefined })
     } catch (err) {
       setNote(err instanceof Error ? err.message : 'Could not save the reminder')
     }

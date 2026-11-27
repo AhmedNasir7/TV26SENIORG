@@ -11,6 +11,7 @@ export const monitoringSettingsSchema = z.strictObject({
   offline: z.boolean(),
   connectionGap: z.boolean(),
   paste: z.boolean(),
+  copy: z.boolean(),
   fullscreen: z.boolean(),
   sessionTakeover: z.boolean(),
   lateSave: z.boolean(),
@@ -25,7 +26,7 @@ export const eventsSchema = z.strictObject({
   events: z
     .array(
       z.strictObject({
-        type: z.enum(['TAB_HIDDEN', 'WINDOW_BLUR', 'OFFLINE', 'PASTE', 'FULLSCREEN_EXIT']),
+        type: z.enum(['TAB_HIDDEN', 'WINDOW_BLUR', 'OFFLINE', 'PASTE', 'COPY', 'FULLSCREEN_EXIT']),
         seconds: z.number().int().min(0).max(86_400).optional(),
         characters: z.number().int().min(0).max(100_000).optional(),
       })

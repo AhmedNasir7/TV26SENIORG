@@ -310,6 +310,7 @@ enum IncidentType {
   LATE_SAVE_REJECTED
   FULLSCREEN_EXIT
   PASTE
+  COPY
 }
 
 model Incident {

@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/ToasterProvider'
 import { useState } from 'react'
 import { apiRequest } from '@/lib/client/request'
 import { DEFAULT_SETTINGS, LOCKED_AFTER_START, NUMBERS, TOGGLES, type MonitoringSettings, type NumberKey } from '@/lib/monitoring'
@@ -28,7 +29,8 @@ export function MonitoringSettingsForm({ examId, initial, recordingLocked }: Pro
     try {
       const result = await apiRequest<{ recordingLocked: boolean }>(`/api/exams/${examId}/monitoring`, 'PUT', settings)
       setLocked(result.recordingLocked)
-      setMessage('Saved')
+      setMessage('')
+      toast.success('Monitoring rules saved', { description: 'Candidates see the updated list before they start.' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save')
     } finally {

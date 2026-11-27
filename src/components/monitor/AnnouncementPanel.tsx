@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/ToasterProvider'
 import { useState } from 'react'
 import { LocalTime } from '@/components/ui/LocalTime'
 import { apiRequest } from '@/lib/client/request'
@@ -19,6 +20,7 @@ export function AnnouncementPanel({ examId, initial, canSend }: { examId: number
       const { announcement } = await apiRequest<{ announcement: Announcement }>(`/api/exams/${examId}/announcements`, 'POST', { message })
       setSent((list) => [announcement, ...list])
       setMessage('')
+      toast.success('Announcement sent', { description: 'Running candidates receive it within seconds.' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not send')
     } finally {

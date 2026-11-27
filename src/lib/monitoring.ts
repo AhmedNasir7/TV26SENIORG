@@ -8,6 +8,7 @@ export type IndicatorType =
   | 'OFFLINE'
   | 'RECONNECTED'
   | 'PASTE'
+  | 'COPY'
   | 'FULLSCREEN_EXIT'
   | 'SESSION_TAKEOVER'
   | 'LATE_SAVE_REJECTED'
@@ -18,6 +19,7 @@ export type ToggleKey =
   | 'offline'
   | 'connectionGap'
   | 'paste'
+  | 'copy'
   | 'fullscreen'
   | 'sessionTakeover'
   | 'lateSave'
@@ -71,6 +73,13 @@ export const INDICATORS: Record<IndicatorType, Indicator> = {
     option: 'Pasting into written answers (length only, never the text)',
     innocent: 'Candidates often move their own sentences around.',
   },
+  COPY: {
+    setting: 'copy',
+    source: 'browser',
+    label: 'Text copied from the examination page',
+    option: 'Copying text out of the page (length only, never the text)',
+    innocent: 'Copying a number into the calculator or a note.',
+  },
   FULLSCREEN_EXIT: {
     setting: 'fullscreen',
     source: 'browser',
@@ -123,6 +132,7 @@ export const DEFAULT_SETTINGS: MonitoringSettings = {
   offline: true,
   connectionGap: true,
   paste: true,
+  copy: true,
   fullscreen: false,
   sessionTakeover: true,
   lateSave: true,

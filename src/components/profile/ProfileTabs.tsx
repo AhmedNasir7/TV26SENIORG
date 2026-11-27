@@ -6,17 +6,15 @@ const tabs: Array<{ id: ProfileTab; label: string }> = [
   { id: 'notifications', label: 'Notifications' },
 ]
 
+/** A segmented control: the current tab is a raised pill, so it reads as a choice and not a link. */
 export function ProfileTabs() {
   return (
-    <TabsList
-      variant="line"
-      className="mb-6 h-auto w-full justify-start gap-0 border-b border-[var(--border)] bg-transparent p-0"
-    >
+    <TabsList className="mb-6 inline-flex h-auto w-auto gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-1">
       {tabs.map((tab) => (
         <TabsTrigger
           key={tab.id}
           value={tab.id}
-          className="rounded-none border-0 px-4 py-2.5 text-sm font-medium text-[color:var(--muted)] after:bg-[var(--accent)] data-active:bg-transparent data-active:text-[color:var(--accent-strong)] data-active:shadow-none"
+          className="rounded-lg border-0 px-5 py-2 text-sm font-medium text-[color:var(--muted)] data-active:bg-[var(--surface)] data-active:text-[color:var(--foreground)] data-active:shadow-[var(--shadow-sm)]"
         >
           {tab.label}
         </TabsTrigger>

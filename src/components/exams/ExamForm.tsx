@@ -1,8 +1,10 @@
 'use client'
 
+import { toast } from '@/components/ui/ToasterProvider'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { apiRequest } from '@/lib/client/request'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { useFeatures } from '@/hooks/useFeatures'
 
 export type ExamValues = {
@@ -27,6 +29,13 @@ function toLocalInput(iso: string) {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
 }
 
+/** The next half hour from now. */
+function defaultStart() {
+  const d = new Date()
+  d.setMinutes(d.getMinutes() < 30 ? 30 : 60, 0, 0)
+  return d
+}
+
 const field = 'input-clean mt-1 w-full px-3 py-2 text-sm font-normal disabled:opacity-60'
 const toggles = [
   ['shuffleQuestions', 'Shuffle question order'],
@@ -39,8 +48,9 @@ export function ExamForm({ exam, wordingOnly = false }: { exam?: ExamValues; wor
   const [values, setValues] = useState({
     title: exam?.title ?? '',
     instructions: exam?.instructions ?? '',
-    startsAt: toLocalInput(exam?.startsAt ?? ''),
-    endsAt: toLocalInput(exam?.endsAt ?? ''),
+    // A new examination starts from the next half hour and runs two hours, so the pickers are never blank
+    startsAt: toLocalInput(exam?.startsAt ?? defaultStart().toISOString()),
+    endsAt: toLocalInput(exam?.endsAt ?? new Date(defaultStart().getTime() + 2 * 3_600_000).toISOString()),
     durationMinutes: String(exam?.durationMinutes ?? 30),
     totalMarks: String(exam?.totalMarks ?? 10),
     passMarks: exam?.passMarks === null || exam?.passMarks === undefined ? '' : String(exam.passMarks),
@@ -67,7 +77,8 @@ export function ExamForm({ exam, wordingOnly = false }: { exam?: ExamValues; wor
         ...(values.instructions.trim() && { notes: values.instructions.trim().slice(0, 1000) }),
       })
       set({ instructions: draft.instructions })
-      setMessage('Draft written. Read it and edit before saving.')
+      setMessage('')
+      toast.success('Draft written', { description: 'Read it and edit before saving.' })
     } catch (err) {
       setMessage(err instanceof Error ? err.message : 'Could not write a draft')
     } finally {
@@ -97,7 +108,8 @@ export function ExamForm({ exam, wordingOnly = false }: { exam?: ExamValues; wor
       )
       if (!exam?.id) router.push(`/examiner/exams/${result.exam.id}`)
       else {
-        setMessage('Saved')
+        setMessage('')
+        toast.success('Examination saved')
         router.refresh()
       }
     } catch (err) {
@@ -127,8 +139,18 @@ export function ExamForm({ exam, wordingOnly = false }: { exam?: ExamValues; wor
         </button>
       )}
       <div className="grid gap-3 sm:grid-cols-2">
-        {input('startsAt', 'Opens (your time)', 'datetime-local', { required: true })}
-        {input('endsAt', 'Closes (your time)', 'datetime-local', { required: true })}
+        <div className="block text-sm font-medium">
+          Opens (your time)
+          <div className="mt-1">
+            <DateTimePicker label="Opens" required disabled={wordingOnly} value={values.startsAt} onChange={(startsAt) => set({ startsAt })} />
+          </div>
+        </div>
+        <div className="block text-sm font-medium">
+          Closes (your time)
+          <div className="mt-1">
+            <DateTimePicker label="Closes" required disabled={wordingOnly} min={values.startsAt} value={values.endsAt} onChange={(endsAt) => set({ endsAt })} />
+          </div>
+        </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         {input('durationMinutes', 'Duration (minutes)', 'number', { required: true, min: 1, max: 1440 })}

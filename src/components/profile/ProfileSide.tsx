@@ -16,7 +16,7 @@ export function ProfileSide({ user }: { user: ProfileUser }) {
   ]
   return (
     <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
-      <h2 className="font-display px-1 text-sm font-semibold text-[color:var(--muted)]">Shortcuts</h2>
+      <h2 className="font-display flex h-[42px] items-center px-1 text-sm font-semibold text-[color:var(--muted)]">Shortcuts</h2>
       <ul className="space-y-2">
         {items.map(({ href, label, help, icon: Icon }) => (
           <li key={href}>

@@ -17,7 +17,7 @@ const MIN_BLUR_MS = 1000
  * text. Events noted while offline wait in local storage and are sent on reconnecting.
  */
 export function useMonitoring(attemptId: number, sessionId: string, settings: MonitoringSettings, active: boolean) {
-  const { tabHidden, windowBlur, offline, paste, fullscreen, minAwaySeconds } = settings
+  const { tabHidden, windowBlur, offline, paste, copy, fullscreen, minAwaySeconds } = settings
 
   useEffect(() => {
     if (!active) return
@@ -97,6 +97,14 @@ export function useMonitoring(attemptId: number, sessionId: string, settings: Mo
     }
     const onPaste = (event: ClipboardEvent) => inserted(event.target, event.clipboardData?.getData('text') ?? '')
     const onDrop = (event: DragEvent) => inserted(event.target, event.dataTransfer?.getData('text') ?? '')
+    // Copying out of the page: the question, options or any text. Copying your own answer or notes is normal.
+    function onCopy(event: ClipboardEvent) {
+      if (!copy) return
+      const target = event.target instanceof Element ? event.target : null
+      if (target?.closest('textarea, input, [data-scratchpad]')) return
+      const length = window.getSelection()?.toString().length ?? 0
+      if (length >= 20) report({ type: 'COPY', characters: length }) // a single number or word is not worth a flag
+    }
     function onFullscreen() {
       const now = Boolean(document.fullscreenElement)
       if (fullscreen && wasFullscreen && !now) report({ type: 'FULLSCREEN_EXIT' })
@@ -106,6 +114,8 @@ export function useMonitoring(attemptId: number, sessionId: string, settings: Mo
     document.addEventListener('visibilitychange', onVisibility)
     document.addEventListener('paste', onPaste, true)
     document.addEventListener('drop', onDrop, true)
+    document.addEventListener('copy', onCopy, true)
+    document.addEventListener('cut', onCopy, true)
     document.addEventListener('fullscreenchange', onFullscreen)
     window.addEventListener('blur', onBlur)
     window.addEventListener('focus', onFocus)
@@ -120,11 +130,13 @@ export function useMonitoring(attemptId: number, sessionId: string, settings: Mo
       document.removeEventListener('visibilitychange', onVisibility)
       document.removeEventListener('paste', onPaste, true)
       document.removeEventListener('drop', onDrop, true)
+      document.removeEventListener('copy', onCopy, true)
+      document.removeEventListener('cut', onCopy, true)
       document.removeEventListener('fullscreenchange', onFullscreen)
       window.removeEventListener('blur', onBlur)
       window.removeEventListener('focus', onFocus)
       window.removeEventListener('offline', onOffline)
       window.removeEventListener('online', onOnline)
     }
-  }, [active, attemptId, sessionId, tabHidden, windowBlur, offline, paste, fullscreen, minAwaySeconds])
+  }, [active, attemptId, sessionId, tabHidden, windowBlur, offline, paste, copy, fullscreen, minAwaySeconds])
 }

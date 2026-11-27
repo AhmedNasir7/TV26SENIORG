@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/ToasterProvider'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
@@ -32,17 +33,25 @@ export function ExamActions({ id, isDraft, canPublish, canUnpublish }: Props) {
         ? { title: 'Publish this examination?', body: 'Enrolled candidates will see it and be notified.', action: 'Publish' }
         : { title: 'Unpublish it?', body: 'It returns to draft and candidates no longer see it.', action: 'Unpublish', danger: true }
     )
-    if (ok) await run(() => apiRequest(`/api/exams/${id}/publish`, 'POST', { published }))
+    if (ok) {
+      await run(async () => {
+        await apiRequest(`/api/exams/${id}/publish`, 'POST', { published })
+        if (published) toast.success('Examination published', { description: 'Enrolled candidates can see it now and have been told.' })
+        else toast.success('Back to draft', { description: 'Candidates no longer see this examination.' })
+      })
+    }
   }
   const duplicate = () =>
     run(async () => {
       const result = await apiRequest<{ exam: { id: number } }>(`/api/exams/${id}/duplicate`, 'POST')
+      toast.success('Examination duplicated', { description: 'You are now editing the copy.' })
       router.push(`/examiner/exams/${result.exam.id}`)
     })
   async function remove() {
     if (!(await confirm({ title: 'Delete this draft?', body: 'This cannot be undone.', action: 'Delete draft', danger: true }))) return
     await run(async () => {
       await apiRequest(`/api/exams/${id}`, 'DELETE')
+      toast.success('Draft deleted')
       router.push('/examiner')
     })
   }

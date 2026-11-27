@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/ToasterProvider'
 import { UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { PasswordField } from '@/components/auth/PasswordField'
@@ -32,7 +33,7 @@ export function CreateUserForm({ onCreated }: { onCreated: (credentials: Credent
         ...(password && { password, mustChangePassword: forceChange }),
       })
       onCreated({ ...result, email })
-      if (password) setDone(`${roleLabel(role)} added. They sign in with ${username || email} and the password you set.`)
+      toast.success(`${roleLabel(role)} added`, { description: result.emailed ? `Sign-in details were emailed to ${email}.` : password ? `They sign in with ${username || email} and the password you set.` : 'Share the temporary password shown below.' })
       setValues(empty)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add the user')

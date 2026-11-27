@@ -33,7 +33,7 @@ export const writePosition = (attemptId: number, position: number) =>
   safely(() => localStorage.setItem(positionKey(attemptId), String(position)), undefined)
 
 export type MonitorEvent = {
-  type: 'TAB_HIDDEN' | 'WINDOW_BLUR' | 'OFFLINE' | 'PASTE' | 'FULLSCREEN_EXIT'
+  type: 'TAB_HIDDEN' | 'WINDOW_BLUR' | 'OFFLINE' | 'PASTE' | 'COPY' | 'FULLSCREEN_EXIT'
   seconds?: number
   characters?: number
 }

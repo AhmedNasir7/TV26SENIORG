@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/ToasterProvider'
 import { BellRing } from 'lucide-react'
 import { useState } from 'react'
 import { apiRequest } from '@/lib/client/request'
@@ -14,9 +15,9 @@ export function SendReminders({ examId }: { examId: number }) {
     setNote('')
     try {
       const result = await apiRequest<{ notified: number; emailed: number }>(`/api/exams/${examId}/reminders`, 'POST')
-      setNote(`Notified ${result.notified} candidate${result.notified === 1 ? '' : 's'}; ${result.emailed} email${result.emailed === 1 ? '' : 's'} sent.`)
+      toast.success('Reminders sent', { description: `${result.notified} candidate${result.notified === 1 ? '' : 's'} notified, ${result.emailed} email${result.emailed === 1 ? '' : 's'} sent.` })
     } catch (err) {
-      setNote(err instanceof Error ? err.message : 'Could not send reminders')
+      toast.error('Could not send reminders', { description: err instanceof Error ? err.message : undefined })
     } finally {
       setBusy(false)
     }
