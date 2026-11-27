@@ -21,6 +21,7 @@ Y = allowed · own = only the caller's own records · — = refused
 | `GET/POST /api/support`, `POST /api/support/transcribe` | — | own | own | own |
 | `GET/POST /api/admin/support` | — | — | Y | Y |
 | `GET/POST /api/admin/users` | — | — | — | Y |
+| `PATCH /api/admin/users/{id}`, `POST .../reset-password` | — | — | — | Y (not own role, status or reset) |
 | `GET /api/admin/audit-logs` | — | — | — | Y |
 | `POST /api/email/send` | — | — | — | Y |
 | `POST /api/check-room`, `generate-code` | — | Y | Y | Y |

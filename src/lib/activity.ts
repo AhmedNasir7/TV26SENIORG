@@ -8,6 +8,9 @@ export type ActivityAction =
   | 'admin_login'
   | 'account_locked'
   | 'password_changed'
+  | 'user_created'
+  | 'user_updated'
+  | 'user_password_reset'
   | 'system_event'
 
 type LogActivityParams = {

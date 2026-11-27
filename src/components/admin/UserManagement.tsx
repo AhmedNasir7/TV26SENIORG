@@ -1,170 +1,134 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Badge } from '@/components/ui/badge'
-import { roleBadgeVariant, roleLabel } from '@/lib/roles'
+import { useCallback, useEffect, useState } from 'react'
+import { Pagination } from '@/components/admin/audit-logs/Pagination'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useAuth } from '@/hooks/useAuth'
+import { ROLES, roleLabel } from '@/lib/roles'
+import { adminRequest, type Credentials, type UserRow } from './users/api'
+import { CreateUserForm } from './users/CreateUserForm'
+import { CredentialNotice } from './users/CredentialNotice'
+import { EditUserDialog } from './users/EditUserDialog'
+import { UserTable } from './users/UserTable'
 
-interface UserRow {
-  id: number
-  email: string
-  name: string | null
-  role: string
-  createdAt: string
-}
+type ListResult = { users: UserRow[]; total: number; totalPages: number; loadedAt: number }
+const noFilters = { search: '', role: '', status: '' }
 
 export function UserManagement() {
-  const [users, setUsers] = useState<UserRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [adding, setAdding] = useState(false)
+  const { user: self } = useAuth()
+  const [filters, setFilters] = useState(noFilters)
+  const [page, setPage] = useState(1)
+  const [result, setResult] = useState<ListResult | null>(null)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [email, setEmail] = useState('')
-  const [name, setName] = useState('')
+  const [credentials, setCredentials] = useState<Credentials | null>(null)
+  const [editing, setEditing] = useState<UserRow | null>(null)
+  const [resetting, setResetting] = useState<UserRow | null>(null)
+  const [busy, setBusy] = useState(false)
 
-  const fetchUsers = async () => {
+  const load = useCallback(async () => {
+    const params = new URLSearchParams({ ...filters, page: String(page) })
     try {
-      const res = await fetch('/api/admin/users')
-      if (!res.ok) {
-        if (res.status === 403) setError('Access denied')
-        return
-      }
-      const data = await res.json()
-      setUsers(data.users || [])
-    } catch {
-      setError('Failed to load users')
-    } finally {
-      setLoading(false)
+      const data = await adminRequest<Omit<ListResult, 'loadedAt'>>(`/api/admin/users?${params}`)
+      setResult({ ...data, loadedAt: Date.now() })
+      setError('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load users')
     }
-  }
+  }, [filters, page])
 
+  // Short delay so typing in the search box doesn't send a request per keystroke
   useEffect(() => {
-    fetchUsers()
-  }, [])
+    const timer = setTimeout(load, 250)
+    return () => clearTimeout(timer)
+  }, [load])
 
-  const handleAddUser = async (e: React.FormEvent) => {
-    e.preventDefault()
+  function updateFilter(patch: Partial<typeof noFilters>) {
+    setFilters((prev) => ({ ...prev, ...patch }))
+    setPage(1)
+  }
+
+  async function run(action: () => Promise<void>) {
+    setBusy(true)
     setError('')
-    setSuccess('')
-    if (!email.trim()) {
-      setError('Email is required')
-      return
-    }
-    setAdding(true)
     try {
-      const res = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), name: name.trim() || undefined }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setError(data.error || 'Failed to add user')
-        setAdding(false)
-        return
-      }
-      setSuccess(
-        data.temporaryPassword
-          ? `User created. Temporary password (shown only once): ${data.temporaryPassword}`
-          : 'User created. Credentials have been sent to their email.'
-      )
-      setEmail('')
-      setName('')
-      fetchUsers()
-    } catch {
-      setError('Something went wrong')
+      await action()
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'The action failed')
     } finally {
-      setAdding(false)
+      setBusy(false)
+      setResetting(null)
     }
   }
+
+  const confirmReset = (target: UserRow) =>
+    run(async () => {
+      const reply = await adminRequest<Omit<Credentials, 'email'>>(`/api/admin/users/${target.id}/reset-password`, 'POST')
+      setCredentials({ ...reply, email: target.email })
+    })
 
   return (
     <>
-      <div className="surface-card mb-8 p-6">
-        <h2 className="font-display text-lg font-semibold text-[color:var(--foreground)] mb-4">Add user</h2>
-        <form onSubmit={handleAddUser} className="max-w-md space-y-4">
-          {error && (
-            <div className="rounded-[var(--radius-sm)] p-3 text-sm" style={{ background: 'var(--danger-soft)', color: 'var(--danger)' }}>
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="rounded-[var(--radius-sm)] p-3 text-sm" style={{ background: 'var(--success-soft)', color: 'var(--success)' }}>
-              {success}
-            </div>
-          )}
-          <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">
-              Email *
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@example.com"
-              className="input-clean w-full px-4 py-2 text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="name" className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">
-              Name (optional)
-            </label>
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Full name"
-              className="input-clean w-full px-4 py-2 text-sm"
-            />
-          </div>
-          <p className="text-xs text-[color:var(--muted)]">
-            A random password is generated. It is emailed if email is set up, otherwise shown here once.
-          </p>
-          <button type="submit" disabled={adding} className="btn-primary px-4 py-2 text-sm disabled:opacity-50">
-            {adding ? 'Adding...' : 'Add user & send credentials'}
-          </button>
-        </form>
+      {credentials && <CredentialNotice credentials={credentials} onDismiss={() => setCredentials(null)} />}
+      <CreateUserForm onCreated={(created) => { setCredentials(created); load() }} />
+
+      <div className="mb-4 flex flex-wrap gap-3">
+        <input type="search" aria-label="Search users" placeholder="Search name or email" value={filters.search} onChange={(e) => updateFilter({ search: e.target.value })} className="input-clean min-w-56 flex-1 px-3 py-2 text-sm" />
+        <select aria-label="Filter by role" value={filters.role} onChange={(e) => updateFilter({ role: e.target.value })} className="input-clean px-3 py-2 text-sm">
+          <option value="">All roles</option>
+          {ROLES.map((r) => (
+            <option key={r} value={r}>{roleLabel(r)}</option>
+          ))}
+        </select>
+        <select aria-label="Filter by status" value={filters.status} onChange={(e) => updateFilter({ status: e.target.value })} className="input-clean px-3 py-2 text-sm">
+          <option value="">Any status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="DISABLED">Disabled</option>
+        </select>
       </div>
 
-      <div className="surface-card overflow-hidden">
-        <h2 className="font-display border-b border-[var(--border)] p-4 text-lg font-semibold text-[color:var(--foreground)]">
-          All users
-        </h2>
-        {loading ? (
-          <div className="p-8 text-center text-sm text-[color:var(--muted)]">Loading...</div>
-        ) : users.length === 0 ? (
-          <div className="p-8 text-center text-sm text-[color:var(--muted)]">No users yet.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-sm font-medium text-[color:var(--muted)]" style={{ background: 'var(--surface-muted)' }}>
-                  <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Name</th>
-                  <th className="px-4 py-3">Role</th>
-                  <th className="px-4 py-3">Joined</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} className="hairline-row text-[color:var(--foreground)]">
-                    <td className="px-4 py-3">{u.email}</td>
-                    <td className="px-4 py-3">{u.name || '—'}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={roleBadgeVariant(u.role)}>{roleLabel(u.role)}</Badge>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-[color:var(--muted)]">
-                      {new Date(u.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {error && <p role="alert" className="mb-4 text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+
+      {!result ? (
+        <p className="surface-card p-8 text-center text-sm text-[color:var(--muted)]">Loading users...</p>
+      ) : result.users.length === 0 ? (
+        <p className="surface-card p-8 text-center text-sm text-[color:var(--muted)]">No users match these filters.</p>
+      ) : (
+        <>
+          <UserTable
+            users={result.users}
+            selfId={self?.id}
+            now={result.loadedAt}
+            onEdit={setEditing}
+            onReset={setResetting}
+            onUnlock={(target) => run(async () => { await adminRequest(`/api/admin/users/${target.id}`, 'PATCH', { unlock: true }) })}
+          />
+          <Pagination page={page} totalPages={result.totalPages} total={result.total} onPageChange={setPage} />
+        </>
+      )}
+
+      {editing && (
+        <EditUserDialog user={editing} isSelf={editing.id === self?.id} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load() }} />
+      )}
+
+      {resetting && (
+        <Dialog open onOpenChange={(open) => !open && setResetting(null)}>
+          <DialogContent className="max-w-sm bg-[color:var(--surface)] p-6">
+            <DialogHeader>
+              <DialogTitle className="font-display text-lg font-semibold">Reset password?</DialogTitle>
+              <DialogDescription className="text-sm text-[color:var(--muted)]">
+                {resetting.email} is signed out everywhere and gets a new temporary password.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setResetting(null)} className="btn-secondary px-4 py-2 text-sm">Cancel</button>
+              <button type="button" disabled={busy} onClick={() => confirmReset(resetting)} className="btn-primary px-4 py-2 text-sm disabled:opacity-60">
+                {busy ? 'Resetting...' : 'Reset password'}
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   )
 }

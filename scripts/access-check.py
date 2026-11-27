@@ -140,4 +140,35 @@ check("locked after five failures", login("Candidate")[1] == 401)
 sql(f"UPDATE \"User\" SET \"failedLogins\"=0, \"lockedUntil\"=NULL WHERE email='{email}'")
 check("works again once unlocked", login("Candidate")[1] == 200)
 
+# user management safeguards (nothing here sends email)
+admin, _, _ = login("Administrator")
+me = json.loads(call(admin, "GET", "/api/auth/me")[2])["user"]["id"]
+status, _, body = call(admin, "GET", "/api/admin/users?search=candidate01&role=CANDIDATE")
+listing = json.loads(body)
+check("user search and filter work", status == 200 and listing["total"] == 1, body[:150])
+check("user list exposes no secrets", not any(k in body for k in ("passwordHash", "googleRefreshToken", "sessionVersion")))
+page = json.loads(call(admin, "GET", "/api/admin/users")[2])
+check("user list is paginated", len(page["users"]) <= 20 and page["totalPages"] >= 2, page["totalPages"])
+target = listing["users"][0]["id"]
+check("admin cannot change own role", call(admin, "PATCH", f"/api/admin/users/{me}", {"role": "CANDIDATE"})[0] == 409)
+check("admin cannot disable self", call(admin, "PATCH", f"/api/admin/users/{me}", {"status": "DISABLED"})[0] == 409)
+check("admin cannot reset own password here", call(admin, "POST", f"/api/admin/users/{me}/reset-password")[0] == 409)
+check("unknown fields rejected", call(admin, "PATCH", f"/api/admin/users/{target}", {"passwordHash": "x"})[0] == 400)
+check("missing user is 404", call(admin, "PATCH", "/api/admin/users/999999", {"name": "x"})[0] == 404)
+check("duplicate email is 409", call(admin, "POST", "/api/admin/users", {"email": listing["users"][0]["email"].upper(), "role": "ADMIN"})[0] == 409)
+candidate, _, _ = login("Candidate")
+check("candidate cannot edit users", call(candidate, "PATCH", f"/api/admin/users/{target}", {"role": "ADMIN"})[0] == 403)
+check("candidate cannot reset passwords", call(candidate, "POST", f"/api/admin/users/{target}/reset-password")[0] == 403)
+own = json.loads(call(admin, "GET", "/api/admin/users?search=candidate.demo")[2])["users"][0]["id"]
+status = call(admin, "PATCH", f"/api/admin/users/{own}", {"status": "DISABLED"})[0]
+check("admin disables an account", status == 200, status)
+check("disabling ends that session", call(candidate, "GET", "/api/auth/me")[0] == 401)
+check("admin re-enables it", call(admin, "PATCH", f"/api/admin/users/{own}", {"status": "ACTIVE"})[0] == 200)
+audit = call(admin, "GET", "/api/admin/audit-logs?action=user_updated")[2]
+check("change is in the audit log", "candidate.demo" in audit, audit[:200])
+for path in ["/admin", "/admin/users", "/admin/audit-logs"]:
+    status, _, body = call(admin, "GET", path)
+    check(f"admin page {path} renders", status == 200 and "NEXT_REDIRECT" not in body, status)
+check("bad audit date rejected", call(admin, "GET", "/api/admin/audit-logs?from=yesterday")[0] == 400)
+
 print(f"\n{sum(results)}/{len(results)} checks passed")

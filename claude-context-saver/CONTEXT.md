@@ -10,8 +10,10 @@ _Last updated: 2026-11-27_
 - **RULE: never remove services (Calendar, ElevenLabs, Supabase, Pusher, 100ms, Stripe, email, moderation,
   chat, support...). Only template content may go. ASK before removing anything.**
 - **RULE: no Claude co-author line in commits or pull requests.**
-- **Phase:** building. **Steps 1–3 done** and pushed to the new repo. App running in Docker.
-- **Next:** step 4 = USR-1, USR-2, DB-3 (user management, operations, seed data). Wait for the user.
+- **Phase:** building. **Steps 1–4 done.** Step 4 is committed locally, **not pushed**.
+- **Next:** step 5 = QB-1, QB-2, QB-3 (question bank). Wait for the user.
+- **Progress view:** top of `docs/TASKS.md`. After each step: tick subtasks, raise `FINISHED_STEP` in
+  `scripts/task-progress.py`, run it. The user relies on this to follow the work.
 - **Waiting for the user:** whether to bring back non-service items removed in step 1: admin analytics,
   settings and reports pages, profile Settings tab, meeting-request booking, admin notification bell variant
   and API, admin activity API, "Forgot password" link, terms checkbox, default `public/*.svg` icons.
@@ -69,7 +71,11 @@ _Last updated: 2026-11-27_
 - Schema changes before release: edit `prisma/schema.prisma`, regenerate `prisma/migrations/0_init`, keep the
   CHECK constraints appended at the end of that file, wipe the local volume
 - **State:** containers running; migration applied; demo accounts seeded (see `docs/TEST-ACCOUNTS.md`)
-- Access check: `python scripts/access-check.py`
+- Access check: `python scripts/access-check.py` (78/78 passed after step 4)
+- **The Docker app doesn't see file changes from Windows.** After editing code:
+  `docker compose -f docker-compose.dev.yml restart app`
+- Demo data: `pnpm run seed:demo` in the app container with `DEMO_PASSWORD` (see `docs/TEST-ACCOUNTS.md`):
+  37 users, 64 questions, 4 exams (completed, open, upcoming, draft), 25 graded attempts
 
 ## 6. Services and configuration
 
@@ -105,6 +111,10 @@ _Last updated: 2026-11-27_
    accounts, sign-up closed (`ALLOW_PUBLIC_SIGNUP`), server-side page guards, policy layer, role home pages.
    Verified in Docker: `python scripts/access-check.py` passed 59/59 on 2026-11-27.
 6. New repo: old `.git` removed by the user; project pushed to TV26SENIORG.
+
+7. **Step 4:** admin user management (search, filters, paging, create, edit, disable, role change, unlock,
+   password reset; no self-demotion or self-reset; last-admin guard; audited in the same transaction), platform
+   overview, validated audit-log API, `lib/grading.ts` (objective marking), demo seed (`scripts/seed-demo.ts`).
 
 Earlier, separate work in the parent folder (not the competition): the `obol` site, `DESIGN-PIPELINE.md`
 and the skills `design-pipeline`, `scroll-video-hero`, `kinetic-details`. The user said to forget Obol.

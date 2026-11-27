@@ -1,0 +1,83 @@
+/**
+ * Demo question bank. Level: E easy, M medium, H hard.
+ * Choice questions list their options; correct ones start with "*". Written questions carry marking notes.
+ */
+type Level = 'E' | 'M' | 'H'
+export type DemoQuestion =
+  | [Level, 'S' | 'M', string, string[]]
+  | [Level, 'W', string, string]
+
+export const QUESTION_BANK: Record<string, DemoQuestion[]> = {
+  Programming: [
+    ['E', 'S', 'What is the index of the first element in a zero-based array?', ['*0', '1', '-1', 'It depends on the array length']],
+    ['E', 'S', 'Which data structure removes items in last in, first out order?', ['*Stack', 'Queue', 'Linked list', 'Hash table']],
+    ['E', 'S', 'In JavaScript, what does a function without a return statement return?', ['*undefined', 'null', '0', 'An empty string']],
+    ['E', 'S', 'Which JavaScript keyword declares a variable that cannot be reassigned?', ['*const', 'let', 'var', 'static']],
+    ['E', 'M', 'Which of these are loop statements in Java?', ['*for', '*while', '*do-while', 'switch']],
+    ['E', 'S', 'What is the value of 17 % 5?', ['*2', '3', '5', '0']],
+    ['M', 'S', 'What is the time complexity of binary search on a sorted array of n items?', ['*O(log n)', 'O(n)', 'O(n log n)', 'O(1)']],
+    ['M', 'S', 'Which sorting algorithm is stable in its standard form?', ['*Merge sort', 'Quicksort', 'Heapsort', 'Selection sort']],
+    ['M', 'S', 'Hiding internal state behind methods is called', ['*Encapsulation', 'Inheritance', 'Polymorphism', 'Recursion']],
+    ['M', 'M', 'Which hash table operations take constant time on average?', ['*Insert', '*Lookup by key', '*Delete by key', 'Listing keys in sorted order']],
+    ['M', 'W', 'Explain the difference between passing by value and passing by reference, with a short example.', 'Value copies the data (2); reference shares the object so changes are visible to the caller (2); correct example (1).'],
+    ['M', 'S', 'A recursive function that never reaches a base case will most likely', ['*Overflow the call stack', 'Return zero', 'Use constant memory', 'Be removed by the compiler']],
+    ['H', 'S', 'What is the worst-case time complexity of quicksort?', ['*O(n^2)', 'O(n log n)', 'O(n)', 'O(log n)']],
+    ['H', 'M', 'Which conditions are necessary for a deadlock?', ['*Mutual exclusion', '*Hold and wait', '*Circular wait', 'Resources can be preempted']],
+    ['H', 'S', 'Which traversal of a binary search tree visits keys in ascending order?', ['*In-order', 'Pre-order', 'Post-order', 'Level-order']],
+    ['H', 'W', 'Describe how to detect a cycle in a linked list using constant extra memory, and why it works.', 'Two pointers at different speeds (2); they meet only if there is a cycle (2); constant memory and linear time argument (1).'],
+  ],
+  Databases: [
+    ['E', 'S', 'Which SQL clause filters rows before they are grouped?', ['*WHERE', 'HAVING', 'ORDER BY', 'GROUP BY']],
+    ['E', 'S', 'The column that uniquely identifies each row of a table is the', ['*Primary key', 'Foreign key', 'Index scan', 'View']],
+    ['E', 'S', 'Which statement adds new rows to a table?', ['*INSERT', 'UPDATE', 'ALTER', 'SELECT']],
+    ['E', 'M', 'Which are data definition statements?', ['*CREATE', '*ALTER', '*DROP', 'SELECT']],
+    ['E', 'S', 'COUNT(*) returns', ['*The number of rows', 'The non-null values in the first column', 'The sum of all values', 'The number of columns']],
+    ['E', 'S', 'A foreign key is used to', ['*Reference a row in another table', 'Encrypt a column', 'Sort results', 'Remove duplicates']],
+    ['M', 'S', 'Which join keeps every row of the left table, using nulls where the right has no match?', ['*Left outer join', 'Inner join', 'Cross join', 'Natural inner join']],
+    ['M', 'S', 'A table is in first normal form when', ['*Every column holds atomic values', 'It has no foreign keys', 'Every column is indexed', 'It has exactly one candidate key']],
+    ['M', 'S', 'Which clause filters groups after aggregation?', ['*HAVING', 'WHERE', 'LIMIT', 'DISTINCT']],
+    ['M', 'M', 'Which are ACID properties of a transaction?', ['*Atomicity', '*Isolation', '*Durability', 'Availability']],
+    ['M', 'W', 'Explain what an index is, how it speeds up reads and what it costs.', 'Separate ordered structure (1); avoids full scans (2); extra storage and slower writes (2).'],
+    ['M', 'S', 'In SQL, the comparison NULL = NULL evaluates to', ['*Unknown', 'True', 'False', 'A syntax error']],
+    ['H', 'S', 'A transaction repeats a query and sees new rows committed by another transaction. This is a', ['*Phantom read', 'Dirty read', 'Lost update', 'Deadlock']],
+    ['H', 'M', 'Which statements about third normal form are true?', ['*It requires second normal form', '*It removes transitive dependencies of non-key attributes', 'It requires tables to have one column', '*Non-key attributes depend only on candidate keys']],
+    ['H', 'S', 'Under the SQL standard, which isolation level rules out dirty, non-repeatable and phantom reads?', ['*Serializable', 'Read committed', 'Repeatable read', 'Read uncommitted']],
+    ['H', 'W', 'A report query on a table with millions of rows is slow. Describe how you would find the cause and fix it.', 'Read the query plan (2); indexes or query rewrite (2); verify with measurements (1).'],
+  ],
+  Networks: [
+    ['E', 'S', 'Which protocol resolves domain names to IP addresses?', ['*DNS', 'DHCP', 'ARP', 'SMTP']],
+    ['E', 'S', 'What is the default port for HTTPS?', ['*443', '80', '22', '25']],
+    ['E', 'S', 'How many bits are in an IPv4 address?', ['*32', '16', '64', '128']],
+    ['E', 'M', 'Which are application layer protocols?', ['*HTTP', '*SMTP', '*FTP', 'IP']],
+    ['E', 'S', 'Which device forwards packets between different networks?', ['*Router', 'Hub', 'Repeater', 'Patch panel']],
+    ['E', 'S', 'Which protocol assigns IP addresses to hosts automatically?', ['*DHCP', 'DNS', 'ICMP', 'TLS']],
+    ['M', 'S', 'Which transport protocol provides reliable, ordered delivery?', ['*TCP', 'UDP', 'IP', 'ARP']],
+    ['M', 'S', 'How many usable host addresses does a /24 IPv4 subnet provide?', ['*254', '256', '255', '126']],
+    ['M', 'S', 'ARP maps', ['*IP addresses to MAC addresses', 'Domain names to IP addresses', 'Ports to processes', 'MAC addresses to domain names']],
+    ['M', 'M', 'Compared with TCP, which statements about UDP are true?', ['*It has no connection handshake', '*It does not retransmit lost data', '*Its header is smaller', 'It guarantees ordering']],
+    ['M', 'W', 'Describe the TCP three-way handshake and why it is needed.', 'SYN, SYN-ACK, ACK (3); both sides agree sequence numbers and confirm reachability (2).'],
+    ['M', 'S', 'HTTP status code 403 means', ['*Forbidden', 'Not found', 'Unauthorized', 'Internal server error']],
+    ['H', 'S', 'A host with address 192.168.10.77/26 is in which network?', ['*192.168.10.64', '192.168.10.0', '192.168.10.76', '192.168.10.128']],
+    ['H', 'M', 'Which protections does TLS give a connection between a client and a server?', ['*Confidentiality', '*Integrity', '*Server authentication', 'Protection if the server itself is compromised']],
+    ['H', 'S', 'How does TCP avoid overwhelming a slow receiver?', ['*Flow control using the advertised window', 'Slow start alone', 'Header checksums', 'Port numbers']],
+    ['H', 'W', 'Explain how HTTPS protects a browser from a man-in-the-middle attack.', 'Certificate chain to a trusted authority (2); hostname check (1); key exchange gives encrypted, authenticated channel (2).'],
+  ],
+  Mathematics: [
+    ['E', 'S', 'What is 2 to the power 5?', ['*32', '10', '25', '64']],
+    ['E', 'S', 'The intersection of {1, 2} and {3, 4} is', ['*The empty set', '{1, 2, 3, 4}', '{2, 3}', '{1, 4}']],
+    ['E', 'S', 'How many subsets does a set with 3 elements have?', ['*8', '3', '6', '9']],
+    ['E', 'M', 'Which of these are prime numbers?', ['*2', '*7', '*11', '9']],
+    ['E', 'S', 'The negation of "all students passed" is', ['*At least one student did not pass', 'No student passed', 'All students failed', 'At least one student passed']],
+    ['E', 'S', 'What is 5 factorial?', ['*120', '25', '60', '24']],
+    ['M', 'S', 'In how many ways can 2 items be chosen from 5 when order does not matter?', ['*10', '20', '25', '7']],
+    ['M', 'S', 'The implication "p implies q" is false only when', ['*p is true and q is false', 'p is false and q is true', 'Both are false', 'Both are true']],
+    ['M', 'S', 'What is the sum of the integers from 1 to 100?', ['*5050', '5000', '5100', '10100']],
+    ['M', 'M', 'Which relations on the integers are equivalence relations?', ['*Equality', '*Congruence modulo 3', '*Having the same absolute value', 'Less than or equal to']],
+    ['M', 'W', 'Prove that the sum of two even integers is even.', 'Write them as 2a and 2b (2); factor to 2(a+b) (2); conclude (1).'],
+    ['M', 'S', 'How many edges does a tree with n vertices have?', ['*n - 1', 'n', 'n + 1', '2n']],
+    ['H', 'S', 'What is the remainder when 7 to the power 100 is divided by 6?', ['*1', '0', '5', '4']],
+    ['H', 'M', 'Which hold for every simple connected planar graph with at least 3 vertices (V vertices, E edges, F faces)?', ['*V - E + F = 2', '*Some vertex has degree at most 5', '*E is at most 3V - 6', 'E is at most V']],
+    ['H', 'S', 'How many distinct arrangements are there of the letters in LEVEL?', ['*30', '120', '60', '20']],
+    ['H', 'W', 'Prove by induction that the sum of the first n odd numbers equals n squared.', 'Base case (1); assume for k (1); add 2k+1 and simplify to (k+1) squared (3).'],
+  ],
+}
