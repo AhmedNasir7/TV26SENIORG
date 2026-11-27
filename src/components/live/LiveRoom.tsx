@@ -15,6 +15,9 @@ type Room = {
   cameraOn: boolean
   join: (passUrl: string, options?: { camera: boolean }) => Promise<void>
   leave: () => Promise<void>
+  /** The examination is over: leave the room and stop asking for the camera. */
+  finish: () => Promise<void>
+  done: boolean
   setCamera: (on: boolean) => Promise<void>
   attach: (trackId: string, element: HTMLVideoElement) => () => void
 }
@@ -27,6 +30,7 @@ export function LiveRoomProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
   const [people, setPeople] = useState<Person[]>([])
+  const [done, setDone] = useState(false)
 
   const leave = useCallback(async () => {
     stops.current.splice(0).forEach((stop) => stop())
@@ -36,6 +40,13 @@ export function LiveRoomProvider({ children }: { children: React.ReactNode }) {
     setPeople([])
     await current?.getActions().leave().catch(() => {})
   }, [])
+
+  const finish = useCallback(async () => {
+    setDone(true)
+    // Switch the camera off first so the light goes out at once, then leave the room
+    await hms.current?.getActions().setLocalVideoEnabled(false).catch(() => {})
+    await leave()
+  }, [leave])
 
   const join = useCallback(async (passUrl: string, options = { camera: true }) => {
     if (hms.current) return
@@ -105,8 +116,8 @@ export function LiveRoomProvider({ children }: { children: React.ReactNode }) {
 
   const cameraOn = people.some((p) => p.isLocal && p.videoOn)
   const value = useMemo(
-    () => ({ status, error, people, cameraOn, join, leave, setCamera, attach }),
-    [status, error, people, cameraOn, join, leave, setCamera, attach]
+    () => ({ status, error, people, cameraOn, join, leave, finish, done, setCamera, attach }),
+    [status, error, people, cameraOn, join, leave, finish, done, setCamera, attach]
   )
   return <RoomContext.Provider value={value}>{children}</RoomContext.Provider>
 }

@@ -4,8 +4,8 @@
  */
 import { APP_NAME } from '@/lib/config'
 import { prisma } from '@/lib/prisma'
-import { escapeHtml, getMailer } from '@/lib/server/email'
-import { runtimeEnv } from '@/lib/server/runtime-env'
+import { getMailer } from '@/lib/server/email'
+import { appUrl, renderEmail, renderText, type EmailContent } from '@/lib/server/email-template'
 
 const MAX_PER_BATCH = 60
 
@@ -16,18 +16,20 @@ export async function emailUsers(userIds: number[], subject: string, message: st
     where: { id: { in: userIds.slice(0, MAX_PER_BATCH) }, status: 'ACTIVE' },
     select: { email: true },
   })
-  const link = `${runtimeEnv('NEXT_PUBLIC_APP_URL') ?? ''}/login`
-  const html = `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.6;color:#101828">
-  <h2 style="margin:0 0 8px">${escapeHtml(subject)}</h2>
-  <p>${escapeHtml(message)}</p>
-  <p><a href="${escapeHtml(link)}">Open ${escapeHtml(APP_NAME)}</a></p>
-</div>`
+  const content: EmailContent = {
+    heading: subject,
+    preheader: message,
+    paragraphs: [message],
+    button: { label: `Open ${APP_NAME}`, href: `${appUrl()}/login` },
+  }
+  const html = renderEmail(content)
+  const text = renderText(content)
   let sent = 0
   for (const person of people) {
     // Reserved test domains can't receive mail; sending to them only damages the sender's reputation
     if (/\.(test|example|invalid|localhost)$|@example\./.test(person.email)) continue
     try {
-      const { error } = await mailer.resend.emails.send({ from: mailer.from, to: person.email, subject: `${APP_NAME}: ${subject}`, html })
+      const { error } = await mailer.resend.emails.send({ from: mailer.from, to: person.email, subject: `${APP_NAME}: ${subject}`, html, text })
       if (!error) sent += 1
     } catch (error) {
       console.error('Email failed:', error instanceof Error ? error.message : error)

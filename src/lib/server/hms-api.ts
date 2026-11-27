@@ -86,10 +86,27 @@ export const listRecordings = async (roomId: string) =>
 
 export const isRecording = (list: Recording[]) => list.some((r) => ['starting', 'running'].includes(r.status))
 
-export const startRecording = (roomId: string) =>
+/**
+ * 100ms records a room by opening a meeting link in a hidden browser, so it needs the template's
+ * subdomain (copy it from the template page of the 100ms dashboard into HMS_SUBDOMAIN). The recorder
+ * joins as the staff role so it sees every candidate. HMS_RECORDING_URL overrides the whole link;
+ * "{room}" in it is replaced by the room id.
+ */
+async function recordingUrl(roomId: string) {
+  const custom = process.env.HMS_RECORDING_URL
+  if (custom) return custom.replace('{room}', roomId)
+  const subdomain = process.env.HMS_SUBDOMAIN
+  if (!subdomain) {
+    throw new ApiError('CONFLICT', 'Recording needs your 100ms template subdomain: add HMS_SUBDOMAIN to the server settings (and turn on recording in the template).')
+  }
+  const { staff } = await roomRoles()
+  return `https://${subdomain}.app.100ms.live/preview/${roomId}/${staff}?skip_preview=true&name=Recorder`
+}
+
+export const startRecording = async (roomId: string) =>
   call<Recording>(`/recordings/room/${roomId}/start`, {
     method: 'POST',
-    body: { resolution: { width: 1280, height: 720 }, ...(process.env.HMS_RECORDING_URL && { meeting_url: process.env.HMS_RECORDING_URL }) },
+    body: { meeting_url: await recordingUrl(roomId), resolution: { width: 1280, height: 720 } },
   })
 
 export const stopRecording = (roomId: string) => call<object>(`/recordings/room/${roomId}/stop`, { method: 'POST', missing: {} })

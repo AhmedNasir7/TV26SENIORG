@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { CandidateSteps } from '@/components/exams/CandidateSteps'
 import { useLiveRoom } from '@/components/live/LiveRoom'
-import { LocalTime } from '@/components/ui/LocalTime'
 import { apiRequest } from '@/lib/client/request'
 import { RunningAttempt } from './RunningAttempt'
 import { readSession, storeSession } from './session'
@@ -15,7 +14,7 @@ import type { Attempt } from './types'
 /** `sandbox` is the examiner's trial run of their own examination. */
 export function AttemptScreen({ examId, sandbox = false }: { examId: number; sandbox?: boolean }) {
   const router = useRouter()
-  const leaveRoom = useLiveRoom()?.leave
+  const leaveRoom = useLiveRoom()?.finish
   const [state, setState] = useState<{ attempt: Attempt; sessionId: string } | null>(null)
   const [error, setError] = useState('')
   const opened = useRef(false)
@@ -78,15 +77,14 @@ export function AttemptScreen({ examId, sandbox = false }: { examId: number; san
           <div className="surface-card p-6">
             <h1 className="font-display text-2xl font-semibold">Submitted</h1>
             <p className="mt-1 text-sm text-[color:var(--muted)]">
-              {sandbox ? 'Opening the marked paper...' : 'Your result appears on your examinations page once the examiner publishes it.'}
+              {sandbox
+                ? 'Opening the marked paper...'
+                : state.attempt.submitReason === 'LEFT'
+                  ? 'You left the examination, so it was cancelled.'
+                  : state.attempt.submitReason === 'TIME_EXPIRED'
+                    ? 'Time ran out, so your saved answers were submitted. Your result appears here once the examiner publishes it.'
+                    : 'Your answers were submitted. Your result appears on your examinations page once the examiner publishes it.'}
             </p>
-            <p className="mt-2 text-sm">
-              {state.attempt.submitReason === 'TIME_EXPIRED' ? 'Time ran out and your saved answers were submitted.' : state.attempt.submitReason === 'LEFT' ? 'You left the examination, so it was cancelled.' : 'Your answers were submitted.'}
-              {state.attempt.submittedAt && <> Recorded <LocalTime iso={state.attempt.submittedAt} />.</>}
-            </p>
-            {state.attempt.receipt && (
-              <p className="mt-3 break-all text-xs text-[color:var(--muted)]">Receipt: <span className="select-all font-mono">{state.attempt.receipt}</span></p>
-            )}
             <Link href={sandbox ? back : '/candidate'} className="btn-secondary mt-4 inline-flex px-4 py-2 text-sm">
               {sandbox ? 'Back to the examination' : 'Back to your examinations'}
             </Link>

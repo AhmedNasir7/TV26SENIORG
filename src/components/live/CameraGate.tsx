@@ -72,6 +72,8 @@ export function CameraGuard({ examId, children }: { examId: number; children: Re
   if (!room) return <>{children}</>
   const me = room.people.find((p) => p.isLocal)
   const live = room.status === 'joined' && room.cameraOn
+  // After submitting there is nothing left to guard
+  if (room.done) return <>{children}</>
 
   return (
     <>
