@@ -10,6 +10,7 @@ import { roleLabel, type Role } from '@/lib/roles'
 const navItems: Array<{ href: string; label: string; roles: Role[] }> = [
   { href: '/admin', label: 'Overview', roles: ['ADMIN'] },
   { href: '/examiner', label: 'Examinations', roles: ['ADMIN', 'EXAMINER'] },
+  { href: '/examiner/questions', label: 'Question bank', roles: ['ADMIN', 'EXAMINER'] },
   { href: '/admin/users', label: 'Users', roles: ['ADMIN'] },
   { href: '/admin/audit-logs', label: 'Audit logs', roles: ['ADMIN'] },
   { href: '/admin/support', label: 'Support', roles: ['ADMIN', 'EXAMINER'] },
@@ -22,7 +23,12 @@ export function ConsoleShell({ user, children }: { user: ConsoleUser; children: 
   const { logout } = useAuth()
   const pathname = usePathname()
   const items = navItems.filter((item) => item.roles.includes(user.role))
-  const isActive = (href: string) => pathname === href || (href !== '/admin' && pathname.startsWith(`${href}/`))
+  // The most specific matching entry wins, so "/examiner/questions" doesn't also highlight "/examiner"
+  const activeHref = items
+    .map((item) => item.href)
+    .filter((href) => pathname === href || (href !== '/admin' && pathname.startsWith(`${href}/`)))
+    .sort((a, b) => b.length - a.length)[0]
+  const isActive = (href: string) => href === activeHref
 
   return (
     <div className="page-shell flex min-h-screen flex-col md:flex-row">

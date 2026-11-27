@@ -5,7 +5,7 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 <!-- progress:start -->
 ## Progress
 
-**Steps finished: 4 of 16** · required subtasks ticked: 56 of 238 · **next: step 5, Question bank**
+**Steps finished: 5 of 16** · required subtasks ticked: 69 of 239 · **next: step 6, Examinations and enrolment**
 
 | Step | Work | Tasks | Subtasks | Status |
 |---:|---|---|---:|---|
@@ -13,8 +13,8 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 | 2 | Project structure and database | FND-2, FND-3, DB-1, DB-2 | 22/22 | ✅ Done |
 | 3 | Sign-in and permissions | AUTH-1, AUTH-2, AUTH-3 | 15/17 | ✅ Done (2 carried over) |
 | 4 | User management and sample data | USR-1, USR-2, DB-3 | 11/12 | ✅ Done (1 carried over) |
-| 5 | Question bank | QB-1, QB-2, QB-3 | 0/12 | ▶️ Next |
-| 6 | Examinations and enrolment | EXM-1, EXM-2, EXM-3, ENR-1, ENR-2, ENR-3 | 0/23 | ⬜ Not started |
+| 5 | Question bank | QB-1, QB-2, QB-3 | 13/13 | ✅ Done |
+| 6 | Examinations and enrolment | EXM-1, EXM-2, EXM-3, ENR-1, ENR-2, ENR-3 | 0/23 | ▶️ Next |
 | 7 | Attempt engine and server timing | ATT-1, ATT-2, ATT-3, ATT-4 | 0/12 | ⬜ Not started |
 | 8 | Exam screen: autosave, resume, submit | WS-1, WS-2, WS-3, WS-4 | 0/16 | ⬜ Not started |
 | 9 | Grading and results | GRD-1, GRD-2, GRD-3, RES-1, RES-2, RES-3, RES-4 | 3/22 | 🟡 Started early |
@@ -202,28 +202,28 @@ Covers: A3, A6
 
 ## QB. Question bank
 
-### QB-1 Topics and questions · P0 · M — ⬜ Not started (step 5)
+### QB-1 Topics and questions · P0 · M — ✅ Done (step 5)
 Covers: Q1, Q2, Q3
-- [ ] Create and rename topics
-- [ ] Create, edit, duplicate, archive questions; difficulty `EASY` / `MEDIUM` / `HARD`
-- [ ] Search and filter by topic, difficulty, type; pagination
-- [ ] Editing creates a new `QuestionVersion`; old versions stay for existing papers
-- [ ] **Sec:** question text rendered as plain text (no raw HTML)
+- [x] Create and rename topics
+- [x] Create, edit, duplicate, archive questions; difficulty `EASY` / `MEDIUM` / `HARD`
+- [x] Search and filter by topic, difficulty, type; pagination
+- [x] Editing creates a new `QuestionVersion`; old versions stay for existing papers
+- [x] **Sec:** question text rendered as plain text (no raw HTML)
 
-### QB-2 Types and marking schemes · P0 · M — ⬜ Not started (step 5)
+### QB-2 Types and marking schemes · P0 · M — ✅ Done (step 5)
 Covers: Q5, Q6, Q7, Q8
-- [ ] Single MCQ: 2–8 options, exactly one correct
-- [ ] Multiple-select: at least one correct; scoring rule chosen
-- [ ] Written: maximum marks, marking notes, optional length limit
-- [ ] Server validation: non-empty text, unique options, positive marks
-- [ ] **Sec:** correct flags and marking notes only in examiner responses
+- [x] Single MCQ: 2–8 options, exactly one correct
+- [x] Multiple-select: at least one correct; scoring rule chosen
+- [x] Written: maximum marks, marking notes, optional length limit
+- [x] Server validation: non-empty text, unique options, positive marks
+- [x] **Sec:** correct flags and marking notes only in examiner responses
 
-### QB-3 Assign to exams · P0 · S — ⬜ Not started (step 5)
+### QB-3 Assign to exams · P0 · S — ✅ Done (step 5)
 Covers: Q4
-- [ ] Pick from bank with filters; reorder; remove; override marks per exam
-- [ ] Running total against the exam's total marks
+- [x] Pick from bank with filters; reorder; remove; override marks per exam
+- [x] Running total against the exam's total marks
 - [ ] ★ Add by recipe ("5 easy from Topic X")
-- [ ] ★ Version history and "used in N exams"
+- [x] ★ Version history and "used in N exams"
 
 ---
 

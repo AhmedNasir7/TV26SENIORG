@@ -171,4 +171,63 @@ for path in ["/admin", "/admin/users", "/admin/audit-logs"]:
     check(f"admin page {path} renders", status == 200 and "NEXT_REDIRECT" not in body, status)
 check("bad audit date rejected", call(admin, "GET", "/api/admin/audit-logs?from=yesterday")[0] == 400)
 
+# question bank (creates one throwaway question and archives it)
+examiner, _, _ = login("Examiner")
+candidate, _, _ = login("Candidate")
+admin, _, _ = login("Administrator")
+other = client()
+second = re.search(r"Shared password for seeded accounts: `([^`]+)`", open("docs/TEST-ACCOUNTS.md", encoding="utf8").read()).group(1)
+call(other, "POST", "/api/auth/login", {"email": "examiner2.demo@secureexam.test", "password": second})
+for path in ["/api/questions", "/api/topics"]:
+    check(f"candidate refused {path}", call(candidate, "GET", path)[0] == 403)
+    check(f"anonymous refused {path}", call(client(), "GET", path)[0] == 401)
+bank = json.loads(call(examiner, "GET", "/api/questions?search=binary&difficulty=MEDIUM")[2])
+check("question search and filter work", bank["total"] == 1, bank["total"])
+check("question bank is paginated", len(json.loads(call(examiner, "GET", "/api/questions")[2])["questions"]) == 20)
+topic = json.loads(call(examiner, "GET", "/api/topics")[2])["topics"][0]["id"]
+good = {"type": "SINGLE_CHOICE", "topicId": topic, "difficulty": "EASY", "text": "Access check question",
+        "marks": 1, "options": [{"text": "A", "correct": True}, {"text": "B", "correct": False}]}
+two = {**good, "options": [{"text": "A", "correct": True}, {"text": "B", "correct": True}]}
+check("single choice needs exactly one correct", call(examiner, "POST", "/api/questions", two)[0] == 400)
+check("duplicate options rejected", call(examiner, "POST", "/api/questions", {**good, "options": [{"text": "A", "correct": True}, {"text": "a", "correct": False}]})[0] == 400)
+check("zero marks rejected", call(examiner, "POST", "/api/questions", {**good, "marks": 0})[0] == 400)
+status, _, body = call(examiner, "POST", "/api/questions", good)
+check("examiner creates a question", status == 201, body[:150])
+qid = json.loads(body)["question"]["id"]
+check("another examiner cannot read it", call(other, "GET", f"/api/questions/{qid}")[0] == 404)
+check("another examiner cannot edit it", call(other, "PATCH", f"/api/questions/{qid}", {"expectedVersion": 1, "question": good})[0] in (404, 400))
+check("another examiner cannot see it listed", json.loads(call(other, "GET", "/api/questions")[2])["total"] == 0)
+check("candidate cannot read answer keys", call(candidate, "GET", f"/api/questions/{qid}")[0] == 403)
+edit = {"expectedVersion": 1, "question": {**good, "text": "Access check question, edited"}}
+status, _, body = call(examiner, "PATCH", f"/api/questions/{qid}", edit)
+check("edit adds a version", status == 200 and json.loads(body)["question"]["version"] == 2, body[:150])
+detail = json.loads(call(examiner, "GET", f"/api/questions/{qid}")[2])["question"]
+check("old version is kept", [v["version"] for v in detail["history"]] == [2, 1])
+check("stale edit is refused", call(examiner, "PATCH", f"/api/questions/{qid}", edit)[0] == 409)
+check("type cannot change", call(examiner, "PATCH", f"/api/questions/{qid}", {"expectedVersion": 2, "question": {"type": "WRITTEN", "topicId": topic, "difficulty": "EASY", "text": "x", "marks": 1}})[0] == 409)
+
+body = call(admin, "GET", "/api/questions?search=NULL")[2]
+page = call(examiner, "GET", "/examiner")[2]
+import re as _re
+ids = sorted({int(i) for i in _re.findall(r"/examiner/exams/(\d+)/questions", page)})
+check("examiner home lists exams", len(ids) >= 4, ids)
+exams = {i: json.loads(call(examiner, "GET", f"/api/exams/{i}/questions")[2]) for i in ids}
+draft = next(e for e in exams.values() if e["exam"]["editable"])
+published = next(e for e in exams.values() if not e["exam"]["editable"])
+original = [{"questionId": i["questionId"], "marks": i["marks"]} for i in draft["items"]]
+path = f"/api/exams/{draft['exam']['id']}/questions"
+status, _, body = call(examiner, "PUT", path, {"items": list(reversed(original))})
+check("draft questions can be reordered", status == 200 and json.loads(body)["items"][0]["questionId"] == original[-1]["questionId"], body[:150])
+check("repeating a question is rejected", call(examiner, "PUT", path, {"items": original + original[:1]})[0] == 400)
+check("original order restored", call(examiner, "PUT", path, {"items": original})[0] == 200)
+check("published exam is locked", call(examiner, "PUT", f"/api/exams/{published['exam']['id']}/questions", {"items": []})[0] == 409)
+check("another examiner cannot open exam questions", call(other, "GET", path)[0] == 404)
+check("candidate cannot open exam questions", call(candidate, "GET", path)[0] == 403)
+check("archive hides the throwaway question", call(examiner, "POST", f"/api/questions/{qid}/archive", {"archived": True})[0] == 200
+      and json.loads(call(examiner, "GET", "/api/questions?search=Access%20check")[2])["total"] == 0)
+check("archived question cannot be newly added", call(examiner, "PUT", path, {"items": original + [{"questionId": qid, "marks": 1}]})[0] == 400)
+for page_path in ["/examiner/questions", f"/examiner/exams/{draft['exam']['id']}/questions"]:
+    status, _, body = call(examiner, "GET", page_path)
+    check(f"page {page_path} renders", status == 200 and "NEXT_REDIRECT" not in body, status)
+
 print(f"\n{sum(results)}/{len(results)} checks passed")

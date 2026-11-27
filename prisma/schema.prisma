@@ -100,6 +100,7 @@ model Question {
   type           QuestionType
   difficulty     Difficulty
   currentVersion Int          @default(1)
+  currentText    String       @default("") // wording of the current version, for search
   archivedAt     DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -122,6 +123,7 @@ model QuestionVersion {
   marks       Decimal     @db.Decimal(7, 2)
   scoringRule ScoringRule @default(ALL_OR_NOTHING)
   guidance    String? // marking notes for examiners
+  maxLength   Int? // written answers only
   createdAt   DateTime    @default(now())
 
   examQuestions    ExamQuestion[]

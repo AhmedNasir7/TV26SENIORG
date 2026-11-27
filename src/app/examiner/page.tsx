@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatTile } from '@/components/ui/StatTile'
 import { requirePageUser } from '@/lib/auth'
@@ -9,10 +10,16 @@ export default async function ExaminerHomePage() {
   // Examiners count only what they own; administrators see the whole platform
   const owned = user.role === 'ADMIN' ? {} : { ownerId: user.id }
 
-  const [exams, drafts, questions] = await Promise.all([
+  const [exams, drafts, questions, list] = await Promise.all([
     prisma.exam.count({ where: owned }),
     prisma.exam.count({ where: { ...owned, status: 'DRAFT' } }),
     prisma.question.count({ where: { ...owned, archivedAt: null } }),
+    prisma.exam.findMany({
+      where: owned,
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: { id: true, title: true, status: true, totalMarks: true, _count: { select: { questions: true } } },
+    }),
   ])
 
   return (
@@ -23,6 +30,24 @@ export default async function ExaminerHomePage() {
         <StatTile label="Drafts" value={drafts} />
         <StatTile label="Questions in your bank" value={questions} />
       </div>
+
+      <ul className="surface-card mt-6">
+        {list.length === 0 && <li className="p-6 text-sm text-[color:var(--muted)]">No examinations yet.</li>}
+        {list.map((exam) => (
+          <li key={exam.id} className="hairline-row flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+            <div>
+              <p className="font-medium">{exam.title}</p>
+              <p className="text-sm text-[color:var(--muted)]">
+                {exam.status === 'DRAFT' ? 'Draft' : 'Published'} · {exam._count.questions} questions ·{' '}
+                {Number(exam.totalMarks)} marks
+              </p>
+            </div>
+            <Link href={`/examiner/exams/${exam.id}/questions`} className="btn-secondary px-3 py-1.5 text-sm">
+              Questions
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

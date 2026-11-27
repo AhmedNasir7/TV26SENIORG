@@ -23,6 +23,9 @@ Y = allowed · own = only the caller's own records · — = refused
 | `GET/POST /api/admin/users` | — | — | — | Y |
 | `PATCH /api/admin/users/{id}`, `POST .../reset-password` | — | — | — | Y (not own role, status or reset) |
 | `GET /api/admin/audit-logs` | — | — | — | Y |
+| `GET/POST /api/topics`, `PATCH /api/topics/{id}` | — | — | own | Y |
+| `GET/POST /api/questions`, `GET/PATCH /api/questions/{id}`, `.../duplicate`, `.../archive` | — | — | own | Y |
+| `GET/PUT /api/exams/{id}/questions` (change drafts only) | — | — | own | Y |
 | `POST /api/email/send` | — | — | — | Y |
 | `POST /api/check-room`, `generate-code` | — | Y | Y | Y |
 | `POST /api/get-or-create-room` | — | — | Y | Y |
@@ -38,7 +41,7 @@ Y = allowed · own = only the caller's own records · — = refused
 | `/signup` (redirects while closed) | — | — | — | — |
 | `/profile`, `/chat`, `/support`, `/meeting`, `/stripe` | — | Y | Y | Y |
 | `/candidate` | — | Y | — | — |
-| `/examiner`, `/admin/support` | — | — | Y | Y |
+| `/examiner`, `/examiner/questions`, `/examiner/exams/{id}/questions`, `/admin/support` | — | — | Y | Y |
 | `/admin`, `/admin/users`, `/admin/audit-logs`, `/send-email` | — | — | — | Y |
 
 ## Record rules (`src/lib/policies`)

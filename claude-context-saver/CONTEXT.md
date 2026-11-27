@@ -10,13 +10,14 @@ _Last updated: 2026-11-27_
 - **RULE: never remove services (Calendar, ElevenLabs, Supabase, Pusher, 100ms, Stripe, email, moderation,
   chat, support...). Only template content may go. ASK before removing anything.**
 - **RULE: no Claude co-author line in commits or pull requests.**
-- **Phase:** building. **Steps 1–4 done.** Step 4 is committed locally, **not pushed**.
-- **Next:** step 5 = QB-1, QB-2, QB-3 (question bank). Wait for the user.
+- **Phase:** building. **Steps 1–5 done.** Steps 4 and 5 are committed locally, **not pushed**.
+- **Next:** step 6 = EXM-1..3, ENR-1..3 (examinations and enrolment). Wait for the user.
 - **Progress view:** top of `docs/TASKS.md`. After each step: tick subtasks, raise `FINISHED_STEP` in
   `scripts/task-progress.py`, run it. The user relies on this to follow the work.
 - **Waiting for the user:** whether to bring back non-service items removed in step 1: admin analytics,
   settings and reports pages, profile Settings tab, meeting-request booking, admin notification bell variant
   and API, admin activity API, "Forgot password" link, terms checkbox, default `public/*.svg` icons.
+- **Functionality only for now** (user, 2026-11-27): how it looks and is polished comes later.
 - **How to build:** one step per user prompt, following `docs/TASKS.md`. Report, then wait.
 - **Priorities:** functionality with a good baseline interface; security and innovation; light testing.
 - **Docker checks:** bulk checks at intermediate points, not after every step.
@@ -41,6 +42,7 @@ _Last updated: 2026-11-27_
 | `docs/REQUIREMENTS.md` | 106 checklist items from the statement, plus our analysis |
 | `docs/TASKS.md` | Tasks and subtasks with progress ticks; all requirements mapped |
 | `docs/PERMISSIONS.md` | Who may call each route and open each page; record rules; known gaps |
+| `CREDENTIALS.md` | All logins by user type, for the local Docker database |
 | `docs/TEST-ACCOUNTS.md` | Demo accounts for the local Docker database only |
 | `GUIDELINES.md` | House rules (file size, API shape, styling, TypeScript, env) |
 | `W:\WebHackathon\Tecnoverse26\DESIGN-PIPELINE.md` | Design playbook for the later design pass |
@@ -68,10 +70,11 @@ _Last updated: 2026-11-27_
 - Stop: `... down` (`-v` also wipes the local database) · after `.env` change: `... up -d --force-recreate app` ·
   after dependency change: `... up -d --build -V`
 - Containers `secureexam-app-dev`, `secureexam-db-dev`; database `secureexam`
-- Schema changes before release: edit `prisma/schema.prisma`, regenerate `prisma/migrations/0_init`, keep the
-  CHECK constraints appended at the end of that file, wipe the local volume
 - **State:** containers running; migration applied; demo accounts seeded (see `docs/TEST-ACCOUNTS.md`)
-- Access check: `python scripts/access-check.py` (78/78 passed after step 4)
+- Access check: `python scripts/access-check.py` (107/107 passed after step 5)
+- The built-in browser pane stalled on large dev scripts (connection reset); Playwright Chromium worked.
+- New migration for schema changes (never wipe data without asking): `prisma/migrations/<n>_name`,
+  then `... exec -T app pnpm run db:migrate`
 - **The Docker app doesn't see file changes from Windows.** After editing code:
   `docker compose -f docker-compose.dev.yml restart app`
 - Demo data: `pnpm run seed:demo` in the app container with `DEMO_PASSWORD` (see `docs/TEST-ACCOUNTS.md`):
@@ -115,6 +118,11 @@ _Last updated: 2026-11-27_
 7. **Step 4:** admin user management (search, filters, paging, create, edit, disable, role change, unlock,
    password reset; no self-demotion or self-reset; last-admin guard; audited in the same transaction), platform
    overview, validated audit-log API, `lib/grading.ts` (objective marking), demo seed (`scripts/seed-demo.ts`).
+
+8. Added `CREDENTIALS.md` (logins per user type, local only).
+9. **Step 5:** question bank (topics, versioned questions, three types with marking rules, search, filters,
+   paging, duplicate, archive, version history, usage count), draft exam question selection with ordering and
+   marks, basic screens under `/examiner`. Migration `1_question_bank` (`currentText`, `maxLength`).
 
 Earlier, separate work in the parent folder (not the competition): the `obol` site, `DESIGN-PIPELINE.md`
 and the skills `design-pipeline`, `scroll-video-hero`, `kinetic-details`. The user said to forget Obol.

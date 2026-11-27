@@ -11,6 +11,10 @@ export type ActivityAction =
   | 'user_created'
   | 'user_updated'
   | 'user_password_reset'
+  | 'question_created'
+  | 'question_updated'
+  | 'question_archived'
+  | 'exam_questions_updated'
   | 'system_event'
 
 type LogActivityParams = {

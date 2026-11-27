@@ -29,6 +29,7 @@ export async function seedQuestions(ownerId: number) {
           topicId: topic.id,
           type: kind === 'S' ? 'SINGLE_CHOICE' : kind === 'M' ? 'MULTIPLE_CHOICE' : 'WRITTEN',
           difficulty: LEVELS[level],
+          currentText: text,
           versions: {
             create: {
               version: 1,
