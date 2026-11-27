@@ -5,21 +5,21 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 <!-- progress:start -->
 ## Progress
 
-**Steps finished: 9 of 16** · required subtasks ticked: 147 of 246 · **next: step 10, Monitoring and announcements**
+**Steps finished: 10 of 16** · required subtasks ticked: 162 of 247 · **next: step 11, Network status, sandbox, scratchpad, preferences**
 
 | Step | Work | Kind | Tasks | Subtasks | Status |
 |---:|---|---|---|---:|---|
 | 1 | Remove template content | Foundation | FND-1 | 4/4 | ✅ Done |
 | 2 | Project structure and database | Foundation | FND-2, FND-3, DB-1, DB-2 | 22/22 | ✅ Done |
-| 3 | Sign-in and permissions | Foundation | AUTH-1, AUTH-2, AUTH-3 | 18/19 | ✅ Done (1 carried over) |
+| 3 | Sign-in and permissions | Foundation | AUTH-1, AUTH-2, AUTH-3 | 19/19 | ✅ Done |
 | 4 | User management and sample data | Foundation | USR-1, USR-2, DB-3 | 12/12 | ✅ Done |
 | 5 | Question bank | Foundation | QB-1, QB-2, QB-3 | 13/13 | ✅ Done |
 | 6 | Examinations and enrolment | Foundation | EXM-1, EXM-2, EXM-3, ENR-1, ENR-2, ENR-3 | 24/25 | ✅ Done (1 carried over) |
 | 7 | Attempt engine and server timing | Foundation | ATT-1, ATT-2, ATT-3, ATT-4 | 13/13 | ✅ Done |
 | 8 | Exam screen: autosave, resume, submit | Foundation | WS-1, WS-2, WS-3, WS-4 | 18/18 | ✅ Done |
 | 9 | Grading and results | Core | GRD-1, GRD-2, GRD-3, RES-1, RES-2, RES-3, RES-4 | 22/22 | ✅ Done |
-| 10 | Monitoring and announcements | Core | MON-1, MON-2, MON-3, MON-4 | 0/13 | ▶️ Next |
-| 11 | Network status, sandbox, scratchpad, preferences | Secondary | NET-1, SBX-1, SBX-2, PAD-1, PREF-1 | 0/16 | ⬜ Not started |
+| 10 | Monitoring and announcements | Core | MON-1, MON-2, MON-3, MON-4 | 14/14 | ✅ Done |
+| 11 | Network status, sandbox, scratchpad, preferences | Secondary | NET-1, SBX-1, SBX-2, PAD-1, PREF-1 | 0/16 | ▶️ Next |
 | 12 | Bulk import and question analytics | Secondary | IMP-1, IMP-2, QAN-1 | 0/11 | ⬜ Not started |
 | 13 | PDF reports and verification | Secondary | PDF-1, PDF-2, VER-1, VER-2 | 0/7 | ⬜ Not started |
 | 14 | Innovation: fair randomized papers | Innovation | FAIR-1, FAIR-2, FAIR-3 | 0/10 | ⬜ Not started |
@@ -28,7 +28,6 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 
 ### Carried over from finished steps
 
-- **AUTH-3** (step 3): Examiner: monitoring, grading, results (arrive in steps 9 and 10)
 - **ENR-1** (step 6): Bulk enrol from import results
 
 ### Already done ahead of its step
@@ -170,12 +169,12 @@ Covers: A5, A6, T1
 - [x] **Sec:** one permission table listing each route and its allowed roles
 - **Done when:** a script calling every route as each role and anonymously matches the table.
 
-### AUTH-3 Role-specific experience · P0 · S — 🟡 Partly done (step 3)
+### AUTH-3 Role-specific experience · P0 · S — ✅ Done (step 3)
 Covers: A2
 - [x] Redirect to the right dashboard after sign-in
 - [x] Admin: users, system overview, audit log
 - [x] Examiner: exams, question bank, candidates
-- [ ] Examiner: monitoring, grading, results (arrive in steps 9 and 10)
+- [x] Examiner: monitoring, grading, results (arrive in steps 9 and 10)
 - [x] Candidate: upcoming, available, completed exams
 - [x] Candidate: results (arrives in step 9)
 
@@ -345,30 +344,31 @@ Covers: I6, T5
 
 ## MON. Monitoring
 
-### MON-1 Live attempt board · P0 · M — ⬜ Not started (step 10)
+### MON-1 Live attempt board · P0 · M — ✅ Done (step 10)
 Covers: M1, M2, M4
-- [ ] Per candidate: status, answered count, current time left, last seen, incident count
-- [ ] Exam totals: not started, active, disconnected, submitted
-- [ ] Polling; filter and search; paginated for large cohorts
-- [ ] **Sec:** exam owner only; no answer content needed on this board
+- [x] Per candidate: status, answered count, current time left, last seen, incident count
+- [x] Exam totals: not started, active, disconnected, submitted
+- [x] Polling; filter and search; paginated for large cohorts
+- [x] **Sec:** exam owner only; no answer content needed on this board
 
-### MON-2 Events and incidents · P0 · M — ⬜ Not started (step 10)
+### MON-2 Events and incidents · P0 · M — ✅ Done (step 10)
 Covers: M3, M6, T2
-- [ ] Heartbeat; record tab hidden, window blur, offline and reconnect, session takeover, late save rejected, fullscreen exit if used
-- [ ] Group repeats and record durations to limit noise
-- [ ] Per-attempt timeline; examiner marks reviewed and adds a note
-- [ ] **Sec:** server timestamps; rate limit and size cap on event intake; candidate cannot delete events
-- [ ] Tell candidates beforehand what is recorded
+- [x] Heartbeat; record tab hidden, window blur, offline and reconnect, session takeover, late save rejected, fullscreen exit if used
+- [x] Group repeats and record durations to limit noise
+- [x] Per-attempt timeline; examiner marks reviewed and adds a note
+- [x] **Sec:** server timestamps; rate limit and size cap on event intake; candidate cannot delete events
+- [x] Tell candidates beforehand what is recorded
+- [x] ★ Examiner switches each indicator on or off and sets its limits, per examination
 
-### MON-3 Fair wording · P0 · S — ⬜ Not started (step 10)
+### MON-3 Fair wording · P0 · S — ✅ Done (step 10)
 Covers: M7
-- [ ] Label as "indicators", with neutral explanations and possible innocent causes
-- [ ] No automatic penalty, score change or "cheating" label
+- [x] Label as "indicators", with neutral explanations and possible innocent causes
+- [x] No automatic penalty, score change or "cheating" label
 
-### MON-4 Announcements · P0 · S — ⬜ Not started (step 10)
+### MON-4 Announcements · P0 · S — ✅ Done (step 10)
 Covers: M5
-- [ ] Send to all candidates of an exam; show inside the workspace without losing input
-- [ ] Late joiners see earlier ones; history kept
+- [x] Send to all candidates of an exam; show inside the workspace without losing input
+- [x] Late joiners see earlier ones; history kept
 - [ ] ★ Message one candidate; "read by N"
 - [ ] ★ Examiner actions with mandatory reason and audit: add time, force submit
 

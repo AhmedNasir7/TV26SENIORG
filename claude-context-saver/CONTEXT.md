@@ -10,14 +10,10 @@ _Last updated: 2026-11-27_
 - **RULE: never remove services (Calendar, ElevenLabs, Supabase, Pusher, 100ms, Stripe, email, moderation,
   chat, support...). Only template content may go. ASK before removing anything.**
 - **RULE: no Claude co-author line in commits or pull requests.**
-- **Phase:** building. **Steps 1–9 done.** Everything through step 9 was **pushed** to `origin/main` on
+- **Phase:** building. **Steps 1–10 done: all core features are built.** Everything through step 9 was **pushed** to `origin/main` on
   2026-11-27 at the user's request. Later commits stay local until the user asks again.
-- **Next:** step 10 = MON-1..4 (live attempt board, events and incidents, fair wording, announcements). It
-  completes the core requirements. Incidents are already recorded for takeover and late saves.
-  **Approved by the user, with one addition: every indicator and its thresholds must be configurable by the
-  examiner per exam.** Plan: on/off per indicator, minimum away time, disconnect threshold, attention
-  threshold, optional full screen; recording choices locked once someone has started; candidates told what is
-  recorded; announcements delivered through the 15-second clock check. No code written yet (interrupted to push).
+- **Next:** step 11 = NET-1, SBX-1, SBX-2, PAD-1, PREF-1 (network status, sandbox, scratchpad, preferences).
+  Wait for the user. Step 10 is committed locally and **not pushed**.
 - **Progress view:** top of `docs/TASKS.md`. After each step: tick subtasks, raise `FINISHED_STEP` in
   `scripts/task-progress.py`, run it. The user relies on this to follow the work.
 - **Waiting for the user:** whether to bring back non-service items removed in step 1: admin analytics,
@@ -29,7 +25,7 @@ _Last updated: 2026-11-27_
 - **Docker checks:** bulk checks at intermediate points, not after every step.
 - **Packages approved:** `zod` (installed), `pdfkit` and `qrcode` later. Ask before adding anything else.
 - **Step order** (reordered 2026-11-27 at the user's request: core first, then straightforward ones; ticks
-  unchanged): 1–9 done · 10 MON (core) · 11 NET, SBX, PAD, PREF · 12 IMP, QAN ·
+  unchanged): 1–10 done · 11 NET, SBX, PAD, PREF · 12 IMP, QAN ·
   13 PDF, VER · 14 FAIR (innovation) · 15 SEC, REL pass · 16 TST, SHIP
 - **UI/UX (20 marks): design pass applied 2026-11-27** at teammate Slothdemon22's request, **pushed to `origin/main`
   the same day**: Attio design system + Linear highlighter colours, class-based light/dark with an animated toggle on
@@ -83,10 +79,12 @@ _Last updated: 2026-11-27_
 - **State:** containers running; migration applied; demo accounts seeded (see `docs/TEST-ACCOUNTS.md`)
 - Sign-in page has Admin / Examiner / Candidate fill buttons when `SHOW_DEMO_LOGINS=true` (set only in
   `docker-compose.dev.yml`). Never enable it with real data.
-- Access check: `python scripts/access-check.py` (223/223 passed after step 9; it creates and removes its own attempt test data)
-- Unit tests: `node --test tests/` (grading, totals, statistics)
+- Access check: `python scripts/access-check.py` (254/254 passed after step 10; it creates and removes its own attempt test data)
+- Unit tests: `node --test "tests/*.test.mjs"` (grading, totals, statistics, monitoring settings)
 - The built-in browser pane once stalled on large dev scripts; it worked in step 9. Use Playwright if it stalls.
 - In Git Bash, very long commands fail on Windows: write large files with the Write tool or in small pieces
+- The built-in browser pane never marks a page hidden or fires focus changes, so test those indicators by
+  dispatching the events, or by hand in a normal browser
 - New migration for schema changes (never wipe data without asking): `prisma/migrations/<n>_name`,
   then `... exec -T app pnpm run db:migrate`
 - **The Docker app doesn't see file changes from Windows.** After editing code:
@@ -195,6 +193,13 @@ _Last updated: 2026-11-27_
     Playwright: 62 page loads, 0 contrast failures, command menu and toggle tests; access check 223/223.
     Dev note: on the Linux box the dev server's file watcher can miss edits when several dev servers run
     (inotify limit 65536); restart `next dev` with `.next` cleared if a change doesn't show.
+
+16. **Step 10:** monitoring. Per-exam settings (`lib/monitoring.ts`, `Exam.monitoring`, migration `4_monitoring`):
+    eight indicators on/off plus minimum away time, disconnect threshold and highlight limit; recording choices
+    lock once someone starts; candidates see the list before and during the exam. Events from the screen
+    (`useMonitoring`) and server (contact gaps, takeover, late save), grouped with durations. Board at
+    `/examiner/exams/{id}/monitor` (5 s polling), timeline with review notes, announcements delivered by the
+    15 s clock check. Defaults: disconnected after 75 s, highlight after 3.
 
 Earlier, separate work in the parent folder (not the competition): the `obol` site, `DESIGN-PIPELINE.md`
 and the skills `design-pipeline`, `scroll-video-hero`, `kinetic-details`. The user said to forget Obol.

@@ -156,6 +156,7 @@ model Exam {
   shuffleOptions      Boolean    @default(true)
   allowBackNavigation Boolean    @default(true)
   blueprint           Json? // fair-paper recipe: counts per topic and difficulty
+  monitoring          Json       @default("{}") // what is recorded; read through lib/monitoring
   publishedAt         DateTime?
   resultsPublishedAt  DateTime?
   createdAt           DateTime   @default(now())

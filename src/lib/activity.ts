@@ -29,6 +29,9 @@ export type ActivityAction =
   | 'answer_graded'
   | 'results_published'
   | 'results_unpublished'
+  | 'monitoring_updated'
+  | 'announcement_sent'
+  | 'incident_reviewed'
   | 'system_event'
 
 type LogActivityParams = {

@@ -3,6 +3,8 @@ import { ArrowLeft, ScrollText } from 'lucide-react'
 import { StatusPill } from '@/components/ui/StatusPill'
 import type { ExamPhase } from '@/lib/server/time'
 import { Countdown } from '@/components/exams/Countdown'
+import { AnnouncementList } from '@/components/attempt/AnnouncementList'
+import { RecordedNotice } from '@/components/attempt/RecordedNotice'
 import { StartAttemptButton } from '@/components/attempt/StartAttemptButton'
 import { AppHeader } from '@/components/layout/AppHeader'
 import { LocalTime } from '@/components/ui/LocalTime'
@@ -15,7 +17,7 @@ const PHASE_FOR: Record<string, ExamPhase> = { available: 'ONGOING', in_progress
 
 export default async function CandidateExamPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requirePageUser(['CANDIDATE'])
-  const { exam, serverNow } = await loadById((await params).id, (id) => getCandidateExam(user, id))
+  const { exam, serverNow, announcements } = await loadById((await params).id, (id) => getCandidateExam(user, id))
 
   return (
     <div className="page-shell min-h-screen">
@@ -49,6 +51,15 @@ export default async function CandidateExamPage({ params }: { params: Promise<{ 
           <p className="mt-2 whitespace-pre-wrap text-sm">{exam.instructions || 'No special instructions.'}</p>
           {!exam.allowBackNavigation && <p className="mt-3 text-sm">You cannot go back to earlier questions.</p>}
         </section>
+        {exam.access.state !== 'submitted' && exam.access.state !== 'closed' && (
+          <section className="surface-card mt-4 p-5 text-sm">
+            <h2 className="font-display mb-2 font-semibold">What is recorded</h2>
+            <RecordedNotice recorded={exam.recorded} />
+          </section>
+        )}
+        {announcements.length > 0 && (
+          <div className="mt-4"><AnnouncementList announcements={announcements} /></div>
+        )}
         <section className={`${exam.access.canEnter ? 'glow-card' : 'surface-card'} mt-4 p-5`}>
           <p role="status" className="text-sm font-medium">
             {exam.access.reason}

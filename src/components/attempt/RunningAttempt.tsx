@@ -2,14 +2,19 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { apiRequest } from '@/lib/client/request'
+import { recordedList } from '@/lib/monitoring'
+import { AnnouncementList } from './AnnouncementList'
+import { FullscreenPrompt } from './FullscreenPrompt'
 import { QuestionGrid, type GridItem } from './QuestionGrid'
 import { QuestionView } from './QuestionView'
+import { RecordedNotice } from './RecordedNotice'
 import { ReviewPanel } from './ReviewPanel'
 import { readPosition, writePosition } from './storage'
 import { TimerBar } from './TimerBar'
 import type { Attempt } from './types'
 import { isAnswered, useAnswers } from './useAnswers'
 import { useDeadline } from './useDeadline'
+import { useMonitoring } from './useMonitoring'
 
 type Props = { attempt: Attempt; sessionId: string; onChange: (attempt: Attempt) => void; onTakeBack: () => void }
 
@@ -24,6 +29,7 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
   const [takenOver, setTakenOver] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [announcements, setAnnouncements] = useState(attempt.announcements)
 
   const submit = useCallback(
     async (timeUp: boolean) => {
@@ -45,7 +51,8 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
 
   const onTimeUp = useCallback(() => void submit(true), [submit])
   const onTakenOver = useCallback(() => setTakenOver(true), [])
-  const remaining = useDeadline(attempt.id, sessionId, attempt, onTimeUp, onTakenOver)
+  const remaining = useDeadline(attempt.id, sessionId, attempt, onTimeUp, onTakenOver, setAnnouncements)
+  useMonitoring(attempt.id, sessionId, attempt.monitoring, !takenOver && remaining > 0)
   const readOnly = takenOver || busy || remaining <= 0 || save.kind === 'blocked'
 
   const go = useCallback(
@@ -107,12 +114,21 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
         </div>
       )}
 
+      <AnnouncementList announcements={announcements} />
+
+      {attempt.monitoring.fullscreen && !takenOver && <FullscreenPrompt />}
+
       {attempt.exam.instructions && (
         <details className="surface-card p-4 text-sm">
           <summary className="cursor-pointer font-medium">Instructions</summary>
           <p className="mt-2 whitespace-pre-wrap">{attempt.exam.instructions}</p>
         </details>
       )}
+
+      <details className="surface-card p-4 text-sm">
+        <summary className="cursor-pointer font-medium">What is recorded during this examination</summary>
+        <div className="mt-2"><RecordedNotice recorded={recordedList(attempt.monitoring)} /></div>
+      </details>
 
       {reviewing ? (
         <ReviewPanel items={items} busy={busy} onSelect={go} onCancel={() => setReviewing(false)} onSubmit={() => submit(false)} />

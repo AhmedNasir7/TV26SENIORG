@@ -32,6 +32,22 @@ export const readPosition = (attemptId: number) => safely(() => Number(localStor
 export const writePosition = (attemptId: number, position: number) =>
   safely(() => localStorage.setItem(positionKey(attemptId), String(position)), undefined)
 
+export type MonitorEvent = {
+  type: 'TAB_HIDDEN' | 'WINDOW_BLUR' | 'OFFLINE' | 'PASTE' | 'FULLSCREEN_EXIT'
+  seconds?: number
+  characters?: number
+}
+const eventsKey = (attemptId: number) => `${PREFIX}events-${attemptId}`
+
+export const readEvents = (attemptId: number) =>
+  safely(() => JSON.parse(localStorage.getItem(eventsKey(attemptId)) ?? '[]') as MonitorEvent[], [])
+
+export const writeEvents = (attemptId: number, events: MonitorEvent[]) =>
+  safely(() => {
+    if (events.length) localStorage.setItem(eventsKey(attemptId), JSON.stringify(events))
+    else localStorage.removeItem(eventsKey(attemptId))
+  }, undefined)
+
 export function clearAttemptStorage() {
   safely(() => {
     for (const store of [localStorage, sessionStorage]) {

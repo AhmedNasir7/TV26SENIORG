@@ -2,34 +2,44 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiRequest } from '@/lib/client/request'
+import type { Announcement } from '@/lib/services/announcements'
 
-type Clock = { status: 'IN_PROGRESS' | 'SUBMITTED'; serverNow: string; deadlineAt: string; activeSession?: boolean }
+type Clock = {
+  status: 'IN_PROGRESS' | 'SUBMITTED'
+  serverNow: string
+  deadlineAt: string
+  activeSession?: boolean
+  announcements?: Announcement[]
+}
 const RESYNC_MS = 15_000
 
 /**
  * Time left according to the server, counted with the browser's monotonic timer (the device
  * clock is never read). Re-synchronised regularly, on focus and when the network returns.
- * The same check reports when another browser has taken the attempt over.
+ * The same check tells the server this screen is still connected, brings new announcements and
+ * reports when another browser has taken the attempt over.
  */
 export function useDeadline(
   attemptId: number,
   sessionId: string,
   initial: Clock,
   onTimeUp: () => void,
-  onTakenOver: () => void
+  onTakenOver: () => void,
+  onAnnouncements: (announcements: Announcement[]) => void
 ) {
   const [remaining, setRemaining] = useState(() => Date.parse(initial.deadlineAt) - Date.parse(initial.serverNow))
   const sync = useRef({ left: Date.parse(initial.deadlineAt) - Date.parse(initial.serverNow), at: 0 })
-  const handlers = useRef({ onTimeUp, onTakenOver })
+  const handlers = useRef({ onTimeUp, onTakenOver, onAnnouncements })
 
   useEffect(() => {
-    handlers.current = { onTimeUp, onTakenOver }
-  }, [onTimeUp, onTakenOver])
+    handlers.current = { onTimeUp, onTakenOver, onAnnouncements }
+  }, [onTimeUp, onTakenOver, onAnnouncements])
 
   const resync = useCallback(async () => {
     try {
       const clock = await apiRequest<Clock>(`/api/attempts/${attemptId}/clock?session=${encodeURIComponent(sessionId)}`)
       sync.current = { left: Date.parse(clock.deadlineAt) - Date.parse(clock.serverNow), at: performance.now() }
+      if (clock.announcements) handlers.current.onAnnouncements(clock.announcements)
       if (clock.status !== 'IN_PROGRESS') handlers.current.onTimeUp()
       else if (clock.activeSession === false) handlers.current.onTakenOver()
     } catch {

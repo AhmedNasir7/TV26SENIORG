@@ -458,6 +458,16 @@ def run_attempt_checks():
     call(examiner, "PUT", f"/api/exams/{strict}/questions", {"items": [{"questionId": q1, "marks": 2}, {"questionId": q2, "marks": 3}]})
     call(examiner, "POST", f"/api/exams/{strict}/enrollments", {"candidateIds": ids})
     call(examiner, "POST", f"/api/exams/{strict}/publish", {"published": True})
+    mon = f"/api/exams/{strict}"
+    defaults = json.loads(call(examiner, "GET", mon + "/monitoring")[2])["settings"]
+    chosen = {**defaults, "windowBlur": False}
+    check("examiner chooses what is recorded", call(examiner, "PUT", mon + "/monitoring", chosen)[0] == 200)
+    check("partial or unknown settings rejected", call(examiner, "PUT", mon + "/monitoring", {"paste": False})[0] == 400
+          and call(examiner, "PUT", mon + "/monitoring", {**chosen, "camera": True})[0] == 400)
+    check("candidate cannot change monitoring", call(one, "PUT", mon + "/monitoring", chosen)[0] == 403)
+    check("another examiner cannot change monitoring", call(other, "PUT", mon + "/monitoring", chosen)[0] == 404)
+    told = json.loads(call(one, "GET", f"/api/me/exams/{strict}")[2])["exam"]["recorded"]
+    check("candidate is told what is recorded", any("tabs" in t for t in told) and not any("another window or application" in t for t in told), told)
     opened = json.loads(call(one, "POST", f"/api/me/exams/{strict}/attempt", {"start": True})[2])
     sid, paper = opened["sessionId"], opened["attempt"]
     wid = paper["id"]
@@ -479,6 +489,50 @@ def run_attempt_checks():
     clock = lambda s: json.loads(call(one, "GET", f"/api/attempts/{wid}/clock?session={s}")[2])
     check("clock recognises the active session", clock(sid)["activeSession"] is True)
     check("clock reports a takeover", clock("an-older-session")["activeSession"] is False)
+    # monitoring: events, board, timeline and announcements
+    board = lambda: json.loads(call(examiner, "GET", mon + "/monitor")[2])
+    first_board = board()
+    mine = next(r for r in first_board["rows"] if r["attemptId"] == wid)
+    check("board shows progress and totals", mine["state"] == "ACTIVE" and mine["total"] == 2 and first_board["totals"]["notStarted"] == 1
+          and mine["secondsLeft"] > 0, first_board["totals"])
+    check("board carries no answers", '"response"' not in call(examiner, "GET", mon + "/monitor")[2])
+    check("candidate and other examiner refused the board", call(one, "GET", mon + "/monitor")[0] == 403 and call(other, "GET", mon + "/monitor")[0] == 404)
+    def report(who, events, session_id=sid):
+        status, _, raw = call(who, "POST", f"/api/attempts/{wid}/events", {"sessionId": session_id, "events": events})
+        return status, json.loads(raw).get("recorded")
+    check("long absence recorded", report(one, [{"type": "TAB_HIDDEN", "seconds": 10}]) == (200, 1))
+    check("short absence ignored", report(one, [{"type": "TAB_HIDDEN", "seconds": 1}]) == (200, 0))
+    check("switched-off indicator ignored", report(one, [{"type": "WINDOW_BLUR", "seconds": 30}]) == (200, 0))
+    report(one, [{"type": "TAB_HIDDEN", "seconds": 20}, {"type": "PASTE", "characters": 12}])
+    grouped = db(f"""select occurrences, details->>'totalSeconds', details->>'longestSeconds' from "Incident" where "attemptId"={wid} and type='TAB_HIDDEN'""")
+    check("repeats grouped with durations", grouped == "2|30|20", grouped)
+    check("another candidate cannot report events", report(two, [{"type": "PASTE", "characters": 1}])[0] == 404)
+    check("wrong session cannot report events", report(one, [{"type": "PASTE"}], "not-the-active-session")[0] == 409)
+    check("browser cannot send server-only kinds", report(one, [{"type": "SESSION_TAKEOVER"}])[0] == 400)
+    check("recording choices lock once started", call(examiner, "PUT", mon + "/monitoring", {**chosen, "paste": False})[0] == 409)
+    check("board limits can still change", call(examiner, "PUT", mon + "/monitoring", {**chosen, "flagAfter": 2})[0] == 200)
+    check("candidate flagged at the chosen limit", next(r for r in board()["rows"] if r["attemptId"] == wid)["flagged"] is True)
+    sql(f"""UPDATE "Attempt" SET "lastSeenAt"=now() at time zone 'utc' - interval '5 min' WHERE id={wid}""")
+    check("silent candidate shows as disconnected", board()["totals"]["disconnected"] == 1)
+    call(one, "GET", f"/api/attempts/{wid}/clock?session={sid}")
+    check("reconnecting is recorded by the server", db(f"""select count(*) from "Incident" where "attemptId"={wid} and type='RECONNECTED'""") == "1"
+          and board()["totals"]["disconnected"] == 0)
+    timeline = json.loads(call(examiner, "GET", f"{mon}/monitor/{wid}")[2])["incidents"]
+    check("timeline explains each indicator", len(timeline) == 3 and all(i["innocent"] for i in timeline), [i["label"] for i in timeline])
+    check("candidate cannot read the timeline", call(one, "GET", f"{mon}/monitor/{wid}")[0] == 403)
+    review = f"{mon}/incidents/{timeline[0]['id']}"
+    check("candidate cannot review or remove indicators", call(one, "PATCH", review, {"note": "x"})[0] == 403)
+    check("another examiner cannot review", call(other, "PATCH", review, {"note": "x"})[0] == 404)
+    check("review with a note", call(examiner, "PATCH", review, {"note": "ZZ checked"})[0] == 200 and call(examiner, "PATCH", review, {"note": ""})[0] == 409)
+    send = lambda who, text: call(who, "POST", mon + "/announcements", {"message": text})[0]
+    check("only the owner announces", send(one, "x") == 403 and send(other, "x") == 404 and send(examiner, "   ") == 400)
+    check("announcement sent", send(examiner, "ZZ five minutes left") == 201)
+    check("running candidate receives it", "ZZ five minutes left" in call(one, "GET", f"/api/attempts/{wid}/clock?session={sid}")[2])
+    check("later joiner sees it", "ZZ five minutes left" in call(two, "GET", f"/api/me/exams/{strict}")[2])
+    check("outsider does not", call(outsider, "GET", f"/api/me/exams/{strict}")[0] == 404)
+    status, _, body = call(examiner, "GET", f"/examiner/exams/{strict}/monitor")
+    check("monitor page renders", status == 200 and "ZZ attempt check one way" in body and "What to record" in body, status)
+    sql(f"""DELETE FROM "Notification" WHERE "entityType"='exam' AND "entityId"={strict}""")
     sql(f'DELETE FROM "Attempt" WHERE "examId"={strict}')
     sql(f'DELETE FROM "Exam" WHERE id={strict}')
 

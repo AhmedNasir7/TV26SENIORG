@@ -32,6 +32,10 @@ Y = allowed · own = only the caller's own records · — = refused
 | `GET /api/exams/{id}/results`, `.../grading`, `PUT .../grading/{qid}`, `GET .../attempts/{aid}` (submitted, real) | — | — | own | Y |
 | `POST /api/exams/{id}/results/publish` (publish or withdraw with a reason) | — | — | own | Y |
 | `GET /api/me/exams/{id}/result` (published only, no answer key) | — | own | — | — |
+| `GET /api/exams/{id}/monitor`, `.../monitor/{aid}`, `PATCH .../incidents/{iid}` (review only) | — | — | own | Y |
+| `GET/PUT /api/exams/{id}/monitoring` (recording choices locked after the first start) | — | — | own | Y |
+| `GET/POST /api/exams/{id}/announcements` | — | — | own | Y |
+| `POST /api/attempts/{id}/events` (browser kinds only, active session, 30 a minute) | — | own | — | — |
 | `GET /api/me/exams`, `GET /api/me/exams/{id}` (no questions) | — | own | — | — |
 | `POST /api/me/exams/{id}/attempt` (start or resume) | — | own | — | — |
 | `GET /api/attempts/{id}`, `.../clock`, `PUT .../answers/{qid}`, `POST .../progress`, `POST .../submit` | — | own | — | — |

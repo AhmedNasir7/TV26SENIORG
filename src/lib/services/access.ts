@@ -2,9 +2,11 @@
  * The one gate for candidates. Pages, and later the attempt, save and submit routes, ask here,
  * so "may this candidate enter now?" has a single answer based on the server clock.
  */
+import { readSettings, recordedList } from '@/lib/monitoring'
 import { canAttemptExam, ensureFound, type Actor } from '@/lib/policies'
 import { prisma } from '@/lib/prisma'
 import { serverNow } from '@/lib/server/time'
+import { announcementsFor } from '@/lib/services/announcements'
 import { finalizeExpired } from '@/lib/services/finalize'
 
 export type AccessState = 'upcoming' | 'available' | 'in_progress' | 'submitted' | 'closed'
@@ -49,6 +51,7 @@ const EXAM_FIELDS = {
   passMarks: true,
   allowBackNavigation: true,
   resultsPublishedAt: true,
+  monitoring: true,
   _count: { select: { questions: true } },
 } as const
 
@@ -76,7 +79,7 @@ async function loadEnrollments(candidateId: number, examId?: number) {
 type Row = Awaited<ReturnType<typeof loadEnrollments>>[number]
 
 function present({ extraMinutes, exam }: Row, now: Date) {
-  const { attempts, _count, resultsPublishedAt, ...details } = exam
+  const { attempts, _count, resultsPublishedAt, monitoring, ...details } = exam
   const access = candidateAccess(exam, extraMinutes, attempts[0] ?? null, now)
   return {
     ...details,
@@ -85,6 +88,8 @@ function present({ extraMinutes, exam }: Row, now: Date) {
     totalMarks: Number(exam.totalMarks),
     passMarks: exam.passMarks === null ? null : Number(exam.passMarks),
     questionCount: _count.questions,
+    // Candidates are told before starting
+    recorded: recordedList(readSettings(monitoring)),
     extraMinutes,
     // Only a candidate who submitted has a result to open
     resultAvailable: resultsPublishedAt !== null && attempts[0]?.status === 'SUBMITTED',
@@ -103,5 +108,6 @@ export async function getCandidateExam(actor: Actor, examId: number) {
   const now = serverNow()
   const [row] = await loadEnrollments(actor.id, examId)
   const found = ensureFound(row, () => canAttemptExam(actor, true))
-  return { serverNow: now.toISOString(), exam: present(found, now) }
+  const announcements = await announcementsFor(actor.id, examId)
+  return { serverNow: now.toISOString(), exam: present(found, now), announcements }
 }

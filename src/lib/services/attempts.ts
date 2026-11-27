@@ -4,6 +4,7 @@
  */
 import { randomInt, randomUUID } from 'node:crypto'
 import { Prisma } from '@/generated/prisma/client'
+import { readSettings } from '@/lib/monitoring'
 import { ensureFound, type Actor } from '@/lib/policies'
 import { prisma } from '@/lib/prisma'
 import { ApiError } from '@/lib/server/api'
@@ -11,9 +12,10 @@ import { rateLimit } from '@/lib/server/rate-limit'
 import { serverNow } from '@/lib/server/time'
 import { seededRandom, shuffled } from '@/lib/shuffle'
 import { attemptDeadline, candidateAccess } from '@/lib/services/access'
+import { announcementsFor } from '@/lib/services/announcements'
 import { audit } from '@/lib/services/audit'
 import { finalizeAttempt, finalizeExpired, GRACE_MS, isPastDeadline } from '@/lib/services/finalize'
-import { recordIncident } from '@/lib/services/incidents'
+import { noteContact, recordIncident } from '@/lib/services/incidents'
 import { candidateQuestion, toOptionIds } from '@/lib/services/paper'
 import type { SaveAnswerInput } from '@/lib/validation/attempts'
 import type { QuestionOption } from '@/lib/grading'
@@ -112,6 +114,7 @@ export async function openAttempt(actor: Actor, examId: number, start: boolean, 
   if (existing.status !== 'IN_PROGRESS') throw new ApiError('CONFLICT', 'You have already submitted this examination')
 
   let active = existing.activeSessionId
+  await noteContact(existing.id) // a long silence before reopening is recorded
   if (sessionId !== active) {
     active = randomUUID()
     await prisma.attempt.update({ where: { id: existing.id }, data: { activeSessionId: active } })
@@ -125,7 +128,7 @@ export async function openAttempt(actor: Actor, examId: number, start: boolean, 
 async function ownAttempt(actor: Actor, attemptId: number) {
   const attempt = await prisma.attempt.findUnique({
     where: { id: attemptId },
-    select: { id: true, candidateId: true, isSandbox: true, status: true, deadlineAt: true, activeSessionId: true },
+    select: { id: true, examId: true, candidateId: true, isSandbox: true, status: true, deadlineAt: true, activeSessionId: true },
   })
   return ensureFound(attempt, (a) => a.candidateId === actor.id && !a.isSandbox)
 }
@@ -152,7 +155,7 @@ export async function viewAttempt(actor: Actor, attemptId: number) {
       submissionHash: true,
       deadlineAt: true,
       reachedPosition: true,
-      exam: { select: { id: true, title: true, instructions: true, allowBackNavigation: true } },
+      exam: { select: { id: true, title: true, instructions: true, allowBackNavigation: true, monitoring: true } },
       questions: {
         orderBy: { position: 'asc' },
         select: {
@@ -170,6 +173,7 @@ export async function viewAttempt(actor: Actor, attemptId: number) {
   })
 
   const running = attempt.status === 'IN_PROGRESS'
+  const { monitoring, ...exam } = attempt.exam
   return {
     id: attempt.id,
     status: attempt.status,
@@ -178,7 +182,9 @@ export async function viewAttempt(actor: Actor, attemptId: number) {
     receipt: attempt.submissionHash,
     deadlineAt: attempt.deadlineAt.toISOString(),
     serverNow: serverNow().toISOString(),
-    exam: attempt.exam,
+    exam,
+    monitoring: readSettings(monitoring),
+    announcements: running ? await announcementsFor(actor.id, exam.id) : [],
     reachedPosition: attempt.reachedPosition,
     // Questions are shown only while the attempt is running
     questions: running
@@ -192,15 +198,17 @@ export async function viewAttempt(actor: Actor, attemptId: number) {
 /** Small and cheap, for the browser to re-synchronise its countdown. */
 export async function attemptClock(actor: Actor, attemptId: number, sessionId?: string) {
   const attempt = await currentAttempt(actor, attemptId)
-  if (attempt.status === 'IN_PROGRESS') {
-    await prisma.attempt.update({ where: { id: attemptId }, data: { lastSeenAt: serverNow() } })
-  }
+  const running = attempt.status === 'IN_PROGRESS'
+  const activeSession = sessionId === undefined || sessionId === attempt.activeSessionId
+  // Only the screen that holds the attempt counts as the candidate being connected
+  if (running && activeSession) await noteContact(attemptId)
   return {
+    announcements: running ? await announcementsFor(actor.id, attempt.examId) : [],
     status: attempt.status,
     serverNow: serverNow().toISOString(),
     deadlineAt: attempt.deadlineAt.toISOString(),
     // False once another browser has taken over: the screen turns read only
-    activeSession: sessionId === undefined || sessionId === attempt.activeSessionId,
+    activeSession,
   }
 }
 
@@ -210,6 +218,7 @@ export async function advanceAttempt(actor: Actor, attemptId: number, sessionId:
   if (attempt.status !== 'IN_PROGRESS') throw new ApiError('CONFLICT', ENDED)
   if (attempt.activeSessionId !== sessionId) throw new ApiError('CONFLICT', ELSEWHERE)
 
+  await noteContact(attemptId)
   const total = await prisma.attemptQuestion.count({ where: { attemptId } })
   if (position <= total) {
     // Conditional on being exactly one behind, so a repeat or a skip changes nothing
@@ -234,6 +243,9 @@ export async function saveAnswer(actor: Actor, attemptId: number, attemptQuestio
     await finalizeAttempt(attemptId, 'TIME_EXPIRED').catch(() => false)
     throw new ApiError('CONFLICT', ENDED)
   }
+
+  // Measured before the save refreshes the contact time
+  if (attempt.activeSessionId === input.sessionId) await noteContact(attemptId)
 
   return prisma.$transaction(async (tx) => {
     const now = serverNow()

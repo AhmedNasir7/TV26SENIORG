@@ -211,6 +211,7 @@ export function duplicateExam(actor: Actor, id: number) {
         shuffleQuestions: source.shuffleQuestions,
         shuffleOptions: source.shuffleOptions,
         allowBackNavigation: source.allowBackNavigation,
+        monitoring: source.monitoring ?? undefined,
         blueprint: source.blueprint ?? undefined,
         questions: {
           create: source.questions.map((item) => ({
