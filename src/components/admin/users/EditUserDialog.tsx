@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ROLES, roleLabel, type Role } from '@/lib/roles'
@@ -60,7 +61,7 @@ export function EditUserDialog({ user, isSelf, onClose, onSaved }: Props) {
           <p className="text-xs text-[color:var(--muted)]">
             {isSelf ? 'You cannot change your own role or status.' : 'Changing role or status signs this user out.'}
           </p>
-          {error && <p role="alert" className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+          <ErrorToast message={error} />
           <div className="flex justify-end gap-2">
             <button type="button" onClick={onClose} className="btn-secondary px-4 py-2 text-sm">Cancel</button>
             <button type="submit" disabled={saving} className="btn-primary px-4 py-2 text-sm disabled:opacity-60">

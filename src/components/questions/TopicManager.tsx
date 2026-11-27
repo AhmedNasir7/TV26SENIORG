@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useState } from 'react'
 import { apiRequest } from '@/lib/client/request'
 import type { Topic } from './types'
@@ -45,7 +46,7 @@ export function TopicManager({ topics, onChanged }: { topics: Topic[]; onChanged
       <button type="submit" className="btn-secondary px-3 py-2 text-sm">
         {selected ? 'Rename' : 'Add topic'}
       </button>
-      {error && <span role="alert" className="text-sm" style={{ color: 'var(--danger)' }}>{error}</span>}
+      <ErrorToast message={error} />
     </form>
   )
 }

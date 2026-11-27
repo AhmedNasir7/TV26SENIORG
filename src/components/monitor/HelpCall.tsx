@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { Video } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -51,7 +52,7 @@ export function HelpCall({ examId }: { examId: number }) {
           <Video className="h-4 w-4" aria-hidden="true" /> {busy ? 'Starting...' : 'Start a call'}
         </button>
       )}
-      {error && <p role="alert" className="w-full" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
     </section>
   )
 }

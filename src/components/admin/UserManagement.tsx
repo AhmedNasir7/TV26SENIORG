@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useCallback, useEffect, useState } from 'react'
 import { Pagination } from '@/components/admin/audit-logs/Pagination'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -87,7 +88,7 @@ export function UserManagement() {
         </select>
       </div>
 
-      {error && <p role="alert" className="mb-4 text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
 
       {!result ? (
         <p className="surface-card p-8 text-center text-sm text-[color:var(--muted)]">Loading users...</p>

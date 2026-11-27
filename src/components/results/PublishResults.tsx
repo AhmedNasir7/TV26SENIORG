@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
@@ -42,7 +43,7 @@ export function PublishResults({ examId, published, ready }: { examId: number; p
       <button type="button" disabled={busy || (!published && !ready)} onClick={act} className={`px-4 py-2.5 disabled:opacity-50 ${published ? 'btn-secondary' : 'btn-primary'}`}>
         {published ? 'Withdraw results' : 'Publish results'}
       </button>
-      {error && <p role="alert" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
     </div>
   )
 }

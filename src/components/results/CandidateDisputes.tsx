@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
@@ -59,7 +60,7 @@ export function CandidateDisputes({ examId, questions, disputes }: Props) {
         </div>
       )}
       <p className="mt-3 text-[color:var(--muted)]">Disputes close seven days after results are published.</p>
-      {error && <p role="alert" className="mt-2" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
     </section>
   )
 }

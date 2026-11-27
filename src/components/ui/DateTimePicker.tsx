@@ -91,7 +91,10 @@ export function DateTimePicker({ value, onChange, mode = 'datetime', label, plac
 
   const shown = selected ? (withTime ? `${SHOWN.format(selected)} · ${SHOWN_TIME.format(selected)}` : SHOWN.format(selected)) : ''
   const minutes = Array.from({ length: 12 }, (_, i) => i * 5)
-  if (selected && !minutes.includes(selected.getMinutes())) minutes.push(selected.getMinutes()), minutes.sort((a, b) => a - b)
+  if (selected && !minutes.includes(selected.getMinutes())) {
+    minutes.push(selected.getMinutes())
+    minutes.sort((x, y) => x - y)
+  }
 
   const column = 'max-h-32 overflow-y-auto pr-1 sm:max-h-60'
   const timeBtn = (active: boolean) =>

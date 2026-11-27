@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast, SuccessToast } from '@/components/ui/Notify'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { DictateButton } from '@/components/audio/DictateButton'
@@ -84,8 +85,8 @@ export function GradeForm({ examId, answer, locked }: Props) {
         </div>
       )}
       {reason && <p className="text-sm text-[color:var(--muted)]">AI suggestion, not saved until you save it. {reason}</p>}
-      {message && <p role="status" className="text-sm" style={{ color: 'var(--success)' }}>{message}</p>}
-      {error && <p role="alert" className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <SuccessToast message={message} />
+      <ErrorToast message={error} />
     </form>
   )
 }

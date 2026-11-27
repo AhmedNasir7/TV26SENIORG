@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast, SuccessToast } from '@/components/ui/Notify'
 import { toast } from '@/components/ui/ToasterProvider'
 import { useState } from 'react'
 import { apiRequest } from '@/lib/client/request'
@@ -93,8 +94,8 @@ export function MonitoringSettingsForm({ examId, initial, recordingLocked }: Pro
         {!locked && (
           <button type="button" onClick={() => change(DEFAULT_SETTINGS)} className="btn-ghost px-3 py-2">Use defaults</button>
         )}
-        {message && <span role="status" style={{ color: 'var(--success)' }}>{message}</span>}
-        {error && <span role="alert" style={{ color: 'var(--danger)' }}>{error}</span>}
+        <SuccessToast message={message} />
+        <ErrorToast message={error} />
       </div>
     </form>
   )

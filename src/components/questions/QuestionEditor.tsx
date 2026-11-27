@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useFeatures } from '@/hooks/useFeatures'
@@ -141,7 +142,7 @@ export function QuestionEditor({ question, topics, onClose, onSaved }: Props) {
               {review.suggestion && <p>{review.suggestion}</p>}
             </div>
           )}
-          {error && <p role="alert" className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+          <ErrorToast message={error} />
           <div className="flex justify-end gap-2">
             {features.ai && text.trim().length >= 3 && (
               <button type="button" onClick={() => void check()} disabled={checking} className="btn-secondary px-4 py-2 text-sm disabled:opacity-60">{checking ? 'Checking...' : 'Check with AI'}</button>

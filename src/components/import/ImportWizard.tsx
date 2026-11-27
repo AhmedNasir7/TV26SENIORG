@@ -1,5 +1,7 @@
 'use client'
 
+import { SuccessToast } from '@/components/ui/Notify'
+import { ErrorToast } from '@/components/ui/Notify'
 import { useState } from 'react'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
 import { downloadText } from '@/lib/client/download'
@@ -109,14 +111,15 @@ export function ImportWizard({ exams }: Props) {
         <button type="button" disabled={!file || busy} onClick={() => send(false)} className="btn-primary px-4 py-2.5 disabled:opacity-50">
           {busy ? 'Working...' : '2. Check the file'}
         </button>
-        {error && <p role="alert" style={{ color: 'var(--danger)' }}>{error}</p>}
+        <ErrorToast message={error} />
       </section>
 
       {report && (
         <section className="surface-card space-y-4 p-6 text-sm" aria-live="polite">
           {report.committed ? (
             <>
-              <p className="font-medium" style={{ color: 'var(--success)' }}>
+              <SuccessToast message={`Imported ${report.created}${report.enrolled > 0 ? `, enrolled ${report.enrolled}` : ''}`} />
+              <p className="font-medium">
                 Imported {report.created}{report.enrolled > 0 && `, enrolled ${report.enrolled}`}.
               </p>
               {report.passwords.length > 0 && (

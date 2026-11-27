@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { Mic, Square } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useFeatures } from '@/hooks/useFeatures'
@@ -51,7 +52,7 @@ export function DictateButton({ onText }: { onText: (text: string) => void }) {
 
   return (
     <span className="inline-flex items-center gap-2">
-      {error && <span role="alert" className="text-xs" style={{ color: 'var(--danger)' }}>{error}</span>}
+      <ErrorToast message={error} />
       <button
         type="button"
         disabled={state === 'working'}

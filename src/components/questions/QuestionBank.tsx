@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useState } from 'react'
 import { Pagination } from '@/components/admin/audit-logs/Pagination'
 import { apiRequest } from '@/lib/client/request'
@@ -40,7 +41,7 @@ export function QuestionBank() {
         </button>
       </div>
       <QuestionFilters filters={filters} topics={topics} onChange={updateFilter} showArchived />
-      {error && <p role="alert" className="mb-4 text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
 
       {!list ? (
         <p className="surface-card p-8 text-center text-sm text-[color:var(--muted)]">Loading questions...</p>

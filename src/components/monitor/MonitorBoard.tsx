@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { LocalTime } from '@/components/ui/LocalTime'
@@ -83,7 +84,7 @@ export function MonitorBoard({ examId, initial }: { examId: number; initial: Boa
         <p className="mt-3 text-[color:var(--muted)]">
           Indicators are reasons to look, not evidence of misconduct. They never change a score.
         </p>
-        {error && <p role="alert" className="mt-2" style={{ color: 'var(--danger)' }}>{error}</p>}
+        <ErrorToast message={error} />
 
         <div className="mt-3 overflow-x-auto">
           <table className="data-table w-full min-w-[40rem]">

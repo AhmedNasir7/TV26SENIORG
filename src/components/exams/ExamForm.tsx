@@ -1,5 +1,6 @@
 'use client'
 
+import { SuccessToast } from '@/components/ui/Notify'
 import { toast } from '@/components/ui/ToasterProvider'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -170,7 +171,7 @@ export function ExamForm({ exam, wordingOnly = false }: { exam?: ExamValues; wor
         <button type="submit" disabled={saving} className="btn-primary px-4 py-2 text-sm disabled:opacity-60">
           {saving ? 'Saving...' : exam?.id ? 'Save changes' : 'Create examination'}
         </button>
-        {message && <span role="status" className="text-sm">{message}</span>}
+        <SuccessToast message={message} />
       </div>
     </form>
   )

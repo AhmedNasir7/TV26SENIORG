@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useState } from 'react'
 import { apiRequest } from '@/lib/client/request'
 import type { Enrollment } from './EnrollmentManager'
@@ -28,7 +29,7 @@ export function ExtraTimeForm({ examId, enrollment, onSaved }: { examId: number;
       <input type="number" min="0" max="600" required aria-label="Extra minutes" value={minutes} onChange={(e) => setMinutes(e.target.value)} className="input-clean w-24 px-2 py-1.5 text-sm" />
       <input aria-label="Reason for extra time" placeholder="Reason (recorded)" maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} className="input-clean min-w-48 flex-1 px-2 py-1.5 text-sm" />
       <button type="submit" className="btn-secondary px-3 py-1.5 text-xs">Save</button>
-      {error && <p role="alert" className="w-full text-xs" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
     </form>
   )
 }

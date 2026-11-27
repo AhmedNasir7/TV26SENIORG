@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast, SuccessToast } from '@/components/ui/Notify'
 import { toast } from '@/components/ui/ToasterProvider'
 import { UserPlus } from 'lucide-react'
 import { useState } from 'react'
@@ -75,8 +76,8 @@ export function CreateUserForm({ onCreated }: { onCreated: (credentials: Credent
           <UserPlus className="h-4 w-4" aria-hidden="true" />
           {saving ? 'Adding...' : 'Add account'}
         </button>
-        {done && <p role="status" className="text-sm" style={{ color: 'var(--success)' }}>{done}</p>}
-        {error && <p role="alert" className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+        <SuccessToast message={done} />
+        <ErrorToast message={error} />
       </div>
     </form>
   )

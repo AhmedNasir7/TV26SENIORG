@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { storeSession } from '@/components/attempt/session'
@@ -49,7 +50,7 @@ export function SandboxControls({ examId, durationMinutes, hasAttempt }: Props) 
         </button>
       )}
       <p className="w-full text-[color:var(--muted)]">Set 1 minute to show what happens when time runs out.</p>
-      {error && <p role="alert" className="w-full" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
     </form>
   )
 }

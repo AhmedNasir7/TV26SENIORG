@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useCallback, useEffect, useState } from 'react'
 import { apiRequest } from '@/lib/client/request'
 import { recordedList } from '@/lib/monitoring'
@@ -190,7 +191,7 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
       </div>
       <ScratchDock attemptId={attempt.id} sessionId={sessionId} readOnly={takenOver || remaining <= 0} />
 
-      {error && <p role="alert" className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
       {remaining <= 0 && error && (
         <button type="button" onClick={onTimeUp} className="btn-secondary px-4 py-2 text-sm">Try submitting again</button>
       )}

@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast, SuccessToast } from '@/components/ui/Notify'
 import { toast } from '@/components/ui/ToasterProvider'
 import { useState } from 'react'
 import { Pagination } from '@/components/admin/audit-logs/Pagination'
@@ -88,7 +89,7 @@ export function ExamQuestionPicker({ initial }: { initial: Data }) {
               <input type="checkbox" checked={syncTotal} onChange={(e) => setSyncTotal(e.target.checked)} />
               Set the exam total to {total}
             </label>
-            {message && <span role="status" className="text-sm">{message}</span>}
+            <SuccessToast message={message} />
           </div>
         )}
       </section>
@@ -96,7 +97,7 @@ export function ExamQuestionPicker({ initial }: { initial: Data }) {
       {exam.editable && (
         <section aria-label="Question bank">
           <QuestionFilters filters={bank.filters} topics={bank.topics} onChange={bank.updateFilter} />
-          {bank.error && <p role="alert" className="mb-3 text-sm" style={{ color: 'var(--danger)' }}>{bank.error}</p>}
+          <ErrorToast message={bank.error} />
           <ul className="surface-card">
             {bank.list?.questions.map((q) => (
               <li key={q.id} className="hairline-row flex items-start justify-between gap-3 px-4 py-3">

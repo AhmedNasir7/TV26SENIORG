@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
@@ -34,7 +35,7 @@ export function VoidButton({ examId, questionVersionId }: { examId: number; ques
   return (
     <div className="mt-3">
       <button type="button" onClick={run} className="btn-danger px-3 py-1.5 text-sm">Void question</button>
-      {error && <p role="alert" className="mt-2" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
     </div>
   )
 }
@@ -75,7 +76,7 @@ function DisputeRow({ examId, dispute }: { examId: number; dispute: Dispute }) {
             <button type="button" disabled={busy || response.trim().length < 5} onClick={() => answer(true)} className="btn-primary px-4 py-2 disabled:opacity-50">Accept and correct</button>
             <button type="button" disabled={busy || response.trim().length < 5} onClick={() => answer(false)} className="btn-secondary px-4 py-2 disabled:opacity-50">Decline</button>
           </div>
-          {error && <p role="alert" style={{ color: 'var(--danger)' }}>{error}</p>}
+          <ErrorToast message={error} />
         </div>
       ) : (
         <p className="mt-2">Answer: {dispute.response}</p>

@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { Sparkles } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
@@ -55,7 +56,7 @@ export function AiReviewPanel({ examId, attemptId }: { examId: number; attemptId
           {busy ? 'Reading records...' : review ? 'Check again' : 'Review with AI'}
         </button>
       </div>
-      {error && <p role="alert" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
       {review && (
         <motion.div initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} className="surface-card space-y-4 p-5">
           <p>

@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast, SuccessToast } from '@/components/ui/Notify'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
@@ -130,8 +131,8 @@ export function FairPaper({ examId, initial, editable, topics, available }: Prop
           {editable && initial && <button type="button" disabled={busy} onClick={turnOff} className="btn-ghost px-4 py-2.5">Use a fixed list</button>}
         </div>
         {!editable && <p className="text-[color:var(--muted)]">Published examinations keep their recipe.</p>}
-        {message && <p role="status" style={{ color: 'var(--success)' }}>{message}</p>}
-        {error && <p role="alert" style={{ color: 'var(--danger)' }}>{error}</p>}
+        <SuccessToast message={message} />
+        <ErrorToast message={error} />
       </section>
 
       {evidence && (

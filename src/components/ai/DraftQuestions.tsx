@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { Check, Circle, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -92,7 +93,7 @@ export function DraftQuestions({ topics }: { topics: Topic[] }) {
         </label>
         <button type="submit" disabled={busy} className="btn-primary px-4 py-2.5 disabled:opacity-60">{busy ? 'Drafting...' : 'Draft 3'}</button>
       </form>
-      {error && <p role="alert" className="mt-3" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
       <ul className="mt-4 space-y-3">
         {drafts.map((draft, index) => (
           <li key={`${draft.text}-${index}`} className="surface-card p-4">

@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
@@ -40,7 +41,7 @@ export function StartAttemptButton({ examId, running }: { examId: number; runnin
       >
         {busy ? 'Opening...' : running ? 'Resume attempt' : 'Start attempt'}
       </button>
-      {error && <p role="alert" className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { toast } from '@/components/ui/ToasterProvider'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -74,7 +75,7 @@ export function ExamActions({ id, isDraft, canPublish, canUnpublish }: Props) {
       {isDraft && (
         <button type="button" disabled={busy} onClick={remove} className="btn-danger px-4 py-2 text-sm">Delete</button>
       )}
-      {error && <p role="alert" className="w-full text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
     </div>
   )
 }

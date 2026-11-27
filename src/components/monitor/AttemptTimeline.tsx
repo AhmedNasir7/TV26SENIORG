@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast, SuccessToast } from '@/components/ui/Notify'
 import { toast } from '@/components/ui/ToasterProvider'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
@@ -93,8 +94,8 @@ export function AttemptTimeline({ examId, attemptId, candidate, onClose, onRevie
           </button>
         </div>
       )}
-      {done && <p role="status" style={{ color: 'var(--success)' }}>{done}</p>}
-      {error && <p role="alert" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <SuccessToast message={done} />
+      <ErrorToast message={error} />
       {timeline?.incidents.length === 0 && <p className="text-[color:var(--muted)]">Nothing was noted for this attempt.</p>}
       <ul className="space-y-3">
         {timeline?.incidents.map((incident) => (

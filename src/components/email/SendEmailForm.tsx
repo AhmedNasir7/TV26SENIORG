@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/ToasterProvider'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -114,17 +115,17 @@ export function SendEmailForm() {
         </button>
       </form>
 
-      {result && (
-        <div
-          className="mt-5 rounded-[var(--radius-sm)] px-4 py-3 text-sm"
-          style={{
-            background: result.error ? 'var(--danger-soft)' : 'var(--success-soft)',
-            color: result.error ? 'var(--danger)' : 'var(--success)',
-          }}
-        >
-          {result.error ? result.error : `Email sent${result.data?.id ? ` (ID: ${result.data.id})` : ''}`}
-        </div>
-      )}
+      <ResultToast result={result} />
     </div>
   )
+}
+
+/** Shows the outcome of a send as a toast, once per result. */
+function ResultToast({ result }: { result: { error?: string; data?: { id?: string } } | null }) {
+  useEffect(() => {
+    if (!result) return
+    if (result.error) toast.error('Email not sent', { description: result.error })
+    else toast.success('Email sent', { description: result.data?.id ? `Reference ${result.data.id}` : undefined })
+  }, [result])
+  return null
 }

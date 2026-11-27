@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useCallback, useEffect, useState } from 'react'
 import { Pagination } from '@/components/admin/audit-logs/Pagination'
 import { apiRequest } from '@/lib/client/request'
@@ -58,7 +59,7 @@ export function EnrollmentManager({ examId, open }: { examId: number; open: bool
     <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
       <section aria-label="Enrolled candidates">
         <input type="search" aria-label="Search enrolled candidates" placeholder="Search enrolled candidates" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} className="input-clean mb-3 w-full px-3 py-2 text-sm" />
-        {error && <p role="alert" className="mb-3 text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+        <ErrorToast message={error} />
         <ul className="surface-card">
           {data?.enrollments.length === 0 && <li className="p-6 text-sm text-[color:var(--muted)]">No candidates enrolled.</li>}
           {data?.enrollments.map((row) => (

@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { useCallback, useEffect, useState } from 'react'
 import { Pagination } from '@/components/admin/audit-logs/Pagination'
 import { apiRequest } from '@/lib/client/request'
@@ -53,7 +54,7 @@ export function CandidatePicker({ examId, onEnrolled }: { examId: number; onEnro
   return (
     <section aria-label="Add candidates">
       <input type="search" aria-label="Search candidates to add" placeholder="Search candidates to add" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} className="input-clean mb-3 w-full px-3 py-2 text-sm" />
-      {error && <p role="alert" className="mb-3 text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={pageIds.length > 0 && pageIds.every((id) => selected.has(id))} onChange={(e) => toggle(pageIds, e.target.checked)} />

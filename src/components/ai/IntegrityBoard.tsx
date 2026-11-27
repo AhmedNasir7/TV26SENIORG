@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { ShieldAlert, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -53,7 +54,7 @@ export function IntegrityBoard({ examId }: { examId: number }) {
         )}
       </div>
       <p className="text-sm text-[color:var(--muted)]">A score from logged events and answer similarity. Strong needs two independent kinds of evidence; one kind alone is at most worth a look. Open a candidate to see the full timeline. It is not proof and changes no mark.</p>
-      {error && <p role="alert" className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
       {explanation && <p className="text-sm">{explanation.overview}{explanation.cached && <span className="text-[color:var(--muted)]"> (saved)</span>}</p>}
       {rows && rows.length === 0 && <p className="text-sm text-[color:var(--muted)]">No submitted attempts yet.</p>}
       {rows && rows.length > 0 && (

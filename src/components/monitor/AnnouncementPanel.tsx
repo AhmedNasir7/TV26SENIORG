@@ -1,5 +1,6 @@
 'use client'
 
+import { ErrorToast } from '@/components/ui/Notify'
 import { toast } from '@/components/ui/ToasterProvider'
 import { useState } from 'react'
 import { LocalTime } from '@/components/ui/LocalTime'
@@ -44,7 +45,7 @@ export function AnnouncementPanel({ examId, initial, canSend }: { examId: number
       ) : (
         <p className="text-[color:var(--muted)]">Publish the examination to send messages.</p>
       )}
-      {error && <p role="alert" style={{ color: 'var(--danger)' }}>{error}</p>}
+      <ErrorToast message={error} />
       <ul className="space-y-2">
         {sent.map((a) => (
           <li key={a.id} className="hairline-row pb-2">
