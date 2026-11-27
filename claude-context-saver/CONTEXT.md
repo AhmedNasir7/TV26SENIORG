@@ -13,7 +13,8 @@ _Last updated: 2026-11-27_
 - **Phase:** building. **Steps 1–10 done: all core features are built.** Everything through step 9 was **pushed** to `origin/main` on
   2026-11-27 at the user's request. Later commits stay local until the user asks again.
 - **Next:** step 11 = NET-1, SBX-1, SBX-2, PAD-1, PREF-1 (network status, sandbox, scratchpad, preferences).
-  Wait for the user. Step 10 is committed locally and **not pushed**.
+  Wait for the user. Step 10 was **pushed** on 2026-11-27 at the user's request. The user then asked for
+  step 11. Later commits stay local until the user asks again.
 - **Progress view:** top of `docs/TASKS.md`. After each step: tick subtasks, raise `FINISHED_STEP` in
   `scripts/task-progress.py`, run it. The user relies on this to follow the work.
 - **Waiting for the user:** whether to bring back non-service items removed in step 1: admin analytics,
