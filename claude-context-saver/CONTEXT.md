@@ -10,9 +10,14 @@ _Last updated: 2026-11-27_
 - **RULE: never remove services (Calendar, ElevenLabs, Supabase, Pusher, 100ms, Stripe, email, moderation,
   chat, support...). Only template content may go. ASK before removing anything.**
 - **RULE: no Claude co-author line in commits or pull requests.**
-- **Phase:** building. **Steps 1–9 done.** Commits since step 3 are local, **not pushed**.
+- **Phase:** building. **Steps 1–9 done.** Everything through step 9 was **pushed** to `origin/main` on
+  2026-11-27 at the user's request. Later commits stay local until the user asks again.
 - **Next:** step 10 = MON-1..4 (live attempt board, events and incidents, fair wording, announcements). It
-  completes the core requirements. Incidents are already recorded for takeover and late saves. Wait for the user.
+  completes the core requirements. Incidents are already recorded for takeover and late saves.
+  **Approved by the user, with one addition: every indicator and its thresholds must be configurable by the
+  examiner per exam.** Plan: on/off per indicator, minimum away time, disconnect threshold, attention
+  threshold, optional full screen; recording choices locked once someone has started; candidates told what is
+  recorded; announcements delivered through the 15-second clock check. No code written yet (interrupted to push).
 - **Progress view:** top of `docs/TASKS.md`. After each step: tick subtasks, raise `FINISHED_STEP` in
   `scripts/task-progress.py`, run it. The user relies on this to follow the work.
 - **Waiting for the user:** whether to bring back non-service items removed in step 1: admin analytics,
