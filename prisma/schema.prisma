@@ -283,6 +283,7 @@ model Answer {
   gradedById        Int?
   gradedBy          User?           @relation("GradedBy", fields: [gradedById], references: [id])
   gradedAt          DateTime?
+  gradeVersion      Int             @default(0) // rejects a mark based on an outdated view
 }
 
 // ---------- monitoring ----------

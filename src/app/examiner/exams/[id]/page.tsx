@@ -31,6 +31,7 @@ export default async function ExamReviewPage({ params }: { params: Promise<{ id:
         <div className="flex flex-wrap gap-2">
           <Link href={`/examiner/exams/${exam.id}/questions`} className="btn-secondary px-3 py-1.5">{exam.questions} questions</Link>
           <Link href={`/examiner/exams/${exam.id}/candidates`} className="btn-secondary px-3 py-1.5">{exam.enrolled} candidates</Link>
+          {!isDraft && <Link href={`/examiner/exams/${exam.id}/results`} className="btn-secondary px-3 py-1.5">Marking and results</Link>}
         </div>
         {isDraft && (
           <ul aria-label="Publication checklist" className="space-y-1">

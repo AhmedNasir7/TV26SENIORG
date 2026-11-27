@@ -10,9 +10,9 @@ _Last updated: 2026-11-27_
 - **RULE: never remove services (Calendar, ElevenLabs, Supabase, Pusher, 100ms, Stripe, email, moderation,
   chat, support...). Only template content may go. ASK before removing anything.**
 - **RULE: no Claude co-author line in commits or pull requests.**
-- **Phase:** building. **Steps 1–8 done.** Commits since step 3 are local, **not pushed**.
-- **Next:** step 9 = GRD-1..3, RES-1..4 (grading and results: manual marking of written answers, publishing,
-  candidate results). Objective auto-grading already runs on submit. Wait for the user.
+- **Phase:** building. **Steps 1–9 done.** Commits since step 3 are local, **not pushed**.
+- **Next:** step 10 = MON-1..4 (live attempt board, events and incidents, fair wording, announcements). It
+  completes the core requirements. Incidents are already recorded for takeover and late saves. Wait for the user.
 - **Progress view:** top of `docs/TASKS.md`. After each step: tick subtasks, raise `FINISHED_STEP` in
   `scripts/task-progress.py`, run it. The user relies on this to follow the work.
 - **Waiting for the user:** whether to bring back non-service items removed in step 1: admin analytics,
@@ -23,8 +23,10 @@ _Last updated: 2026-11-27_
 - **Priorities:** functionality with a good baseline interface; security and innovation; light testing.
 - **Docker checks:** bulk checks at intermediate points, not after every step.
 - **Packages approved:** `zod` (installed), `pdfkit` and `qrcode` later. Ask before adding anything else.
-- **Step order:** 1–3 done · 4 USR, DB-3 · 5 QB · 6 EXM, ENR · 7 ATT · 8 WS · 9 GRD, RES · 10 MON ·
-  11 FAIR · 12 NET, PREF, PAD · 13 SBX, IMP · 14 QAN, PDF, VER · 15 SEC, REL pass · 16 SHIP
+- **Step order** (reordered 2026-11-27 at the user's request: core first, then straightforward ones; ticks
+  unchanged): 1–9 done · 10 MON (core) · 11 NET, SBX, PAD, PREF · 12 IMP, QAN ·
+  13 PDF, VER · 14 FAIR (innovation) · 15 SEC, REL pass · 16 TST, SHIP
+- UI/UX (20 marks) is not a numbered step yet: the user deferred the design pass; raise it again.
 - **Decided:** testing on Dockerized app and Postgres; hosting later, before the deadline; public sign-up closed.
 - **Still unanswered:** deadline, team size, template rule, explicit confirmation of innovation 5.2.
 
@@ -74,8 +76,10 @@ _Last updated: 2026-11-27_
 - **State:** containers running; migration applied; demo accounts seeded (see `docs/TEST-ACCOUNTS.md`)
 - Sign-in page has Admin / Examiner / Candidate fill buttons when `SHOW_DEMO_LOGINS=true` (set only in
   `docker-compose.dev.yml`). Never enable it with real data.
-- Access check: `python scripts/access-check.py` (192/192 passed after step 8; it creates and removes its own attempt test data)
-- The built-in browser pane stalled on large dev scripts (connection reset); Playwright Chromium worked.
+- Access check: `python scripts/access-check.py` (223/223 passed after step 9; it creates and removes its own attempt test data)
+- Unit tests: `node --test tests/` (grading, totals, statistics)
+- The built-in browser pane once stalled on large dev scripts; it worked in step 9. Use Playwright if it stalls.
+- In Git Bash, very long commands fail on Windows: write large files with the Write tool or in small pieces
 - New migration for schema changes (never wipe data without asking): `prisma/migrations/<n>_name`,
   then `... exec -T app pnpm run db:migrate`
 - **The Docker app doesn't see file changes from Windows.** After editing code:
@@ -142,6 +146,11 @@ _Last updated: 2026-11-27_
     submit). No-back exams are enforced on the server (one question sent at a time,
     `POST /api/attempts/{id}/progress`; migration `2_attempt_progress`). Per-account save rate limit.
     Checked once in Playwright Chromium: autosave, offline retry, reload, submit, narrow-screen width.
+13. **Step 9:** marking queue for written answers (by question or candidate, version check, 0 to maximum,
+    audited), totals re-derived in one place (`services/scoring.ts`), results page (summary, distribution,
+    topics, candidates, history), publication checks and withdrawal with a reason, candidate result page,
+    staff paper view. Migration `3_grading` (`Answer.gradeVersion`). Tried once in the browser pane:
+    mark, publish, candidate view.
 
 Earlier, separate work in the parent folder (not the competition): the `obol` site, `DESIGN-PIPELINE.md`
 and the skills `design-pipeline`, `scroll-video-hero`, `kinetic-details`. The user said to forget Obol.

@@ -8,6 +8,16 @@ export type Scoring = 'ALL_OR_NOTHING' | 'PARTIAL'
 
 export const roundMarks = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100
 
+/**
+ * An attempt's total from the marks of every question. A person's mark replaces the automatic one;
+ * while any question has neither, there is no total yet.
+ */
+export function totalOf(items: Array<{ autoMarks: number | null; manualMarks: number | null }>) {
+  const awarded = items.map((item) => item.manualMarks ?? item.autoMarks)
+  const pending = awarded.filter((marks) => marks === null).length
+  return { pending, score: pending ? null : roundMarks(awarded.reduce<number>((sum, marks) => sum + (marks ?? 0), 0)) }
+}
+
 export function gradeChoice({
   type,
   scoringRule,

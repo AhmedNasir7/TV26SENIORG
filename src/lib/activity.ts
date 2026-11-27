@@ -26,6 +26,9 @@ export type ActivityAction =
   | 'enrollment_added'
   | 'enrollment_removed'
   | 'extra_time_granted'
+  | 'answer_graded'
+  | 'results_published'
+  | 'results_unpublished'
   | 'system_event'
 
 type LogActivityParams = {

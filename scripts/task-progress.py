@@ -6,7 +6,7 @@ When a step is finished, raise FINISHED_STEP below.
 import os
 import re
 
-FINISHED_STEP = 8
+FINISHED_STEP = 9
 
 STEPS = [
     ("Remove template content", ["FND-1"]),
@@ -19,13 +19,16 @@ STEPS = [
     ("Exam screen: autosave, resume, submit", ["WS-1", "WS-2", "WS-3", "WS-4"]),
     ("Grading and results", ["GRD-1", "GRD-2", "GRD-3", "RES-1", "RES-2", "RES-3", "RES-4"]),
     ("Monitoring and announcements", ["MON-1", "MON-2", "MON-3", "MON-4"]),
+    ("Network status, sandbox, scratchpad, preferences", ["NET-1", "SBX-1", "SBX-2", "PAD-1", "PREF-1"]),
+    ("Bulk import and question analytics", ["IMP-1", "IMP-2", "QAN-1"]),
+    ("PDF reports and verification", ["PDF-1", "PDF-2", "VER-1", "VER-2"]),
     ("Innovation: fair randomized papers", ["FAIR-1", "FAIR-2", "FAIR-3"]),
-    ("Network status, preferences, scratchpad", ["NET-1", "PREF-1", "PAD-1"]),
-    ("Sandbox and bulk import", ["SBX-1", "SBX-2", "IMP-1", "IMP-2"]),
-    ("Question analytics, PDF, verification", ["QAN-1", "PDF-1", "PDF-2", "VER-1", "VER-2"]),
     ("Security and reliability pass", ["SEC-1", "SEC-2", "SEC-3", "REL-1", "REL-2", "REL-3"]),
     ("Testing, hosting, submission", ["TST-1", "TST-2", "SHIP-1", "SHIP-2", "SHIP-3", "SHIP-4"]),
 ]
+# What each step is for, in priority order after the foundation
+KIND = {9: "Core", 10: "Core", 11: "Secondary", 12: "Secondary", 13: "Secondary", 14: "Innovation",
+        15: "Core quality", 16: "Submission"}
 STEP_OF = {task: number for number, (_, tasks) in enumerate(STEPS, 1) for task in tasks}
 START, END = "<!-- progress:start -->", "<!-- progress:end -->"
 HEADING = re.compile(r"^### ([A-Z]+-\d+) (.*)$")
@@ -77,7 +80,7 @@ out.append(
     f"**Steps finished: {FINISHED_STEP} of {len(STEPS)}** · required subtasks ticked: {done_count} of {total} · "
     + (f"**next: step {next_step}, {STEPS[next_step - 1][0]}**" if next_step <= len(STEPS) else "**all steps finished**")
 )
-out += ["", "| Step | Work | Tasks | Subtasks | Status |", "|---:|---|---|---:|---|"]
+out += ["", "| Step | Work | Kind | Tasks | Subtasks | Status |", "|---:|---|---|---|---:|---|"]
 for number, (title, ids) in enumerate(STEPS, 1):
     done = sum(len(tasks[i]["done"]) for i in ids)
     size = done + sum(len(tasks[i]["open"]) for i in ids)
@@ -87,7 +90,7 @@ for number, (title, ids) in enumerate(STEPS, 1):
         label = "▶️ Next"
     else:
         label = "🟡 Started early" if done else "⬜ Not started"
-    out.append(f"| {number} | {title} | {', '.join(ids)} | {done}/{size} | {label} |")
+    out.append(f"| {number} | {title} | {KIND.get(number, 'Foundation')} | {', '.join(ids)} | {done}/{size} | {label} |")
 
 carried = [(i, t) for i, t in tasks.items() if STEP_OF[i] <= FINISHED_STEP and t["open"]]
 out += ["", "### Carried over from finished steps", ""]
@@ -96,7 +99,8 @@ early = [(i, t) for i, t in tasks.items() if STEP_OF[i] > FINISHED_STEP and t["d
 if early:
     out += ["", "### Already done ahead of its step", ""]
     out += [f"- **{i}** (step {STEP_OF[i]}): {label}" for i, t in early for label in t["done"]]
-out += ["", "Steps are the working order. Detailed subtasks are below, grouped by feature.", "", END, ""]
+out += ["", "Steps are the working order: core features first, then the simpler secondary features, then the rest.",
+        "★ extras come only after all required work. Detailed subtasks are below, grouped by feature.", "", END, ""]
 
 # the overview goes right after the title and introduction
 anchor = next(i for i, line in enumerate(lines) if line.startswith("## "))

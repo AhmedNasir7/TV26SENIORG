@@ -29,6 +29,9 @@ Y = allowed · own = only the caller's own records · — = refused
 | `GET/POST /api/exams`, `GET/PATCH/DELETE /api/exams/{id}` | — | — | own | Y |
 | `POST /api/exams/{id}/publish`, `.../duplicate` | — | — | own | Y |
 | `GET /api/exams/{id}/candidates`, `GET/POST .../enrollments`, `PATCH/DELETE .../enrollments/{eid}` | — | — | own | Y |
+| `GET /api/exams/{id}/results`, `.../grading`, `PUT .../grading/{qid}`, `GET .../attempts/{aid}` (submitted, real) | — | — | own | Y |
+| `POST /api/exams/{id}/results/publish` (publish or withdraw with a reason) | — | — | own | Y |
+| `GET /api/me/exams/{id}/result` (published only, no answer key) | — | own | — | — |
 | `GET /api/me/exams`, `GET /api/me/exams/{id}` (no questions) | — | own | — | — |
 | `POST /api/me/exams/{id}/attempt` (start or resume) | — | own | — | — |
 | `GET /api/attempts/{id}`, `.../clock`, `PUT .../answers/{qid}`, `POST .../progress`, `POST .../submit` | — | own | — | — |
@@ -47,7 +50,7 @@ Y = allowed · own = only the caller's own records · — = refused
 | `/login` | Y | Y | Y | Y |
 | `/signup` (redirects while closed) | — | — | — | — |
 | `/profile`, `/chat`, `/support`, `/meeting`, `/stripe` | — | Y | Y | Y |
-| `/candidate`, `/candidate/exams/{id}` (enrolled, published) | — | own | — | — |
+| `/candidate`, `/candidate/exams/{id}` (enrolled, published), `.../result` (results published) | — | own | — | — |
 | `/examiner`, `/examiner/questions`, `/examiner/exams/...`, `/admin/support` | — | — | Y | Y |
 | `/admin`, `/admin/users`, `/admin/audit-logs`, `/send-email` | — | — | — | Y |
 

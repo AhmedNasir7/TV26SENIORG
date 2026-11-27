@@ -5,42 +5,38 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 <!-- progress:start -->
 ## Progress
 
-**Steps finished: 8 of 16** · required subtasks ticked: 128 of 246 · **next: step 9, Grading and results**
+**Steps finished: 9 of 16** · required subtasks ticked: 147 of 246 · **next: step 10, Monitoring and announcements**
 
-| Step | Work | Tasks | Subtasks | Status |
-|---:|---|---|---:|---|
-| 1 | Remove template content | FND-1 | 4/4 | ✅ Done |
-| 2 | Project structure and database | FND-2, FND-3, DB-1, DB-2 | 22/22 | ✅ Done |
-| 3 | Sign-in and permissions | AUTH-1, AUTH-2, AUTH-3 | 17/19 | ✅ Done (2 carried over) |
-| 4 | User management and sample data | USR-1, USR-2, DB-3 | 12/12 | ✅ Done |
-| 5 | Question bank | QB-1, QB-2, QB-3 | 13/13 | ✅ Done |
-| 6 | Examinations and enrolment | EXM-1, EXM-2, EXM-3, ENR-1, ENR-2, ENR-3 | 24/25 | ✅ Done (1 carried over) |
-| 7 | Attempt engine and server timing | ATT-1, ATT-2, ATT-3, ATT-4 | 13/13 | ✅ Done |
-| 8 | Exam screen: autosave, resume, submit | WS-1, WS-2, WS-3, WS-4 | 18/18 | ✅ Done |
-| 9 | Grading and results | GRD-1, GRD-2, GRD-3, RES-1, RES-2, RES-3, RES-4 | 4/22 | ▶️ Next |
-| 10 | Monitoring and announcements | MON-1, MON-2, MON-3, MON-4 | 0/13 | ⬜ Not started |
-| 11 | Innovation: fair randomized papers | FAIR-1, FAIR-2, FAIR-3 | 0/10 | ⬜ Not started |
-| 12 | Network status, preferences, scratchpad | NET-1, PREF-1, PAD-1 | 0/12 | ⬜ Not started |
-| 13 | Sandbox and bulk import | SBX-1, SBX-2, IMP-1, IMP-2 | 0/12 | ⬜ Not started |
-| 14 | Question analytics, PDF, verification | QAN-1, PDF-1, PDF-2, VER-1, VER-2 | 0/10 | ⬜ Not started |
-| 15 | Security and reliability pass | SEC-1, SEC-2, SEC-3, REL-1, REL-2, REL-3 | 0/20 | ⬜ Not started |
-| 16 | Testing, hosting, submission | TST-1, TST-2, SHIP-1, SHIP-2, SHIP-3, SHIP-4 | 1/21 | 🟡 Started early |
+| Step | Work | Kind | Tasks | Subtasks | Status |
+|---:|---|---|---|---:|---|
+| 1 | Remove template content | Foundation | FND-1 | 4/4 | ✅ Done |
+| 2 | Project structure and database | Foundation | FND-2, FND-3, DB-1, DB-2 | 22/22 | ✅ Done |
+| 3 | Sign-in and permissions | Foundation | AUTH-1, AUTH-2, AUTH-3 | 18/19 | ✅ Done (1 carried over) |
+| 4 | User management and sample data | Foundation | USR-1, USR-2, DB-3 | 12/12 | ✅ Done |
+| 5 | Question bank | Foundation | QB-1, QB-2, QB-3 | 13/13 | ✅ Done |
+| 6 | Examinations and enrolment | Foundation | EXM-1, EXM-2, EXM-3, ENR-1, ENR-2, ENR-3 | 24/25 | ✅ Done (1 carried over) |
+| 7 | Attempt engine and server timing | Foundation | ATT-1, ATT-2, ATT-3, ATT-4 | 13/13 | ✅ Done |
+| 8 | Exam screen: autosave, resume, submit | Foundation | WS-1, WS-2, WS-3, WS-4 | 18/18 | ✅ Done |
+| 9 | Grading and results | Core | GRD-1, GRD-2, GRD-3, RES-1, RES-2, RES-3, RES-4 | 22/22 | ✅ Done |
+| 10 | Monitoring and announcements | Core | MON-1, MON-2, MON-3, MON-4 | 0/13 | ▶️ Next |
+| 11 | Network status, sandbox, scratchpad, preferences | Secondary | NET-1, SBX-1, SBX-2, PAD-1, PREF-1 | 0/16 | ⬜ Not started |
+| 12 | Bulk import and question analytics | Secondary | IMP-1, IMP-2, QAN-1 | 0/11 | ⬜ Not started |
+| 13 | PDF reports and verification | Secondary | PDF-1, PDF-2, VER-1, VER-2 | 0/7 | ⬜ Not started |
+| 14 | Innovation: fair randomized papers | Innovation | FAIR-1, FAIR-2, FAIR-3 | 0/10 | ⬜ Not started |
+| 15 | Security and reliability pass | Core quality | SEC-1, SEC-2, SEC-3, REL-1, REL-2, REL-3 | 0/20 | ⬜ Not started |
+| 16 | Testing, hosting, submission | Submission | TST-1, TST-2, SHIP-1, SHIP-2, SHIP-3, SHIP-4 | 1/21 | 🟡 Started early |
 
 ### Carried over from finished steps
 
 - **AUTH-3** (step 3): Examiner: monitoring, grading, results (arrive in steps 9 and 10)
-- **AUTH-3** (step 3): Candidate: results (arrives in step 9)
 - **ENR-1** (step 6): Bulk enrol from import results
 
 ### Already done ahead of its step
 
-- **GRD-1** (step 9): Pure function per type and rule; unanswered = 0
-- **GRD-1** (step 9): Grades against the attempt's frozen question versions
-- **GRD-1** (step 9): Exact decimal handling with one rounding rule
-- **GRD-1** (step 9): Re-running gives the same result
 - **TST-1** (step 16): Permission script from AUTH-2
 
-Steps are the working order. Detailed subtasks are below, grouped by feature.
+Steps are the working order: core features first, then the simpler secondary features, then the rest.
+★ extras come only after all required work. Detailed subtasks are below, grouped by feature.
 
 <!-- progress:end -->
 
@@ -181,7 +177,7 @@ Covers: A2
 - [x] Examiner: exams, question bank, candidates
 - [ ] Examiner: monitoring, grading, results (arrive in steps 9 and 10)
 - [x] Candidate: upcoming, available, completed exams
-- [ ] Candidate: results (arrives in step 9)
+- [x] Candidate: results (arrives in step 9)
 
 ---
 
@@ -380,63 +376,63 @@ Covers: M5
 
 ## GRD. Evaluation and grading
 
-### GRD-1 Auto-grading · P0 · M — 🟡 Partly done (step 9)
+### GRD-1 Auto-grading · P0 · M — ✅ Done (step 9)
 Covers: G1, T6
 - [x] Pure function per type and rule; unanswered = 0
 - [x] Grades against the attempt's frozen question versions
 - [x] Exact decimal handling with one rounding rule
 - [x] Re-running gives the same result
-- [ ] Unit tests: all-correct, partial, over-selection, none, invalid option
+- [x] Unit tests: all-correct, partial, over-selection, none, invalid option
 
-### GRD-2 Manual grading · P0 · M — ⬜ Not started (step 9)
+### GRD-2 Manual grading · P0 · M — ✅ Done (step 9)
 Covers: G2, G3
-- [ ] Queue by exam, by question or by candidate; pending count
-- [ ] Marks between 0 and the question's maximum, validated on server; feedback
-- [ ] Concurrent edits detected by version
+- [x] Queue by exam, by question or by candidate; pending count
+- [x] Marks between 0 and the question's maximum, validated on server; feedback
+- [x] Concurrent edits detected by version
 - [ ] ★ Anonymous grading (names hidden until done)
 - [ ] ★ Rubric criteria per written question
 
-### GRD-3 Totals and state · P0 · M — ⬜ Not started (step 9)
+### GRD-3 Totals and state · P0 · M — ✅ Done (step 9)
 Covers: G4, G5, G6
-- [ ] State: `PENDING_MANUAL` → `GRADED` → `PUBLISHED`
-- [ ] Total always derived from answer marks in one transaction
-- [ ] Review table before publishing, flagging ungraded items
-- [ ] Mark changes audited with old and new values
+- [x] State: `PENDING_MANUAL` → `GRADED` → `PUBLISHED`
+- [x] Total always derived from answer marks in one transaction
+- [x] Review table before publishing, flagging ungraded items
+- [x] Mark changes audited with old and new values
 - [ ] ★ Void a faulty question and regrade everyone affected, with reason
 
 ---
 
 ## RES. Results and analytics
 
-### RES-1 Publication · P0 · S — ⬜ Not started (step 9)
+### RES-1 Publication · P0 · S — ✅ Done (step 9)
 Covers: R1, R2
-- [ ] Publish only when the exam is completed, no attempt is still in progress (extra time included) and nothing is pending
-- [ ] Confirm step; audited; candidates notified in app
-- [ ] Correction path: unpublish → fix → republish, with history
-- [ ] **Sec:** candidates get only their own result, only after publication
+- [x] Publish only when the exam is completed, no attempt is still in progress (extra time included) and nothing is pending
+- [x] Confirm step; audited; candidates notified in app
+- [x] Correction path: unpublish → fix → republish, with history
+- [x] **Sec:** candidates get only their own result, only after publication
 
-### RES-2 Candidate result view · P0 · S — ⬜ Not started (step 9)
+### RES-2 Candidate result view · P0 · S — ✅ Done (step 9)
 Covers: R2, R4
-- [ ] Score, maximum, pass or fail, per-question marks and feedback
+- [x] Score, maximum, pass or fail, per-question marks and feedback
 - [ ] ★ Examiner setting for whether correct answers are revealed after the exam closes
 
-### RES-3 Examiner analytics · P0 · M — ⬜ Not started (step 9)
+### RES-3 Examiner analytics · P0 · M — ✅ Done (step 9)
 Covers: R3, R4
-- [ ] Enrolled, attempted, absent, average, median, high, low, pass rate
-- [ ] Score distribution; per-topic performance; candidate score table
-- [ ] Real non-sandbox data only, through one shared query
+- [x] Enrolled, attempted, absent, average, median, high, low, pass rate
+- [x] Score distribution; per-topic performance; candidate score table
+- [x] Real non-sandbox data only, through one shared query
 - [ ] ★ CSV export (escape cells starting `= + - @`)
 
-### RES-4 History · P0 · S — ⬜ Not started (step 9)
+### RES-4 History · P0 · S — ✅ Done (step 9)
 Covers: R5
-- [ ] Past attempts readable by the owner examiner and admin; candidate sees own published
-- [ ] Disabled users' records retained; no hard delete
+- [x] Past attempts readable by the owner examiner and admin; candidate sees own published
+- [x] Disabled users' records retained; no hard delete
 
 ---
 
 ## NET. Network-aware interface
 
-### NET-1 Connectivity and sync status · P1 · M — ⬜ Not started (step 12)
+### NET-1 Connectivity and sync status · P1 · M — ⬜ Not started (step 11)
 Covers: S1a, S1b, S1c, T11
 - [ ] Combine browser online events with heartbeat success and latency
 - [ ] States: online, unstable, offline, reconnecting
@@ -446,24 +442,24 @@ Covers: S1a, S1b, S1c, T11
 
 ## PDF. Reports
 
-### PDF-1 Generation · P1 · M — ⬜ Not started (step 14)
+### PDF-1 Generation · P1 · M — ⬜ Not started (step 13)
 Covers: S2a, S2b
 - [ ] Candidate result report and exam summary report, built on the server
 - [ ] Real data; page numbers, long text wrapping, non-Latin characters checked
 - [ ] ★ Bulk download for an exam
 
-### PDF-2 Access control · P1 · S — ⬜ Not started (step 14)
+### PDF-2 Access control · P1 · S — ⬜ Not started (step 13)
 Covers: S2c, T3
 - [ ] **Sec:** candidate: own published report; examiner: own exams; no public or guessable file URLs
 
 ## SBX. Examination sandbox
 
-### SBX-1 Preview as candidate · P1 · M — ⬜ Not started (step 13)
+### SBX-1 Preview as candidate · P1 · M — ⬜ Not started (step 11)
 Covers: S3a
 - [ ] Same workspace and engine with `isSandbox`; works for drafts; ignores schedule
 - [ ] Persistent "sandbox" marker; restart and discard; ★ shortened timer to demonstrate expiry
 
-### SBX-2 Isolation · P1 · S — ⬜ Not started (step 13)
+### SBX-2 Isolation · P1 · S — ⬜ Not started (step 11)
 Covers: S3b
 - [ ] Excluded from results, analytics, question stats, monitoring, reports, enrolment status
 - [ ] **Sec:** exam owner only; cannot be converted into a real attempt
@@ -471,7 +467,7 @@ Covers: S3b
 
 ## IMP. Bulk import
 
-### IMP-1 Candidate import · P1 · M — ⬜ Not started (step 13)
+### IMP-1 Candidate import · P1 · M — ⬜ Not started (step 12)
 Covers: S4a, S4c, S4d
 - [ ] CSV and JSON; downloadable templates
 - [ ] Preview with row and field errors; duplicates in file and database
@@ -479,7 +475,7 @@ Covers: S4a, S4c, S4d
 - [ ] Temporary passwords in a one-time download; optional enrol into an exam
 - [ ] **Sec:** role forced to candidate; existing accounts never overwritten; file size and row limits
 
-### IMP-2 Question import · P1 · M — ⬜ Not started (step 13)
+### IMP-2 Question import · P1 · M — ⬜ Not started (step 12)
 Covers: S4b, S4c, S4d
 - [ ] All three types, topics, difficulty, marks, correct answers
 - [ ] Same validation as manual entry; preview; downloadable error report
@@ -487,7 +483,7 @@ Covers: S4b, S4c, S4d
 
 ## QAN. Question analytics
 
-### QAN-1 Per-question insight · P1 · M — ⬜ Not started (step 14)
+### QAN-1 Per-question insight · P1 · M — ⬜ Not started (step 12)
 Covers: S5
 - [ ] Attempts, skip rate, correct rate (observed difficulty), average marks
 - [ ] Option selection counts to expose common wrong answers
@@ -496,11 +492,11 @@ Covers: S5
 
 ## VER. Verifiable reports
 
-### VER-1 Issue · P1 · S — ⬜ Not started (step 14)
+### VER-1 Issue · P1 · S — ⬜ Not started (step 13)
 Covers: S6a
 - [ ] Random unguessable code and signed hash of the result data, printed with a QR code
 
-### VER-2 Public verification page · P1 · S — ⬜ Not started (step 14)
+### VER-2 Public verification page · P1 · S — ⬜ Not started (step 13)
 Covers: S6a, S6b, T3
 - [ ] Enter or scan code: valid, superseded, revoked or unknown
 - [ ] Reports older than a mark correction show "superseded"
@@ -508,7 +504,7 @@ Covers: S6a, S6b, T3
 
 ## PREF. Workspace customization
 
-### PREF-1 Preferences · P1 · M — ⬜ Not started (step 12)
+### PREF-1 Preferences · P1 · M — ⬜ Not started (step 11)
 Covers: S7a, S7b, U3
 - [ ] Question navigator position or hidden; one question or list view
 - [ ] Text size, line spacing, high contrast, timer compact or full
@@ -517,7 +513,7 @@ Covers: S7a, S7b, U3
 
 ## PAD. Digital scratchpad
 
-### PAD-1 Rough work · P1 · M — ⬜ Not started (step 12)
+### PAD-1 Rough work · P1 · M — ⬜ Not started (step 11)
 Covers: S8
 - [ ] Text notes and a drawing area, openable beside the question
 - [ ] Saved per attempt, survives refresh; clearly "not graded"
@@ -528,12 +524,12 @@ Covers: S8
 
 ## FAIR. Innovation 5.2: fair randomized papers · P2
 
-### FAIR-1 Exam blueprint · M — ⬜ Not started (step 11)
+### FAIR-1 Exam blueprint · M — ⬜ Not started (step 14)
 Covers: N2
 - [ ] Rules per topic × difficulty: count and marks
 - [ ] Feasibility check with clear shortfall messages
 
-### FAIR-2 Balanced generator · L — ⬜ Not started (step 11)
+### FAIR-2 Balanced generator · L — ⬜ Not started (step 14)
 Covers: N1, Q9
 - [ ] Difficulty score per question: declared level, blended with observed correct rate when enough data
 - [ ] Select per cell so every paper has equal marks and a total difficulty within a tolerance
@@ -541,7 +537,7 @@ Covers: N1, Q9
 - [ ] Plugs into ATT-1; paper frozen as usual
 - [ ] Unit tests: constraints always met
 
-### FAIR-3 Evidence and explanation · M — ⬜ Not started (step 11)
+### FAIR-3 Evidence and explanation · M — ⬜ Not started (step 14)
 Covers: N3, N4
 - [ ] Simulate e.g. 200 papers: plain random against balanced (spread, min, max, overlap)
 - [ ] Per-candidate paper difficulty after the exam, against score

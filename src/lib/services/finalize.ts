@@ -4,9 +4,10 @@
  */
 import { createHash } from 'node:crypto'
 import type { Prisma } from '@/generated/prisma/client'
-import { gradeChoice, roundMarks, type QuestionOption } from '@/lib/grading'
+import { gradeChoice, type QuestionOption } from '@/lib/grading'
 import { prisma } from '@/lib/prisma'
 import { serverNow } from '@/lib/server/time'
+import { recomputeTotal } from '@/lib/services/scoring'
 
 /** Allowance for a request that left the browser in time but arrived just after the deadline. */
 export const GRACE_MS = 5000
@@ -42,9 +43,6 @@ async function grade(tx: Prisma.TransactionClient, attemptId: number, now: Date)
     },
   })
 
-  let score = 0
-  let needsExaminer = false
-
   for (const item of attempt.questions) {
     const { type } = item.questionVersion.question
     const response = item.answer?.response as { optionIds?: string[]; text?: string } | null | undefined
@@ -52,8 +50,7 @@ async function grade(tx: Prisma.TransactionClient, attemptId: number, now: Date)
 
     if (type === 'WRITTEN') {
       // A blank written answer scores zero by itself; anything written needs a person
-      if (response?.text?.trim()) needsExaminer = true
-      else autoMarks = 0
+      if (!response?.text?.trim()) autoMarks = 0
     } else {
       autoMarks = gradeChoice({
         type,
@@ -63,8 +60,6 @@ async function grade(tx: Prisma.TransactionClient, attemptId: number, now: Date)
         marks: Number(item.marks),
       })
     }
-    score += autoMarks ?? 0
-
     await tx.answer.upsert({
       where: { attemptQuestionId: item.id },
       create: { attemptQuestionId: item.id, autoMarks },
@@ -78,11 +73,10 @@ async function grade(tx: Prisma.TransactionClient, attemptId: number, now: Date)
     where: { id: attemptId },
     data: {
       submittedAt: new Date(Math.min(now.getTime(), attempt.deadlineAt.getTime())),
-      gradingState: needsExaminer ? 'PENDING_MANUAL' : 'GRADED',
-      score: needsExaminer ? null : roundMarks(score),
       submissionHash: createHash('sha256').update(JSON.stringify([attemptId, receipt])).digest('hex'),
     },
   })
+  await recomputeTotal(tx, attemptId)
 }
 
 /**

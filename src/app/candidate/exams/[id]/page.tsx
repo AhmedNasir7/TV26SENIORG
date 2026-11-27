@@ -38,6 +38,9 @@ export default async function CandidateExamPage({ params }: { params: Promise<{ 
           {exam.access.reason}
           {exam.access.state === 'upcoming' && <> · opens in <Countdown key={serverNow} target={exam.startsAt} serverNow={serverNow} /></>}
         </p>
+        {exam.resultAvailable && (
+          <Link href={`/candidate/exams/${exam.id}/result`} className="btn-primary mt-3 inline-flex px-4 py-2 text-sm">View result</Link>
+        )}
         {exam.access.canEnter && (
           <StartAttemptButton examId={exam.id} running={exam.access.state === 'in_progress'} />
         )}

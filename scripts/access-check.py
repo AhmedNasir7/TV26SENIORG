@@ -404,6 +404,55 @@ def run_attempt_checks():
     status, _, body = call(one, "GET", f"/candidate/exams/{eid}/attempt")
     check("attempt page renders", status == 200 and "NEXT_REDIRECT" not in body, status)
 
+    # marking, publication and results
+    base = f"/api/exams/{eid}"
+    queue = json.loads(call(examiner, "GET", base + "/grading")[2])
+    check("one written answer waits for a mark", queue["pendingTotal"] == 1 and queue["answers"][0]["attemptId"] == aid, queue["pendingTotal"])
+    item = queue["answers"][0]
+    def mark(who, marks, version=0):
+        return call(who, "PUT", f"{base}/grading/{item['id']}", {"marks": marks, "feedback": "ZZ feedback", "expectedVersion": version})
+    check("candidate cannot see or change marking", call(one, "GET", base + "/grading")[0] == 403 and mark(one, 3)[0] == 403)
+    check("another examiner cannot mark", mark(other, 1)[0] == 404 and call(other, "GET", base + "/results")[0] == 404)
+    check("marks above the maximum rejected", mark(examiner, 3.5)[0] == 400)
+    check("negative marks rejected", mark(examiner, -1)[0] == 400)
+    publish = lambda who, body: call(who, "POST", base + "/results/publish", body)[0]
+    check("publishing blocked before marking and closing", publish(examiner, {"published": True}) == 409)
+    marked = json.loads(mark(examiner, 1.5)[2])
+    check("mark saved and total derived", marked["score"] == 3.5 and marked["gradingState"] == "GRADED", marked)
+    check("outdated mark refused", mark(examiner, 3, 0)[0] == 409)
+    check("a correction needs the new version", json.loads(mark(examiner, 2, 1)[2])["score"] == 4)
+    audited = db(f"""select count(*) from "ActivityLog" where action='answer_graded' and "entityId"={aid} and metadata like '%"from":1.5,"to":2%'""")
+    check("mark change audited with old and new", audited == "1", audited)
+    result_url = f"/api/me/exams/{eid}/result"
+    check("result hidden before publication", call(one, "GET", result_url)[0] == 404)
+    check("publishing blocked while the exam is open", publish(examiner, {"published": True}) == 409)
+    sql(f"""UPDATE "Exam" SET "startsAt"=now() at time zone 'utc' - interval '3 hour', "endsAt"=now() at time zone 'utc' - interval '1 min' WHERE id={eid}""")
+    check("candidate cannot publish", publish(one, {"published": True}) == 403)
+    check("results publish once everything is ready", publish(examiner, {"published": True}) == 200)
+    check("publishing again is harmless", publish(examiner, {"published": True}) == 200)
+    status, _, raw = call(one, "GET", result_url)
+    own = json.loads(raw)["result"]
+    check("candidate sees own score and feedback", status == 200 and own["score"] == 4 and "ZZ feedback" in raw, raw[:200])
+    check("candidate result has no answer key or notes", '"correct":true' not in raw and "SECRET-GUIDANCE" not in raw)
+    check("each candidate gets only their own", json.loads(call(two, "GET", result_url)[2])["result"]["attemptId"] == bid)
+    check("someone who never sat it gets nothing", call(outsider, "GET", result_url)[0] == 404)
+    check("candidate cannot open staff results or papers", call(one, "GET", base + "/results")[0] == 403 and call(one, "GET", f"{base}/attempts/{bid}")[0] == 403)
+    check("marks locked while published", mark(examiner, 3, 2)[0] == 409)
+    summary = json.loads(call(examiner, "GET", base + "/results")[2])
+    figures = summary["summary"]
+    check("summary comes from the real attempts", (figures["attempted"], figures["average"], figures["highest"], figures["lowest"]) == (2, 2, 4, 0), figures)
+    check("owner reads a past paper with the key", '"correct":true' in call(examiner, "GET", f"{base}/attempts/{aid}")[2])
+    for who, path in [(examiner, f"/examiner/exams/{eid}/results"), (examiner, f"/examiner/exams/{eid}/grading?show=all"),
+                      (examiner, f"/examiner/exams/{eid}/attempts/{aid}"), (one, f"/candidate/exams/{eid}/result")]:
+        status, _, body = call(who, "GET", path)
+        check(f"page {path} renders", status == 200 and "ZZ attempt check" in body, status)
+    check("withdrawing needs a reason", publish(examiner, {"published": False}) == 400)
+    check("results can be withdrawn", publish(examiner, {"published": False, "reason": "ZZ correction needed"}) == 200)
+    check("withdrawn result is hidden again", call(one, "GET", result_url)[0] == 404)
+    history = json.loads(call(examiner, "GET", base + "/results")[2])["history"]
+    check("publication history is kept", any("ZZ correction needed" in h["what"] for h in history) and any(h["what"] == "Published results" for h in history))
+    sql(f"""DELETE FROM "Notification" WHERE "entityType"='exam' AND "entityId"={eid}""")
+
     # exam screen rules: no going back, and the clock reports a takeover
     strict = json.loads(call(examiner, "POST", "/api/exams", {**plan, "title": "ZZ attempt check one way", "allowBackNavigation": False, "shuffleQuestions": False})[2])["exam"]["id"]
     call(examiner, "PUT", f"/api/exams/{strict}/questions", {"items": [{"questionId": q1, "marks": 2}, {"questionId": q2, "marks": 3}]})

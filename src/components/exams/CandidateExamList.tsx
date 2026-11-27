@@ -26,9 +26,14 @@ export function CandidateExamList({ title, exams, serverNow, empty }: { title: s
                 )}
               </p>
             </div>
-            <Link href={`/candidate/exams/${exam.id}`} className={`px-4 py-2 text-sm ${exam.access.canEnter ? 'btn-primary' : 'btn-secondary'}`}>
-              {exam.access.canEnter ? 'Open' : 'Details'}
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              {exam.resultAvailable && (
+                <Link href={`/candidate/exams/${exam.id}/result`} className="btn-primary px-4 py-2 text-sm">View result</Link>
+              )}
+              <Link href={`/candidate/exams/${exam.id}`} className={`px-4 py-2 text-sm ${exam.access.canEnter ? 'btn-primary' : 'btn-secondary'}`}>
+                {exam.access.canEnter ? 'Open' : 'Details'}
+              </Link>
+            </div>
           </li>
         ))}
       </ul>

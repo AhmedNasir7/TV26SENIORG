@@ -48,6 +48,7 @@ const EXAM_FIELDS = {
   totalMarks: true,
   passMarks: true,
   allowBackNavigation: true,
+  resultsPublishedAt: true,
   _count: { select: { questions: true } },
 } as const
 
@@ -75,7 +76,7 @@ async function loadEnrollments(candidateId: number, examId?: number) {
 type Row = Awaited<ReturnType<typeof loadEnrollments>>[number]
 
 function present({ extraMinutes, exam }: Row, now: Date) {
-  const { attempts, _count, ...details } = exam
+  const { attempts, _count, resultsPublishedAt, ...details } = exam
   const access = candidateAccess(exam, extraMinutes, attempts[0] ?? null, now)
   return {
     ...details,
@@ -85,6 +86,8 @@ function present({ extraMinutes, exam }: Row, now: Date) {
     passMarks: exam.passMarks === null ? null : Number(exam.passMarks),
     questionCount: _count.questions,
     extraMinutes,
+    // Only a candidate who submitted has a result to open
+    resultAvailable: resultsPublishedAt !== null && attempts[0]?.status === 'SUBMITTED',
     access: { ...access, closesAt: access.closesAt.toISOString() },
   }
 }

@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --test tests/",
     "postinstall": "pnpm dlx update-browserslist-db@latest",
     "seed:admin": "tsx scripts/seed-admin.ts",
     "seed:roles": "tsx scripts/seed-roles.ts",

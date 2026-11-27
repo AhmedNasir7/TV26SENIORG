@@ -145,6 +145,7 @@ export async function setExtraTime(actor: Actor, examId: number, enrollmentId: n
   return prisma.$transaction(
     async (tx) => {
       const exam = await ownedExam(tx, actor, examId)
+      if (exam.resultsPublishedAt) throw new ApiError('CONFLICT', 'Results are published for this examination')
       const { enrollment, attempt } = await findEnrollment(tx, examId, enrollmentId)
       if (attempt && attempt.status !== 'IN_PROGRESS') {
         throw new ApiError('CONFLICT', 'This candidate has already submitted')
