@@ -12,14 +12,15 @@ _Last updated: 2026-11-27_
 - **RULE: no Claude co-author line in commits or pull requests.**
 - **Phase:** building. **Steps 1–11 done: all core features and 5 of 8 secondary features.** Everything through step 9 was **pushed** to `origin/main` on
   2026-11-27 at the user's request. Later commits stay local until the user asks again.
-- **Deployment (2026-11-27):** CI/CD on push to `main`: build and test, images to Docker Hub
-  (`<user>/secureexam`), then `deploy/deploy.sh` on EC2 `32.194.175.137` (user `ec2-user`, key outside the repo).
-  Settings live only in the server's `~/secureexam/.env` (copied from the local `.env` at the user's request,
-  without reading it; `POSTGRES_PASSWORD` generated on the server). Guide: `docs/DEPLOY.md`.
-  **Pushes to `main` now deploy to production.** Stop pushing before the competition deadline.
-- `TURNSTILE_SECRET_KEY` is empty in the server `.env`, so the bot check is off in production.
+- **Live since 2026-11-27: https://seniorgrade.site** (Cloudflare, nginx and Certbot on EC2 `32.194.175.137`,
+  user `ec2-user`, key outside the repo). CI/CD on push to `main`: build and test, images to Docker Hub
+  (`<user>/secureexam`), `deploy/deploy.sh` on the server. First full run passed and was verified through the
+  domain. Settings live only in the server's `~/secureexam/.env`. Guide: `docs/DEPLOY.md`.
+  **Every push to `main` deploys to production.** Push nothing after the competition deadline.
+- Production has one administrator (from the server `.env`) and **no demo data yet**. `TURNSTILE_SECRET_KEY` is
+  empty there, so the bot check is off.
 - Local C: drive filled during image builds. npm/pnpm caches cleared, page file moved to P: (needs restart);
-  Docker's disk is still on C: (user was moving it).
+  Docker's disk is still on C:.
 - **Next build step:** 12 = IMP-1, IMP-2, QAN-1. The user said "for now it is enough" about added complexity:
   **no new features unless asked**; keep the flow easy to follow.
 - **Navigation rules (user, 2026-11-27):** nothing removed, buttons clearly visible, breadcrumbs on nested pages,
@@ -73,6 +74,12 @@ _Last updated: 2026-11-27_
   Push when the user asks.
 
 ## 5. Environment and commands
+
+**Run locally (user's choice, 2026-11-27): app on Windows, only the database in Docker.**
+`pnpm dev:local` or `node scripts/dev-local.mjs` (preview name `app-local` in the workspace
+`.claude/launch.json`). It starts the `postgres` container, overrides the `.env` database address with the local
+one and turns on the demo buttons. Edits show at once; no container rebuild. The `app` container stays stopped.
+The container-based notes below apply only if that container is used.
 
 - Windows 11, PowerShell and Git Bash, Node 25, Docker Desktop
 - Install: `npx -y pnpm@10.32.1 install --ignore-scripts` (global pnpm 12 can't load the pinned version; the
