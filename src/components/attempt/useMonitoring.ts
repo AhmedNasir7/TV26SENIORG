@@ -91,7 +91,9 @@ export function useMonitoring(attemptId: number, sessionId: string, settings: Mo
       schedule(SEND_DELAY)
     }
     function inserted(target: EventTarget | null, text: string) {
-      if (paste && target instanceof HTMLTextAreaElement && text.length) report({ type: 'PASTE', characters: text.length })
+      // Rough work is private: pasting into the scratchpad is not an answer
+      const answerBox = target instanceof HTMLTextAreaElement && !target.closest('[data-scratchpad]')
+      if (paste && answerBox && text.length) report({ type: 'PASTE', characters: text.length })
     }
     const onPaste = (event: ClipboardEvent) => inserted(event.target, event.clipboardData?.getData('text') ?? '')
     const onDrop = (event: DragEvent) => inserted(event.target, event.dataTransfer?.getData('text') ?? '')

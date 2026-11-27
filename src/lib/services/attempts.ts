@@ -2,25 +2,24 @@
  * Starting, resuming, saving and submitting. The server clock decides everything; times sent by
  * the browser are never used. Every entry point checks that the attempt belongs to the caller.
  */
-import { randomInt, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import { Prisma } from '@/generated/prisma/client'
 import { readSettings } from '@/lib/monitoring'
-import { ensureFound, type Actor } from '@/lib/policies'
+import { canManageExam, ensureFound, type Actor } from '@/lib/policies'
 import { prisma } from '@/lib/prisma'
 import { ApiError } from '@/lib/server/api'
 import { rateLimit } from '@/lib/server/rate-limit'
 import { serverNow } from '@/lib/server/time'
-import { seededRandom, shuffled } from '@/lib/shuffle'
 import { attemptDeadline, candidateAccess } from '@/lib/services/access'
 import { announcementsFor } from '@/lib/services/announcements'
 import { audit } from '@/lib/services/audit'
 import { finalizeAttempt, finalizeExpired, GRACE_MS, isPastDeadline } from '@/lib/services/finalize'
 import { noteContact, recordIncident } from '@/lib/services/incidents'
 import { candidateQuestion, toOptionIds } from '@/lib/services/paper'
+import { buildPaper, PAPER_QUESTIONS } from '@/lib/services/paper-build'
+import { getPreferences } from '@/lib/services/preferences'
 import type { SaveAnswerInput } from '@/lib/validation/attempts'
-import type { QuestionOption } from '@/lib/grading'
 
-const DIFFICULTY_SCORE = { EASY: 1, MEDIUM: 2, HARD: 3 } as const
 const MAX_WRITTEN = 20_000
 
 // ---------- starting ----------
@@ -30,14 +29,7 @@ async function createAttempt(candidateId: number, examId: number) {
     const enrollment = await tx.enrollment.findFirst({
       where: { examId, candidateId, exam: { status: 'PUBLISHED' } },
       include: {
-        exam: {
-          include: {
-            questions: {
-              orderBy: { position: 'asc' },
-              include: { questionVersion: { include: { question: { select: { difficulty: true } } } } },
-            },
-          },
-        },
+        exam: { include: { questions: PAPER_QUESTIONS } },
       },
     })
     if (!enrollment) throw new ApiError('NOT_FOUND', 'Not found')
@@ -47,21 +39,6 @@ async function createAttempt(candidateId: number, examId: number) {
     const access = candidateAccess(exam, extraMinutes, null, now)
     if (!access.canEnter) throw new ApiError('CONFLICT', access.reason)
 
-    // The paper is fixed here: versions, order, option order and marks never change afterwards
-    const seed = randomInt(1, 2_147_483_647)
-    const next = seededRandom(seed)
-    const items = exam.shuffleQuestions ? shuffled(exam.questions, next) : exam.questions
-    const questions = items.map((item, index) => {
-      const ids = (item.questionVersion.options as unknown as QuestionOption[]).map((o) => o.id)
-      return {
-        questionVersionId: item.questionVersionId,
-        position: index + 1,
-        marks: item.marks,
-        optionOrder: exam.shuffleOptions ? shuffled(ids, next) : ids,
-        difficultyScore: DIFFICULTY_SCORE[item.questionVersion.question.difficulty],
-      }
-    })
-
     const attempt = await tx.attempt.create({
       data: {
         examId,
@@ -70,11 +47,7 @@ async function createAttempt(candidateId: number, examId: number) {
         startedAt: now,
         lastSeenAt: now,
         deadlineAt: attemptDeadline(now, exam, extraMinutes),
-        seed,
-        activeSessionId: randomUUID(),
-        maxScore: exam.totalMarks,
-        paperDifficulty: questions.reduce((sum, q) => sum + q.difficultyScore, 0) / (questions.length || 1),
-        questions: { create: questions },
+        ...buildPaper(exam),
       },
       select: { id: true, activeSessionId: true },
     })
@@ -125,16 +98,29 @@ export async function openAttempt(actor: Actor, examId: number, start: boolean, 
 
 // ---------- reading ----------
 
+/** A candidate's own real attempt, or a staff member's own sandbox of an examination they manage. */
 async function ownAttempt(actor: Actor, attemptId: number) {
   const attempt = await prisma.attempt.findUnique({
     where: { id: attemptId },
-    select: { id: true, examId: true, candidateId: true, isSandbox: true, status: true, deadlineAt: true, activeSessionId: true },
+    select: {
+      id: true,
+      examId: true,
+      candidateId: true,
+      isSandbox: true,
+      status: true,
+      deadlineAt: true,
+      activeSessionId: true,
+      exam: { select: { ownerId: true } },
+    },
   })
-  return ensureFound(attempt, (a) => a.candidateId === actor.id && !a.isSandbox)
+  return ensureFound(
+    attempt,
+    (a) => a.candidateId === actor.id && (a.isSandbox ? canManageExam(actor, a.exam) : actor.role === 'CANDIDATE')
+  )
 }
 
 /** Finalizes first if time is up, so a caller never sees an expired attempt as running. */
-async function currentAttempt(actor: Actor, attemptId: number) {
+export async function currentAttempt(actor: Actor, attemptId: number) {
   const attempt = await ownAttempt(actor, attemptId)
   if (attempt.status === 'IN_PROGRESS' && isPastDeadline(attempt.deadlineAt)) {
     await finalizeAttempt(attemptId, 'TIME_EXPIRED')
@@ -176,6 +162,8 @@ export async function viewAttempt(actor: Actor, attemptId: number) {
   const { monitoring, ...exam } = attempt.exam
   return {
     id: attempt.id,
+    isSandbox: current.isSandbox,
+    preferences: await getPreferences(actor.id),
     status: attempt.status,
     submitReason: attempt.submitReason,
     submittedAt: attempt.submittedAt?.toISOString() ?? null,

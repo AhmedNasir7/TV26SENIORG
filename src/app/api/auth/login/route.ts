@@ -4,8 +4,10 @@ import { setAuthCookie } from '@/lib/auth'
 import { signInWithPassword } from '@/lib/services/signin'
 import { parseBody, route } from '@/lib/server/api'
 import { loginSchema } from '@/lib/validation/auth'
+import { verifyHuman } from '@/lib/server/turnstile'
 
 export const POST = route(async (request: Request) => {
+  await verifyHuman(request, 'login')
   const { email, password } = await parseBody(request, loginSchema, 4096)
   const user = await signInWithPassword(email, password)
   await setAuthCookie(user)

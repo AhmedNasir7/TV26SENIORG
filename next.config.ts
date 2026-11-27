@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   output: process.platform === 'win32' ? undefined : 'standalone',
   poweredByHeader: false,
 
+  // The development badge sat on top of the sidebar's Profile button
+  devIndicators: false,
+
   // Skip linting and type checking during builds
   // eslint: {
   //   ignoreDuringBuilds: true,

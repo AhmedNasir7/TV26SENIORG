@@ -11,64 +11,80 @@ type Clock = {
   activeSession?: boolean
   announcements?: Announcement[]
 }
+
+type Handlers = {
+  onTimeUp: () => void
+  onTakenOver: () => void
+  onAnnouncements: (announcements: Announcement[]) => void
+  /** Reports every check-in, so the screen can describe the connection */
+  onCheckIn: (ok: boolean, latencyMs: number) => void
+}
+
 const RESYNC_MS = 15_000
+const RETRY_MS = 5000
+const TIMEOUT_MS = 8000
 
 /**
  * Time left according to the server, counted with the browser's monotonic timer (the device
- * clock is never read). Re-synchronised regularly, on focus and when the network returns.
- * The same check tells the server this screen is still connected, brings new announcements and
- * reports when another browser has taken the attempt over.
+ * clock is never read). Re-synchronised regularly, on focus and when the network returns, and
+ * more often while check-ins are failing. The same check tells the server this screen is still
+ * connected, brings new announcements and reports when another browser has taken the attempt over.
  */
-export function useDeadline(
-  attemptId: number,
-  sessionId: string,
-  initial: Clock,
-  onTimeUp: () => void,
-  onTakenOver: () => void,
-  onAnnouncements: (announcements: Announcement[]) => void
-) {
-  const [remaining, setRemaining] = useState(() => Date.parse(initial.deadlineAt) - Date.parse(initial.serverNow))
-  const sync = useRef({ left: Date.parse(initial.deadlineAt) - Date.parse(initial.serverNow), at: 0 })
-  const handlers = useRef({ onTimeUp, onTakenOver, onAnnouncements })
+export function useDeadline(attemptId: number, sessionId: string, initial: Clock, handlers: Handlers) {
+  const initialLeft = Date.parse(initial.deadlineAt) - Date.parse(initial.serverNow)
+  const [remaining, setRemaining] = useState(initialLeft)
+  const sync = useRef({ left: initialLeft, at: 0 })
+  const latest = useRef(handlers)
+  const next = useRef(0)
 
   useEffect(() => {
-    handlers.current = { onTimeUp, onTakenOver, onAnnouncements }
-  }, [onTimeUp, onTakenOver, onAnnouncements])
+    latest.current = handlers
+  })
 
   const resync = useCallback(async () => {
+    const started = performance.now()
+    next.current = started + RESYNC_MS
     try {
-      const clock = await apiRequest<Clock>(`/api/attempts/${attemptId}/clock?session=${encodeURIComponent(sessionId)}`)
+      const clock = await apiRequest<Clock>(
+        `/api/attempts/${attemptId}/clock?session=${encodeURIComponent(sessionId)}`,
+        'GET',
+        undefined,
+        { signal: AbortSignal.timeout(TIMEOUT_MS) }
+      )
       sync.current = { left: Date.parse(clock.deadlineAt) - Date.parse(clock.serverNow), at: performance.now() }
-      if (clock.announcements) handlers.current.onAnnouncements(clock.announcements)
-      if (clock.status !== 'IN_PROGRESS') handlers.current.onTimeUp()
-      else if (clock.activeSession === false) handlers.current.onTakenOver()
+      latest.current.onCheckIn(true, performance.now() - started)
+      if (clock.announcements) latest.current.onAnnouncements(clock.announcements)
+      if (clock.status !== 'IN_PROGRESS') latest.current.onTimeUp()
+      else if (clock.activeSession === false) latest.current.onTakenOver()
     } catch {
-      // Offline: keep counting from the last good reading
+      // Keep counting from the last good reading, and try again soon
+      next.current = performance.now() + RETRY_MS
+      latest.current.onCheckIn(false, performance.now() - started)
     }
   }, [attemptId, sessionId])
 
   useEffect(() => {
     sync.current.at = performance.now()
+    next.current = performance.now() + RESYNC_MS
     let fired = false
     const tick = setInterval(() => {
       const left = sync.current.left - (performance.now() - sync.current.at)
       setRemaining(Math.max(0, left))
       if (left <= 0 && !fired) {
         fired = true
-        handlers.current.onTimeUp()
+        latest.current.onTimeUp()
       }
       if (left > 0) fired = false // extra time was granted
+      if (performance.now() >= next.current) void resync()
     }, 500)
-    const periodic = setInterval(resync, RESYNC_MS)
     window.addEventListener('focus', resync)
     window.addEventListener('online', resync)
     return () => {
       clearInterval(tick)
-      clearInterval(periodic)
       window.removeEventListener('focus', resync)
       window.removeEventListener('online', resync)
     }
   }, [resync])
 
-  return remaining
+  return { remaining, resync }
 }

@@ -5,7 +5,7 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 <!-- progress:start -->
 ## Progress
 
-**Steps finished: 10 of 16** · required subtasks ticked: 162 of 247 · **next: step 11, Network status, sandbox, scratchpad, preferences**
+**Steps finished: 11 of 16** · required subtasks ticked: 179 of 248 · **next: step 12, Bulk import and question analytics**
 
 | Step | Work | Kind | Tasks | Subtasks | Status |
 |---:|---|---|---|---:|---|
@@ -19,11 +19,11 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 | 8 | Exam screen: autosave, resume, submit | Foundation | WS-1, WS-2, WS-3, WS-4 | 18/18 | ✅ Done |
 | 9 | Grading and results | Core | GRD-1, GRD-2, GRD-3, RES-1, RES-2, RES-3, RES-4 | 22/22 | ✅ Done |
 | 10 | Monitoring and announcements | Core | MON-1, MON-2, MON-3, MON-4 | 14/14 | ✅ Done |
-| 11 | Network status, sandbox, scratchpad, preferences | Secondary | NET-1, SBX-1, SBX-2, PAD-1, PREF-1 | 0/16 | ▶️ Next |
-| 12 | Bulk import and question analytics | Secondary | IMP-1, IMP-2, QAN-1 | 0/11 | ⬜ Not started |
+| 11 | Network status, sandbox, scratchpad, preferences | Secondary | NET-1, SBX-1, SBX-2, PAD-1, PREF-1 | 16/16 | ✅ Done |
+| 12 | Bulk import and question analytics | Secondary | IMP-1, IMP-2, QAN-1 | 0/11 | ▶️ Next |
 | 13 | PDF reports and verification | Secondary | PDF-1, PDF-2, VER-1, VER-2 | 0/7 | ⬜ Not started |
 | 14 | Innovation: fair randomized papers | Innovation | FAIR-1, FAIR-2, FAIR-3 | 0/10 | ⬜ Not started |
-| 15 | Security and reliability pass | Core quality | SEC-1, SEC-2, SEC-3, REL-1, REL-2, REL-3 | 0/20 | ⬜ Not started |
+| 15 | Security and reliability pass | Core quality | SEC-1, SEC-2, SEC-3, REL-1, REL-2, REL-3 | 1/21 | 🟡 Started early |
 | 16 | Testing, hosting, submission | Submission | TST-1, TST-2, SHIP-1, SHIP-2, SHIP-3, SHIP-4 | 1/21 | 🟡 Started early |
 
 ### Carried over from finished steps
@@ -32,6 +32,7 @@ Requirement IDs (A1, Q10, T4 …) refer to [REQUIREMENTS.md](REQUIREMENTS.md). T
 
 ### Already done ahead of its step
 
+- **SEC-1** (step 15): ★ Bot check (Cloudflare Turnstile) on sign-in, sign-up, password, support and email forms; off until the secret is set
 - **TST-1** (step 16): Permission script from AUTH-2
 
 Steps are the working order: core features first, then the simpler secondary features, then the rest.
@@ -432,13 +433,13 @@ Covers: R5
 
 ## NET. Network-aware interface
 
-### NET-1 Connectivity and sync status · P1 · M — ⬜ Not started (step 11)
+### NET-1 Connectivity and sync status · P1 · M — ✅ Done (step 11)
 Covers: S1a, S1b, S1c, T11
-- [ ] Combine browser online events with heartbeat success and latency
-- [ ] States: online, unstable, offline, reconnecting
-- [ ] Count of unsaved answers; "retry now"; warning before leaving with unsaved work
-- [ ] State what happens: timer continues, answers send when reconnected if still in time
-- [ ] Block submit while offline, with explanation
+- [x] Combine browser online events with heartbeat success and latency
+- [x] States: online, unstable, offline, reconnecting
+- [x] Count of unsaved answers; "retry now"; warning before leaving with unsaved work
+- [x] State what happens: timer continues, answers send when reconnected if still in time
+- [x] Block submit while offline, with explanation
 
 ## PDF. Reports
 
@@ -454,15 +455,15 @@ Covers: S2c, T3
 
 ## SBX. Examination sandbox
 
-### SBX-1 Preview as candidate · P1 · M — ⬜ Not started (step 11)
+### SBX-1 Preview as candidate · P1 · M — ✅ Done (step 11)
 Covers: S3a
-- [ ] Same workspace and engine with `isSandbox`; works for drafts; ignores schedule
-- [ ] Persistent "sandbox" marker; restart and discard; ★ shortened timer to demonstrate expiry
+- [x] Same workspace and engine with `isSandbox`; works for drafts; ignores schedule
+- [x] Persistent "sandbox" marker; restart and discard; ★ shortened timer to demonstrate expiry
 
-### SBX-2 Isolation · P1 · S — ⬜ Not started (step 11)
+### SBX-2 Isolation · P1 · S — ✅ Done (step 11)
 Covers: S3b
-- [ ] Excluded from results, analytics, question stats, monitoring, reports, enrolment status
-- [ ] **Sec:** exam owner only; cannot be converted into a real attempt
+- [x] Excluded from results, analytics, question stats, monitoring, reports, enrolment status
+- [x] **Sec:** exam owner only; cannot be converted into a real attempt
 - **Done when:** statistics are identical before and after a sandbox run.
 
 ## IMP. Bulk import
@@ -504,21 +505,21 @@ Covers: S6a, S6b, T3
 
 ## PREF. Workspace customization
 
-### PREF-1 Preferences · P1 · M — ⬜ Not started (step 11)
+### PREF-1 Preferences · P1 · M — ✅ Done (step 11)
 Covers: S7a, S7b, U3
-- [ ] Question navigator position or hidden; one question or list view
-- [ ] Text size, line spacing, high contrast, timer compact or full
-- [ ] Saved per user on the server, restored on any device; reset to default
-- [ ] **Sec:** validated against an allowed list
+- [x] Question navigator position or hidden; one question or list view
+- [x] Text size, line spacing, high contrast, timer compact or full
+- [x] Saved per user on the server, restored on any device; reset to default
+- [x] **Sec:** validated against an allowed list
 
 ## PAD. Digital scratchpad
 
-### PAD-1 Rough work · P1 · M — ⬜ Not started (step 11)
+### PAD-1 Rough work · P1 · M — ✅ Done (step 11)
 Covers: S8
-- [ ] Text notes and a drawing area, openable beside the question
-- [ ] Saved per attempt, survives refresh; clearly "not graded"
+- [x] Text notes and a drawing area, openable beside the question
+- [x] Saved per attempt, survives refresh; clearly "not graded"
 - [ ] ★ Basic calculator
-- [ ] **Sec:** private to the candidate; capped size; never affects the save of real answers
+- [x] **Sec:** private to the candidate; capped size; never affects the save of real answers
 
 ---
 
@@ -552,13 +553,14 @@ Covers: N3, N4
 
 ## SEC. Security hardening (applies everywhere)
 
-### SEC-1 Input and request safety · P0 · M — ⬜ Not started (step 15)
+### SEC-1 Input and request safety · P0 · M — 🟡 Partly done (step 15)
 Covers: T1, T8, T9
 - [ ] Schema validation for every body, query and path parameter; reject unknown fields
 - [ ] Size limits; pagination caps
 - [ ] Origin check on state-changing requests (CSRF)
 - [ ] ORM queries only; no raw string SQL; no raw HTML rendering
 - [ ] Rate limits on sign-in, save, events, verification, import
+- [x] ★ Bot check (Cloudflare Turnstile) on sign-in, sign-up, password, support and email forms; off until the secret is set
 
 ### SEC-2 Data protection · P0 · M — ⬜ Not started (step 15)
 Covers: T2, T3

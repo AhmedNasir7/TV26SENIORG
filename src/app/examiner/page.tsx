@@ -68,6 +68,7 @@ export default async function ExaminerHomePage({ searchParams }: Props) {
             <div className="flex gap-2">
               <Link href={`/examiner/exams/${exam.id}/questions`} className="btn-secondary px-3 py-1.5 text-sm">Questions</Link>
               <Link href={`/examiner/exams/${exam.id}/candidates`} className="btn-secondary px-3 py-1.5 text-sm">Candidates</Link>
+              <Link href={`/examiner/exams/${exam.id}`} className="btn-primary px-3 py-1.5 text-sm">Manage</Link>
             </div>
           </li>
         ))}

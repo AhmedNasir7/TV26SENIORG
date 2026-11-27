@@ -5,6 +5,7 @@ import { isSignupOpen } from '@/lib/config'
 import { prisma } from '@/lib/prisma'
 import { ApiError, parseBody, route } from '@/lib/server/api'
 import { signupSchema } from '@/lib/validation/auth'
+import { verifyHuman } from '@/lib/server/turnstile'
 
 /**
  * Public sign-up is closed unless ALLOW_PUBLIC_SIGNUP=true. Even when open it only ever creates
@@ -15,6 +16,7 @@ export const POST = route(async (request: Request) => {
     throw new ApiError('FORBIDDEN', 'Sign-up is closed. Ask your administrator for an account.')
   }
 
+  await verifyHuman(request, 'signup')
   const { email, password, name } = await parseBody(request, signupSchema, 4096)
   // The unique email constraint turns a duplicate into a 409 in route()
   const user = await prisma.user.create({

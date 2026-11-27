@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useTurnstile } from '@/components/security/useTurnstile'
 
 export function SendEmailForm() {
   const router = useRouter()
@@ -11,6 +12,7 @@ export function SendEmailForm() {
   const [html, setHtml] = useState('')
   const [to, setTo] = useState('')
   const [sending, setSending] = useState(false)
+  const human = useTurnstile('email')
   const [result, setResult] = useState<{ error?: string; data?: { id?: string } } | null>(null)
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export function SendEmailForm() {
     try {
       const response = await fetch('/api/email/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...human.headers },
         body: JSON.stringify({ subject, html, to: to || user.email }),
       })
       const data = await response.json()
@@ -43,6 +45,7 @@ export function SendEmailForm() {
     } catch {
       setResult({ error: 'Failed to send email' })
     } finally {
+      human.reset()
       setSending(false)
     }
   }
@@ -100,9 +103,11 @@ export function SendEmailForm() {
           />
         </div>
 
+        {human.widget}
+
         <button
           type="submit"
-          disabled={sending}
+          disabled={sending || !human.ready}
           className="btn-primary w-full px-4 py-2.5 text-sm disabled:opacity-60"
         >
           {sending ? 'Sending...' : 'Send Email'}

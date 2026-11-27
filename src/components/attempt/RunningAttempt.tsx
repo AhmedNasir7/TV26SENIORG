@@ -4,15 +4,19 @@ import { useCallback, useEffect, useState } from 'react'
 import { apiRequest } from '@/lib/client/request'
 import { recordedList } from '@/lib/monitoring'
 import { AnnouncementList } from './AnnouncementList'
+import { DisplaySettings, usePreferences } from './DisplaySettings'
 import { FullscreenPrompt } from './FullscreenPrompt'
-import { QuestionGrid, type GridItem } from './QuestionGrid'
-import { QuestionView } from './QuestionView'
+import { NetworkNotice } from './NetworkNotice'
+import { QuestionArea } from './QuestionArea'
+import type { GridItem } from './QuestionGrid'
 import { RecordedNotice } from './RecordedNotice'
 import { ReviewPanel } from './ReviewPanel'
+import { Scratchpad } from './Scratchpad'
 import { readPosition, writePosition } from './storage'
 import { TimerBar } from './TimerBar'
 import type { Attempt } from './types'
 import { isAnswered, useAnswers } from './useAnswers'
+import { useConnection } from './useConnection'
 import { useDeadline } from './useDeadline'
 import { useMonitoring } from './useMonitoring'
 
@@ -30,6 +34,10 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [announcements, setAnnouncements] = useState(attempt.announcements)
+  const [padOpen, setPadOpen] = useState(false)
+  const display = usePreferences(attempt.preferences)
+  const { preferences } = display
+  const connection = useConnection(save.kind === 'retrying')
 
   const submit = useCallback(
     async (timeUp: boolean) => {
@@ -50,22 +58,32 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
   )
 
   const onTimeUp = useCallback(() => void submit(true), [submit])
-  const onTakenOver = useCallback(() => setTakenOver(true), [])
-  const remaining = useDeadline(attempt.id, sessionId, attempt, onTimeUp, onTakenOver, setAnnouncements)
-  useMonitoring(attempt.id, sessionId, attempt.monitoring, !takenOver && remaining > 0)
+  const { remaining, resync } = useDeadline(attempt.id, sessionId, attempt, {
+    onTimeUp,
+    onTakenOver: () => setTakenOver(true),
+    onAnnouncements: setAnnouncements,
+    onCheckIn: connection.onCheckIn,
+  })
+  // Trial runs record nothing about the examiner's screen
+  useMonitoring(attempt.id, sessionId, attempt.monitoring, !attempt.isSandbox && !takenOver && remaining > 0)
   const readOnly = takenOver || busy || remaining <= 0 || save.kind === 'blocked'
+  const listView = preferences.view === 'list' && backAllowed
 
   const go = useCallback(
     async (target: number) => {
       if (target < 1 || target > total) return
-      if (target === position) return setReviewing(false) // chosen from the review list
       setReviewing(false)
+      // In the list view "going to" a question means scrolling to it
+      const reveal = () => {
+        if (listView) setTimeout(() => document.getElementById(`question-${target}`)?.scrollIntoView({ block: 'start' }), 0)
+      }
+      if (target === position) return reveal() // chosen from the review list
       setError('')
       if (backAllowed) {
         void flush()
         setChosen(target)
         writePosition(attempt.id, target)
-        return
+        return reveal()
       }
       if (target !== position + 1) return
       // The current answer must reach the server before leaving the question for good
@@ -77,7 +95,7 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
         setError(err instanceof Error ? err.message : 'Could not move on')
       }
     },
-    [attempt.id, backAllowed, flush, onChange, position, sessionId, total]
+    [attempt.id, backAllowed, flush, listView, onChange, position, sessionId, total]
   )
 
   const question = attempt.questions.find((q) => q.position === position)
@@ -104,8 +122,17 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
   }))
 
   return (
-    <div className="space-y-4">
-      <TimerBar title={attempt.exam.title} remaining={remaining} save={save} />
+    <div className="exam-prefs space-y-4" data-text={preferences.textSize} data-spacing={preferences.spacing} data-contrast={preferences.contrast}>
+      <TimerBar title={attempt.exam.title} remaining={remaining} save={save} connection={connection.state} compact={preferences.timer === 'compact'} />
+
+      <NetworkNotice
+        state={connection.state}
+        unsaved={'unsaved' in save ? save.unsaved : 0}
+        onRetry={() => {
+          void flush()
+          void resync()
+        }}
+      />
 
       {takenOver && (
         <div role="alert" className="surface-card p-4 text-sm">
@@ -116,39 +143,54 @@ export function RunningAttempt({ attempt, sessionId, onChange, onTakeBack }: Pro
 
       <AnnouncementList announcements={announcements} />
 
-      {attempt.monitoring.fullscreen && !takenOver && <FullscreenPrompt />}
+      {!attempt.isSandbox && attempt.monitoring.fullscreen && !takenOver && <FullscreenPrompt />}
 
-      {attempt.exam.instructions && (
+      {/* Tools sit together so they are easy to find and stay out of the way of the question */}
+      <div aria-label="Examination tools" role="group" className="flex flex-wrap items-start gap-2 [&>details[open]]:w-full">
+        <button type="button" aria-expanded={padOpen} onClick={() => setPadOpen((open) => !open)} className="btn-secondary px-4 py-2 text-sm">
+          {padOpen ? 'Hide scratchpad' : 'Open scratchpad'}
+        </button>
+        <DisplaySettings {...display} listAllowed={backAllowed} />
+        {attempt.exam.instructions && (
+          <details className="surface-card p-4 text-sm">
+            <summary className="cursor-pointer font-medium">Instructions</summary>
+            <p className="mt-2 whitespace-pre-wrap">{attempt.exam.instructions}</p>
+          </details>
+        )}
         <details className="surface-card p-4 text-sm">
-          <summary className="cursor-pointer font-medium">Instructions</summary>
-          <p className="mt-2 whitespace-pre-wrap">{attempt.exam.instructions}</p>
+          <summary className="cursor-pointer font-medium">What is recorded during this examination</summary>
+          <div className="mt-2"><RecordedNotice recorded={recordedList(attempt.monitoring)} /></div>
         </details>
-      )}
+      </div>
 
-      <details className="surface-card p-4 text-sm">
-        <summary className="cursor-pointer font-medium">What is recorded during this examination</summary>
-        <div className="mt-2"><RecordedNotice recorded={recordedList(attempt.monitoring)} /></div>
-      </details>
-
-      {reviewing ? (
-        <ReviewPanel items={items} busy={busy} onSelect={go} onCancel={() => setReviewing(false)} onSubmit={() => submit(false)} />
-      ) : (
-        <>
-          <QuestionGrid items={items} current={position} onSelect={go} />
-          {question && (
-            <QuestionView key={question.id} question={question} draft={drafts[question.id]} readOnly={readOnly} onChange={(patch) => change(question.id, patch)} />
+      <div className={padOpen ? 'grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]' : ''}>
+        <div className="min-w-0">
+          {reviewing ? (
+            <ReviewPanel
+              items={items}
+              busy={busy}
+              blocked={connection.state === 'offline' ? 'You are offline. You can submit when the connection returns; your answers are kept.' : undefined}
+              onSelect={go}
+              onCancel={() => setReviewing(false)}
+              onSubmit={() => submit(false)}
+            />
+          ) : (
+            <QuestionArea
+              attempt={attempt}
+              items={items}
+              position={position}
+              drafts={drafts}
+              readOnly={readOnly}
+              submitDisabled={takenOver || busy}
+              preferences={preferences}
+              onGo={go}
+              onChange={change}
+              onReview={() => setReviewing(true)}
+            />
           )}
-          <div className="flex flex-wrap justify-between gap-3">
-            <div className="flex gap-2">
-              <button type="button" disabled={!backAllowed || position === 1} onClick={() => go(position - 1)} className="btn-secondary px-4 py-2 text-sm disabled:opacity-40">Previous</button>
-              <button type="button" disabled={position === total} onClick={() => go(position + 1)} className="btn-secondary px-4 py-2 text-sm disabled:opacity-40">Next</button>
-            </div>
-            <button type="button" disabled={takenOver || busy} onClick={() => setReviewing(true)} className="btn-primary px-5 py-2 text-sm disabled:opacity-50">Review and submit</button>
-          </div>
-          {!backAllowed && <p className="text-sm text-[color:var(--muted)]">You cannot return to a question after moving on.</p>}
-          <p className="text-xs text-[color:var(--muted)]">Shortcuts: Alt + → next, Alt + ← previous, Alt + M mark for review.</p>
-        </>
-      )}
+        </div>
+        {padOpen && <Scratchpad attemptId={attempt.id} sessionId={sessionId} readOnly={takenOver || remaining <= 0} onClose={() => setPadOpen(false)} />}
+      </div>
 
       {error && <p role="alert" className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
       {remaining <= 0 && error && (

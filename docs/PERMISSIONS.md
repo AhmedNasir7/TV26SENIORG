@@ -36,6 +36,10 @@ Y = allowed · own = only the caller's own records · — = refused
 | `GET/PUT /api/exams/{id}/monitoring` (recording choices locked after the first start) | — | — | own | Y |
 | `GET/POST /api/exams/{id}/announcements` | — | — | own | Y |
 | `POST /api/attempts/{id}/events` (browser kinds only, active session, 30 a minute) | — | own | — | — |
+| `POST/DELETE /api/exams/{id}/sandbox`, `POST .../sandbox/open` (own trial only) | — | — | own | Y |
+| `GET/PUT /api/me/preferences` | — | own | own | own |
+| `GET/PUT /api/attempts/{id}/scratchpad` (only the person sitting it) | — | own | own trial | own trial |
+| `GET /api/security/turnstile` (public site key only) | Y | Y | Y | Y |
 | `GET /api/me/exams`, `GET /api/me/exams/{id}` (no questions) | — | own | — | — |
 | `POST /api/me/exams/{id}/attempt` (start or resume) | — | own | — | — |
 | `GET /api/attempts/{id}`, `.../clock`, `PUT .../answers/{qid}`, `POST .../progress`, `POST .../submit` | — | own | — | — |
@@ -75,3 +79,6 @@ Examination features must pass these. Missing and forbidden records both answer 
   account (180 a minute, held in memory on one server)
 - Video room codes are issued with the host role to any signed-in user
 - Google refresh tokens are stored unencrypted
+
+Staff can use the attempt routes only for their own sandbox attempt of an examination they manage; a
+candidate's real attempt answers 404 to everyone but that candidate.

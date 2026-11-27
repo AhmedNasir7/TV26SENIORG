@@ -19,7 +19,7 @@ export default async function ExamReviewPage({ params }: { params: Promise<{ id:
     <div className="space-y-6 p-8">
       <PageHeader status={<StatusPill phase={exam.phase} />} title={exam.title} description="Review the examination before candidates see it." />
 
-      <section className="surface-card space-y-4 p-5 text-sm">
+      <section id="publish" className="surface-card scroll-mt-24 space-y-4 p-5 text-sm">
         <dl className="facts">
           <div><dt>Opens</dt><dd><LocalTime iso={exam.startsAt} /></dd></div>
           <div><dt>Closes</dt><dd><LocalTime iso={exam.endsAt} /></dd></div>
@@ -34,6 +34,7 @@ export default async function ExamReviewPage({ params }: { params: Promise<{ id:
         <div className="flex flex-wrap gap-2">
           <Link href={`/examiner/exams/${exam.id}/questions`} className="btn-secondary px-3 py-1.5">{exam.questions} questions</Link>
           <Link href={`/examiner/exams/${exam.id}/candidates`} className="btn-secondary px-3 py-1.5">{exam.enrolled} candidates</Link>
+          {exam.questions > 0 && <Link href={`/examiner/exams/${exam.id}/sandbox`} className="btn-secondary px-3 py-1.5">Try in sandbox</Link>}
           <Link href={`/examiner/exams/${exam.id}/monitor`} className="btn-secondary px-3 py-1.5">{isDraft ? 'Monitoring settings' : 'Monitor'}</Link>
           {!isDraft && <Link href={`/examiner/exams/${exam.id}/results`} className="btn-secondary px-3 py-1.5">Marking and results</Link>}
         </div>

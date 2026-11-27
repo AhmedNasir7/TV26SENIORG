@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { ArrowLeft, ScrollText } from 'lucide-react'
 import { StatusPill } from '@/components/ui/StatusPill'
 import type { ExamPhase } from '@/lib/server/time'
+import { Breadcrumbs } from '@/components/layout/Breadcrumbs'
+import { CandidateSteps } from '@/components/exams/CandidateSteps'
 import { Countdown } from '@/components/exams/Countdown'
 import { AnnouncementList } from '@/components/attempt/AnnouncementList'
 import { RecordedNotice } from '@/components/attempt/RecordedNotice'
@@ -27,6 +29,10 @@ export default async function CandidateExamPage({ params }: { params: Promise<{ 
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back to your examinations
         </Link>
+        <div className="mt-4 space-y-3">
+          <Breadcrumbs items={[{ label: 'Your examinations', href: '/candidate' }, { label: exam.title }]} />
+          <CandidateSteps current={exam.resultAvailable ? 3 : exam.access.state === 'submitted' ? 2 : exam.access.state === 'in_progress' ? 1 : 0} />
+        </div>
         <div className="page-enter mt-4">
           {PHASE_FOR[exam.access.state] && <StatusPill phase={PHASE_FOR[exam.access.state]} />}
           <h1 className="font-display mt-3 text-[28px] font-semibold leading-[34px] tracking-[-0.02em]">{exam.title}</h1>
@@ -60,7 +66,7 @@ export default async function CandidateExamPage({ params }: { params: Promise<{ 
         {announcements.length > 0 && (
           <div className="mt-4"><AnnouncementList announcements={announcements} /></div>
         )}
-        <section className={`${exam.access.canEnter ? 'glow-card' : 'surface-card'} mt-4 p-5`}>
+        <section className={`${exam.access.canEnter || exam.resultAvailable ? 'glow-card sticky bottom-3 z-10' : 'surface-card'} mt-4 p-5 max-lg:pr-20`}>
           <p role="status" className="text-sm font-medium">
             {exam.access.reason}
             {exam.access.state === 'upcoming' && <> · opens in <Countdown key={serverNow} target={exam.startsAt} serverNow={serverNow} /></>}

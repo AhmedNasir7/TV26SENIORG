@@ -6,6 +6,7 @@ import { logActivity, notifyUser } from '@/lib/activity'
 import { hashPassword, setAuthCookie } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { ApiError, parseBody, route } from '@/lib/server/api'
+import { verifyHuman } from '@/lib/server/turnstile'
 
 const FIREBASE_PROJECT_ID = "technoverse26sg"
 const FIREBASE_ISSUER = `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`
@@ -37,6 +38,7 @@ async function verifyFirebaseIdToken(idToken: string): Promise<FirebaseIdTokenPa
 
 /** Google sign-in for accounts that already exist. It never creates one. */
 export const POST = route(async (request: Request) => {
+  await verifyHuman(request, 'login')
   const { idToken } = await parseBody(request, bodySchema, 8192)
   const payload = await verifyFirebaseIdToken(idToken)
 

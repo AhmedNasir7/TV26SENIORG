@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin'
 import { getMailer } from '@/lib/server/email'
+import { humanCheckResponse } from '@/lib/server/turnstile'
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +19,9 @@ export async function POST(request: NextRequest) {
     if (!mailer) {
       return NextResponse.json({ error: 'Email is not configured' }, { status: 503 })
     }
+
+    const refused = await humanCheckResponse(request, 'email')
+    if (refused) return refused
 
     const body = await request.json()
     const { subject, html, to } = body

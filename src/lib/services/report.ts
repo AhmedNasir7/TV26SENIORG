@@ -72,6 +72,15 @@ export async function staffReport(actor: Actor, examId: number, attemptId: numbe
   return buildReport(attemptId, true)
 }
 
+/** The marked paper of the staff member's own finished sandbox attempt. */
+export async function sandboxReport(actor: Actor, examId: number) {
+  const attempt = await prisma.attempt.findFirst({
+    where: { examId, candidateId: actor.id, isSandbox: true, status: 'SUBMITTED' },
+    select: { id: true, exam: { select: { ownerId: true } } },
+  })
+  return buildReport(ensureFound(attempt, (a) => canManageExam(actor, a.exam)).id, true)
+}
+
 /** The caller's own result. Unpublished, absent and someone else's all look the same: not found. */
 export async function candidateResult(actor: Actor, examId: number) {
   const attempt = await prisma.attempt.findFirst({

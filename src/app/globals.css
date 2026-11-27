@@ -957,3 +957,20 @@
     --accent-strong: #1d4fb0;
   }
 }
+
+/* ---------- candidate display preferences (examination screen only) ----------
+   Unlayered, so these win over utility classes on the same element. */
+.exam-prefs[data-text="large"] :is(p, h2, li, label, textarea, select, summary) { font-size: 1.125rem; line-height: 1.65; }
+.exam-prefs[data-text="xlarge"] :is(p, h2, li, label, textarea, select, summary) { font-size: 1.35rem; line-height: 1.6; }
+.exam-prefs[data-spacing="relaxed"] :is(p, h2, li, label, textarea) { line-height: 2; letter-spacing: 0.015em; }
+.exam-prefs[data-contrast="high"] {
+  --muted: var(--foreground);
+  --border: var(--foreground);
+  --border-strong: var(--foreground);
+}
+.exam-prefs[data-contrast="high"] .surface-card { border-width: 2px; border-style: solid; border-color: var(--foreground); }
+
+/* Buttons must look like buttons: quiet and destructive ones keep a visible edge */
+button.btn-ghost { border: 1px solid var(--border-strong); }
+.btn-danger { border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent); }
+

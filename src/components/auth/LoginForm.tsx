@@ -7,6 +7,7 @@ import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth'
 
 import type { DemoLogin } from '@/lib/demo-logins'
 import { auth } from '@/lib/firebase/client'
+import { useTurnstile } from '@/components/security/useTurnstile'
 
 export function LoginForm({ allowSignup, demoAccounts }: { allowSignup: boolean; demoAccounts: DemoLogin[] }) {
   const router = useRouter()
@@ -15,6 +16,7 @@ export function LoginForm({ allowSignup, demoAccounts }: { allowSignup: boolean;
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
+  const human = useTurnstile('login')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,10 +25,11 @@ export function LoginForm({ allowSignup, demoAccounts }: { allowSignup: boolean;
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...human.headers },
         body: JSON.stringify({ email, password }),
       })
       const data = await response.json()
+      human.reset()
       if (!response.ok) {
         setError(data.error?.message || 'Login failed')
         setLoading(false)
@@ -53,11 +56,12 @@ export function LoginForm({ allowSignup, demoAccounts }: { allowSignup: boolean;
 
       const response = await fetch('/api/auth/google', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...human.headers },
         body: JSON.stringify({ idToken }),
       })
 
       const data = await response.json().catch(() => ({}))
+      human.reset()
       if (!response.ok) {
         setError(data.error?.message || 'Google sign-in failed')
         setGoogleLoading(false)
@@ -123,7 +127,7 @@ export function LoginForm({ allowSignup, demoAccounts }: { allowSignup: boolean;
         <button
           type="button"
           onClick={handleGoogleSignIn}
-          disabled={loading || googleLoading}
+          disabled={loading || googleLoading || !human.ready}
           className="btn-secondary w-full px-4 py-2.5 text-sm disabled:opacity-60"
         >
           {googleLoading ? (
@@ -177,9 +181,11 @@ export function LoginForm({ allowSignup, demoAccounts }: { allowSignup: boolean;
           />
         </div>
 
+        {human.widget}
+
         <button
           type="submit"
-          disabled={loading || googleLoading}
+          disabled={loading || googleLoading || !human.ready}
           className="btn-primary w-full px-4 py-2.5 text-sm disabled:opacity-60"
         >
           {loading ? 'Signing in...' : 'Sign in'}

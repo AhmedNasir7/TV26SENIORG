@@ -43,9 +43,9 @@ export async function recordIncident(attemptId: number, type: IncidentType, meas
   try {
     const attempt = await prisma.attempt.findUnique({
       where: { id: attemptId },
-      select: { exam: { select: { monitoring: true } } },
+      select: { isSandbox: true, exam: { select: { monitoring: true } } },
     })
-    if (!attempt || !readSettings(attempt.exam.monitoring)[INDICATORS[type].setting]) return false
+    if (!attempt || attempt.isSandbox || !readSettings(attempt.exam.monitoring)[INDICATORS[type].setting]) return false
 
     for (let tries = 1; ; tries += 1) {
       try {

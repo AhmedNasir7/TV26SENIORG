@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { logActivity } from '@/lib/activity'
 import { notifyStaff } from '@/lib/support'
+import { humanCheckResponse } from '@/lib/server/turnstile'
 
 export async function GET() {
   try {
@@ -29,6 +30,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const refused = await humanCheckResponse(request, 'support')
+    if (refused) return refused
 
     const body = await request.json()
     const { subject, message } = body

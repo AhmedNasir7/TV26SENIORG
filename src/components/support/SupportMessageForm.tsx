@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import { toast } from '@/components/ui/ToasterProvider'
 import { VoiceRecorder } from './VoiceRecorder'
+import { useTurnstile } from '@/components/security/useTurnstile'
 
 export function SupportMessageForm({ onSubmitted }: { onSubmitted: () => void }) {
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const human = useTurnstile('support')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -15,7 +17,7 @@ export function SupportMessageForm({ onSubmitted }: { onSubmitted: () => void })
     try {
       const res = await fetch('/api/support', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...human.headers },
         body: JSON.stringify({ subject, message }),
       })
       const data = await res.json()
@@ -28,6 +30,7 @@ export function SupportMessageForm({ onSubmitted }: { onSubmitted: () => void })
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to submit message')
     } finally {
+      human.reset()
       setSubmitting(false)
     }
   }
@@ -64,7 +67,8 @@ export function SupportMessageForm({ onSubmitted }: { onSubmitted: () => void })
           Voice notes are transcribed automatically — review the text before sending.
         </p>
       </div>
-      <button type="submit" disabled={submitting} className="btn-primary px-5 py-2.5 text-sm disabled:opacity-60">
+      {human.widget}
+      <button type="submit" disabled={submitting || !human.ready} className="btn-primary px-5 py-2.5 text-sm disabled:opacity-60">
         {submitting ? 'Sending...' : 'Send message'}
       </button>
     </form>

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useTurnstile } from '@/components/security/useTurnstile'
 
 export function SignupForm() {
   const router = useRouter()
@@ -11,6 +12,7 @@ export function SignupForm() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const human = useTurnstile('signup')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,10 +21,11 @@ export function SignupForm() {
     try {
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...human.headers },
         body: JSON.stringify({ name: name || undefined, email, password }),
       })
       const data = await response.json()
+      human.reset()
       if (!response.ok) {
         setError(data.error?.fields ? Object.values(data.error.fields).join('. ') : data.error?.message || 'Signup failed')
         setLoading(false)
@@ -99,9 +102,11 @@ export function SignupForm() {
           <p className="mt-1 text-xs text-[color:var(--muted)]">Minimum length: 8 characters</p>
         </div>
 
+        {human.widget}
+
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !human.ready}
           className="btn-primary w-full px-4 py-2.5 text-sm disabled:opacity-60"
         >
           {loading ? 'Creating account...' : 'Create account'}

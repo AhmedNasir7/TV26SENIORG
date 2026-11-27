@@ -32,7 +32,7 @@ def client():
 
 def call(c, method, path, body=None, headers=None):
     data = json.dumps(body).encode() if body is not None else None
-    req = urllib.request.Request(BASE + path, data=data, method=method, headers={"Content-Type": "application/json", **(headers or {})})
+    req = urllib.request.Request(BASE + path, data=data, method=method, headers={"Content-Type": "application/json", "x-turnstile-token": "XXXX.DUMMY.TOKEN.XXXX", **(headers or {})})
     try:
         r = c[0].open(req, timeout=120)
         return r.status, r.headers.get("location"), r.read().decode("utf8", "replace")
@@ -453,6 +453,47 @@ def run_attempt_checks():
     check("publication history is kept", any("ZZ correction needed" in h["what"] for h in history) and any(h["what"] == "Published results" for h in history))
     sql(f"""DELETE FROM "Notification" WHERE "entityType"='exam' AND "entityId"={eid}""")
 
+    # sandbox: the owner sits their own examination and nothing real changes
+    def figures():
+        results = json.loads(call(examiner, "GET", base + "/results")[2])
+        queue = json.loads(call(examiner, "GET", base + "/grading?show=all")[2])
+        totals = json.loads(call(examiner, "GET", base + "/monitor")[2])["totals"]
+        return json.dumps([results["summary"], results["distribution"], results["topics"], len(results["attempts"]), queue["total"], totals], sort_keys=True)
+    before = figures()
+    trial = lambda who, method, path="", body=None: call(who, method, base + "/sandbox" + path, body)
+    check("candidate cannot open a sandbox", trial(one, "POST", "", {})[0] == 403)
+    check("another examiner cannot open it", trial(other, "POST", "", {})[0] == 404)
+    check("owner starts a trial", trial(examiner, "POST", "", {"minutes": 5})[0] == 201)
+    run = json.loads(trial(examiner, "POST", "/open", {})[2])
+    xid, xsid, paper = run["attempt"]["id"], run["sessionId"], run["attempt"]["questions"]
+    check("trial uses the exam engine", run["attempt"]["isSandbox"] is True and len(paper) == 2)
+    written_q = next(q for q in paper if q["type"] == "WRITTEN")
+    saved = call(examiner, "PUT", f"/api/attempts/{xid}/answers/{written_q['id']}", {"sessionId": xsid, "revision": 1, "markedForReview": False, "response": {"text": "trial"}})
+    check("trial answers save", saved[0] == 200, saved[2][:120])
+    check("candidate cannot reach the trial", call(one, "GET", f"/api/attempts/{xid}")[0] == 404)
+    check("another examiner cannot reach it", call(other, "GET", f"/api/attempts/{xid}")[0] == 404)
+    check("staff still cannot touch a real attempt", call(examiner, "GET", f"/api/attempts/{aid}")[0] == 404)
+    check("no events are recorded for a trial", call(examiner, "POST", f"/api/attempts/{xid}/events", {"sessionId": xsid, "events": [{"type": "PASTE"}]})[0] == 403)
+    check("trial submits", call(examiner, "POST", f"/api/attempts/{xid}/submit", {"sessionId": xsid})[0] == 200)
+    check("statistics identical after a trial", figures() == before)
+    check("a trial has no real-attempt slot", db(f'select count(*) from "Attempt" where id={xid} and "isSandbox" and "realSlot" is null') == "1")
+    status, _, body = call(examiner, "GET", f"/examiner/exams/{eid}/sandbox")
+    check("sandbox page shows the marked paper", status == 200 and "Start a fresh trial" in body and "Examination steps" in body, status)
+    check("trial can be discarded", trial(examiner, "DELETE")[0] == 200)
+    copied = json.loads(call(examiner, "POST", base + "/duplicate")[2])["exam"]["id"]
+    call(examiner, "POST", f"/api/exams/{copied}/sandbox", {})
+    check("a draft with a trial can still be deleted", call(examiner, "DELETE", f"/api/exams/{copied}")[0] == 200)
+
+    # display preferences
+    chosen_view = {"navigator": "side", "view": "list", "textSize": "large", "spacing": "relaxed", "contrast": "high", "timer": "compact"}
+    check("preferences saved to the account", call(one, "PUT", "/api/me/preferences", chosen_view)[0] == 200
+          and json.loads(call(one, "GET", "/api/me/preferences")[2])["preferences"] == chosen_view)
+    check("preferences are per person", json.loads(call(two, "GET", "/api/me/preferences")[2])["preferences"]["textSize"] == "normal")
+    check("unlisted preference values rejected", call(one, "PUT", "/api/me/preferences", {**chosen_view, "textSize": "huge"})[0] == 400
+          and call(one, "PUT", "/api/me/preferences", {**chosen_view, "css": "x"})[0] == 400)
+    check("anonymous has no preferences", call(client(), "GET", "/api/me/preferences")[0] == 401)
+    call(one, "PUT", "/api/me/preferences", {"navigator": "top", "view": "one", "textSize": "normal", "spacing": "normal", "contrast": "normal", "timer": "full"})
+
     # exam screen rules: no going back, and the clock reports a takeover
     strict = json.loads(call(examiner, "POST", "/api/exams", {**plan, "title": "ZZ attempt check one way", "allowBackNavigation": False, "shuffleQuestions": False})[2])["exam"]["id"]
     call(examiner, "PUT", f"/api/exams/{strict}/questions", {"items": [{"questionId": q1, "marks": 2}, {"questionId": q2, "marks": 3}]})
@@ -489,6 +530,19 @@ def run_attempt_checks():
     clock = lambda s: json.loads(call(one, "GET", f"/api/attempts/{wid}/clock?session={s}")[2])
     check("clock recognises the active session", clock(sid)["activeSession"] is True)
     check("clock reports a takeover", clock("an-older-session")["activeSession"] is False)
+    # scratchpad: private rough work
+    pad_url = f"/api/attempts/{wid}/scratchpad"
+    note = {"sessionId": sid, "notes": "ZZ rough work", "drawing": [[[1, 2], [30, 40]]]}
+    check("scratchpad saves and restores", call(one, "PUT", pad_url, note)[0] == 200 and "ZZ rough work" in call(one, "GET", pad_url)[2])
+    check("scratchpad is private", call(examiner, "GET", pad_url)[0] == 404 and call(two, "GET", pad_url)[0] == 404)
+    check("another person cannot write it", call(two, "PUT", pad_url, note)[0] == 404)
+    check("old session cannot overwrite it", call(one, "PUT", pad_url, {**note, "sessionId": "not-the-active-session"})[0] == 409)
+    check("oversized rough work rejected", call(one, "PUT", pad_url, {**note, "notes": "x" * 10001})[0] == 400
+          and call(one, "PUT", pad_url, {**note, "drawing": [[[0, 2000]]]})[0] == 400)
+    check("rough work never appears in the paper", "ZZ rough work" not in call(one, "GET", f"/api/attempts/{wid}")[2])
+    status, _, body = call(client(), "GET", "/api/security/turnstile")
+    check("bot-check settings expose no secret", status == 200 and "secret" not in body.lower(), body[:100])
+
     # monitoring: events, board, timeline and announcements
     board = lambda: json.loads(call(examiner, "GET", mon + "/monitor")[2])
     first_board = board()

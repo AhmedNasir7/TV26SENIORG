@@ -48,6 +48,15 @@ export const writeEvents = (attemptId: number, events: MonitorEvent[]) =>
     else localStorage.removeItem(eventsKey(attemptId))
   }, undefined)
 
+export type Pad = { notes: string; drawing: [number, number][][]; unsent?: boolean }
+const padKey = (attemptId: number) => `${PREFIX}pad-${attemptId}`
+
+export const readPad = (attemptId: number) =>
+  safely(() => JSON.parse(localStorage.getItem(padKey(attemptId)) ?? 'null') as Pad | null, null)
+
+export const writePad = (attemptId: number, pad: Pad) =>
+  safely(() => localStorage.setItem(padKey(attemptId), JSON.stringify(pad)), undefined)
+
 export function clearAttemptStorage() {
   safely(() => {
     for (const store of [localStorage, sessionStorage]) {

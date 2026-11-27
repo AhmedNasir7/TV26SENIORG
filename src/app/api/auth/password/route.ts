@@ -4,6 +4,7 @@ import { getSession, hashPassword, setAuthCookie, verifyPassword } from '@/lib/a
 import { prisma } from '@/lib/prisma'
 import { ApiError, parseBody, route } from '@/lib/server/api'
 import { changePasswordSchema } from '@/lib/validation/auth'
+import { verifyHuman } from '@/lib/server/turnstile'
 
 /** Change own password. Every other session of this account ends. */
 export const POST = route(async (request: Request) => {
@@ -11,6 +12,7 @@ export const POST = route(async (request: Request) => {
   const session = await getSession()
   if (!session) throw new ApiError('UNAUTHORIZED', 'Sign in to continue')
 
+  await verifyHuman(request, 'password')
   const { currentPassword, newPassword } = await parseBody(request, changePasswordSchema, 4096)
   const account = await prisma.user.findUniqueOrThrow({
     where: { id: session.id },

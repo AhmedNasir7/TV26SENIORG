@@ -177,6 +177,7 @@ export function deleteDraft(actor: Actor, id: number) {
     async (tx) => {
       const exam = await findOwned(tx, actor, id)
       if (exam.status !== 'DRAFT') throw new ApiError('CONFLICT', 'Only a draft can be deleted')
+      await tx.attempt.deleteMany({ where: { examId: id, isSandbox: true } }) // trial runs are not records
       if ((await tx.attempt.count({ where: { examId: id } })) > 0) {
         throw new ApiError('CONFLICT', 'This examination has attempts, so it is kept')
       }

@@ -10,11 +10,14 @@ _Last updated: 2026-11-27_
 - **RULE: never remove services (Calendar, ElevenLabs, Supabase, Pusher, 100ms, Stripe, email, moderation,
   chat, support...). Only template content may go. ASK before removing anything.**
 - **RULE: no Claude co-author line in commits or pull requests.**
-- **Phase:** building. **Steps 1–10 done: all core features are built.** Everything through step 9 was **pushed** to `origin/main` on
+- **Phase:** building. **Steps 1–11 done: all core features and 5 of 8 secondary features.** Everything through step 9 was **pushed** to `origin/main` on
   2026-11-27 at the user's request. Later commits stay local until the user asks again.
-- **Next:** step 11 = NET-1, SBX-1, SBX-2, PAD-1, PREF-1 (network status, sandbox, scratchpad, preferences).
-  Wait for the user. Step 10 was **pushed** on 2026-11-27 at the user's request. The user then asked for
-  step 11. Later commits stay local until the user asks again.
+- **Now:** the user asked (2026-11-27) to deploy to their EC2 server with CI/CD through Docker Hub on push to
+  `main`. That comes before step 12.
+- **Next build step:** 12 = IMP-1, IMP-2, QAN-1. The user said "for now it is enough" about added complexity:
+  **no new features unless asked**; keep the flow easy to follow.
+- **Navigation rules (user, 2026-11-27):** nothing removed, buttons clearly visible, breadcrumbs on nested pages,
+  every exam page shows the numbered step bar and next step (`lib/exam-flow.ts`, `components/exams/ExamNav.tsx`).
 - **Progress view:** top of `docs/TASKS.md`. After each step: tick subtasks, raise `FINISHED_STEP` in
   `scripts/task-progress.py`, run it. The user relies on this to follow the work.
 - **Waiting for the user:** whether to bring back non-service items removed in step 1: admin analytics,
@@ -26,7 +29,7 @@ _Last updated: 2026-11-27_
 - **Docker checks:** bulk checks at intermediate points, not after every step.
 - **Packages approved:** `zod` (installed), `pdfkit` and `qrcode` later. Ask before adding anything else.
 - **Step order** (reordered 2026-11-27 at the user's request: core first, then straightforward ones; ticks
-  unchanged): 1–10 done · 11 NET, SBX, PAD, PREF · 12 IMP, QAN ·
+  unchanged): 1–11 done · 12 IMP, QAN ·
   13 PDF, VER · 14 FAIR (innovation) · 15 SEC, REL pass · 16 TST, SHIP
 - **UI/UX (20 marks): design pass applied 2026-11-27** at teammate Slothdemon22's request, **pushed to `origin/main`
   the same day**: Attio design system + Linear highlighter colours, class-based light/dark with an animated toggle on
@@ -80,7 +83,7 @@ _Last updated: 2026-11-27_
 - **State:** containers running; migration applied; demo accounts seeded (see `docs/TEST-ACCOUNTS.md`)
 - Sign-in page has Admin / Examiner / Candidate fill buttons when `SHOW_DEMO_LOGINS=true` (set only in
   `docker-compose.dev.yml`). Never enable it with real data.
-- Access check: `python scripts/access-check.py` (254/254 passed after step 10; it creates and removes its own attempt test data)
+- Access check: `python scripts/access-check.py` (280/280 passed after step 11; it creates and removes its own attempt test data)
 - Unit tests: `node --test "tests/*.test.mjs"` (grading, totals, statistics, monitoring settings)
 - The built-in browser pane once stalled on large dev scripts; it worked in step 9. Use Playwright if it stalls.
 - In Git Bash, very long commands fail on Windows: write large files with the Write tool or in small pieces
@@ -106,7 +109,10 @@ _Last updated: 2026-11-27_
 - Firebase project `technoverse26sg`, hard-coded in `src/lib/firebase/client.ts` and
   `src/app/api/auth/google/route.ts` (the user's choice)
 - GitHub CLI signed in as `AhmedNasir7`
-- Deploy workflow kept by the user's choice: **fails on every push**
+- Deploy workflow kept by the user's choice: **fails on every push** (being replaced by the CI/CD work)
+- Cloudflare Turnstile: widget created by the team. Needs `TURNSTILE_SECRET_KEY` (never commit it; it was
+  shared over chat, so rotate it before the event) and the domain listed on the widget. Off while empty.
+  With a real secret the access check can't sign in; use Cloudflare's published test secret for it.
 - **Second machine (teammate Slothdemon22, Kali Linux), 2026-11-27:** clone at
   `/home/bacillus/University/FYP-Cerberus-Vanguard/TV26SENIORG`, own `.env` (gitignored). Port 3000 there
   is taken by another project, so the app runs natively with `next dev -p 3300` against only the compose
@@ -201,6 +207,12 @@ _Last updated: 2026-11-27_
     (`useMonitoring`) and server (contact gaps, takeover, late save), grouped with durations. Board at
     `/examiner/exams/{id}/monitor` (5 s polling), timeline with review notes, announcements delivered by the
     15 s clock check. Defaults: disconnected after 75 s, highlight after 3.
+
+17. **Step 11:** connection state and notices, submit blocked offline; sandbox trials
+    (`/examiner/exams/{id}/sandbox`, excluded everywhere); scratchpad (notes and drawing, private);
+    display preferences saved per account. Then navigation: breadcrumbs, exam step bar and next step, candidate
+    progress steps, sticky action bars, visible button edges, dev badge off. Turnstile on sign-in, sign-up,
+    password, support and email forms (`lib/server/turnstile.ts`).
 
 Earlier, separate work in the parent folder (not the competition): the `obol` site, `DESIGN-PIPELINE.md`
 and the skills `design-pipeline`, `scroll-video-hero`, `kinetic-details`. The user said to forget Obol.

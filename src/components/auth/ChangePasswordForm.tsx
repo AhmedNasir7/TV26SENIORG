@@ -3,6 +3,7 @@
 import { clearAttemptStorage } from '@/components/attempt/storage'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useTurnstile } from '@/components/security/useTurnstile'
 
 const fields = [
   { id: 'currentPassword', label: 'Current password', autoComplete: 'current-password' },
@@ -19,6 +20,7 @@ export function ChangePasswordForm({ forced }: { forced: boolean }) {
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({})
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
+  const human = useTurnstile('password')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -33,10 +35,11 @@ export function ChangePasswordForm({ forced }: { forced: boolean }) {
     try {
       const res = await fetch('/api/auth/password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...human.headers },
         body: JSON.stringify({ currentPassword: values.currentPassword, newPassword: values.newPassword }),
       })
       const data = await res.json()
+      human.reset()
       if (!res.ok) {
         setErrors(data.error?.fields ?? {})
         setMessage(data.error?.message ?? 'Could not change the password')
@@ -93,7 +96,8 @@ export function ChangePasswordForm({ forced }: { forced: boolean }) {
             )}
           </div>
         ))}
-        <button type="submit" disabled={saving} className="btn-primary w-full px-4 py-2.5 text-sm disabled:opacity-60">
+        {human.widget}
+        <button type="submit" disabled={saving || !human.ready} className="btn-primary w-full px-4 py-2.5 text-sm disabled:opacity-60">
           {saving ? 'Saving...' : 'Change password'}
         </button>
         <button type="button" onClick={signOut} className="btn-ghost w-full px-4 py-2 text-sm">
